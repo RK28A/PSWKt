@@ -14,7 +14,7 @@
     id: 'ps5.useragent',
     name: 'User-Agent and WebKit version',
     category: 'ps5',
-    description: 'Extrait la version AppleWebKit et les indices PlayStation du UA.',
+    description: 'Extracts the AppleWebKit version and PlayStation hints from the UA.',
     requires: [],
     run: function (ctx) {
       var ua = (global.navigator && global.navigator.userAgent) || '';
@@ -42,13 +42,13 @@
     id: 'ps5.gpu',
     name: 'GPU et pilote (WebGL)',
     category: 'ps5',
-    description: 'Releve VENDOR/RENDERER demasques et la version GLSL.',
+    description: 'Reads the unmasked VENDOR/RENDERER and the GLSL version.',
     requires: [],
     run: function (ctx) {
       var canvas = document.createElement('canvas');
       var gl = null;
       try { gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl'); } catch (e) {}
-      if (!gl) return { status: 'skip', detail: 'WebGL indisponible', measurements: null };
+      if (!gl) return { status: 'skip', detail: 'WebGL unavailable', measurements: null };
       var info = {
         vendor: gl.getParameter(gl.VENDOR),
         renderer: gl.getParameter(gl.RENDERER),
@@ -77,7 +77,7 @@
     id: 'ps5.display',
     name: 'Screen, HDR and gamut',
     category: 'ps5',
-    description: 'Releve resolution, profondeur, dynamic-range et color-gamut via matchMedia.',
+    description: 'Reads resolution, depth, dynamic-range and color-gamut via matchMedia.',
     requires: [],
     run: function (ctx) {
       var scr = global.screen || {};
@@ -109,7 +109,7 @@
     id: 'ps5.clock.resolution',
     name: 'performance.now resolution',
     category: 'ps5',
-    description: 'Mesure le plus petit increment non nul observable de l horloge.',
+    description: 'Measures the smallest observable non-zero clock increment.',
     requires: ['timing.performanceNow'],
     run: function (ctx) {
       var minDelta = Infinity;
@@ -171,7 +171,7 @@
     id: 'ps5.webkit.quirks',
     name: 'WebKit quirks (behaviours)',
     category: 'ps5',
-    description: 'Verifie quelques comportements specifiques historiquement variables sur WebKit.',
+    description: 'Checks a few specific behaviours historically variable on WebKit.',
     requires: [],
     run: function (ctx) {
       var q = {};

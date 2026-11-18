@@ -61,7 +61,7 @@
     id: 'ta.dataview.endian',
     name: 'DataView - endianness',
     category: 'typedarrays',
-    description: 'Ecrit 0x01020304 en little et big endian et relit les octets.',
+    description: 'Writes 0x01020304 in little and big endian and reads back the bytes.',
     requires: ['typedArrays.DataView'],
     run: function (ctx) {
       var buf = new ArrayBuffer(4);
@@ -86,7 +86,7 @@
     id: 'ta.views',
     name: 'Shared views (subarray/set/slice)',
     category: 'typedarrays',
-    description: 'Verifie le partage de memoire (subarray) et la copie (slice).',
+    description: 'Checks memory sharing (subarray) and copying (slice).',
     requires: ['typedArrays.Uint16Array'],
     run: function (ctx) {
       var a = new Uint16Array([10, 20, 30, 40, 50, 60]);
@@ -114,7 +114,7 @@
     id: 'ta.bounds',
     name: 'Out-of-bounds access (read)',
     category: 'typedarrays',
-    description: 'Lit au-dela des bornes ; attendu : undefined, pas de plantage.',
+    description: 'Reads beyond bounds; expected: undefined, no crash.',
     requires: ['typedArrays.Int32Array'],
     run: function (ctx) {
       var a = new Int32Array(4);
@@ -129,7 +129,7 @@
       var ok = okBeyond && okNeg && writeIgnored;
       return {
         status: ok ? 'pass' : 'fail',
-        detail: 'lecture>len=' + beyond + ', lecture[-1]=' + negative + ', ecriture hors-borne ignoree=' + writeIgnored,
+        detail: 'read>len=' + beyond + ', lecture[-1]=' + negative + ', ecriture hors-borne ignoree=' + writeIgnored,
         measurements: { okBeyond: okBeyond, okNeg: okNeg, writeIgnored: writeIgnored }
       };
     }
@@ -140,7 +140,7 @@
     id: 'ta.alloc.budget',
     name: 'Progressive allocation under budget',
     category: 'typedarrays',
-    description: 'Alloue des blocs Float64 jusqu au budget memoire, puis libere.',
+    description: 'Allocates Float64 blocks up to the memory budget, then releases.',
     requires: ['typedArrays.Float64Array'],
     run: function (ctx) {
       var blockBytes = 1 * 1024 * 1024; // 1 Mo par bloc
@@ -178,7 +178,7 @@
     id: 'ta.throughput',
     name: 'Float64 sequential throughput',
     category: 'typedarrays',
-    description: 'Mesure le temps de remplissage et de somme d un tableau de 1M elements.',
+    description: 'Measures the time to fill and sum a 1M-element array.',
     requires: ['typedArrays.Float64Array'],
     run: function (ctx) {
       var n = 1000000;
@@ -203,7 +203,7 @@
       var ok = Math.abs(sum - expected) < 1; // tolerance flottante
       return {
         status: ok ? 'pass' : 'fail',
-        detail: 'ecriture ' + Math.round(tWrite) + ' ms, lecture ' + Math.round(tRead) +
+        detail: 'write ' + Math.round(tWrite) + ' ms, lecture ' + Math.round(tRead) +
           ' ms, somme ' + (ok ? 'correcte' : 'incorrecte'),
         measurements: {
           elements: n,

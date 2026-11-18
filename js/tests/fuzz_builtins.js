@@ -26,7 +26,7 @@
   // 1) String.prototype.* avec index/longueurs absurdes et objets-pieges en argument.
   F.resilience({
     id: 'fuzz.builtins.string.indexing', name: 'String · absurd indices/lengths', category: CAT,
-    description: 'slice/substr/substring/repeat/padStart/charAt/codePointAt avec arguments limites.',
+    description: 'slice/substr/substring/repeat/padStart/charAt/codePointAt with boundary arguments.',
     build: function (ctx) {
       var base = 'abcdef😀xyz';
       var args = badArgs(ctx);
@@ -55,7 +55,7 @@
   // 2) String.prototype.repeat : count negatif/Infini/NaN -> RangeError OU gestion propre.
   F.resilience({
     id: 'fuzz.builtins.string.repeat', name: 'String.repeat (boundary count)', category: CAT,
-    description: 'repeat(-1/Infinity/NaN/2^30) : RangeError rattrapee ou chaine bornee, jamais de plantage.',
+    description: 'repeat(-1/Infinity/NaN/2^30): caught RangeError or bounded string, never a crash.',
     requires: [],
     build: function (ctx) {
       var counts = [-1, -0.9, 0, 0.9, 1.5, NaN, Infinity, -Infinity, 1e9, 1073741824, 2147483648,
@@ -77,7 +77,7 @@
   // 3) Array(len) et new Array : longueurs invalides -> RangeError attendue.
   F.resilience({
     id: 'fuzz.builtins.array.length', name: 'Array(length) invalide', category: CAT,
-    description: 'new Array(-1 / 2.5 / 2^32 / NaN) : RangeError rattrapee attendue.',
+    description: 'new Array(-1 / 2.5 / 2^32 / NaN): caught RangeError expected.',
     build: function (ctx) {
       var lens = [-1, -0, 0.5, 2.5, NaN, Infinity, 4294967295, 4294967296, 1e100, '3', '3.5',
         { valueOf: function () { return 4; } }, null, F.trap('throwValueOf')];
@@ -93,7 +93,7 @@
   // 4) Array.prototype.* avec callbacks/arguments pieges et tableaux degeneres.
   F.resilience({
     id: 'fuzz.builtins.array.methods', name: 'Array.* · trapped callbacks/args', category: CAT,
-    description: 'map/filter/reduce/slice/fill/copyWithin/sort avec arguments limites et objets-pieges.',
+    description: 'map/filter/reduce/slice/fill/copyWithin/sort with boundary arguments and trap objects.',
     build: function (ctx) {
       var args = badArgs(ctx);
       var inputs = [];
@@ -120,7 +120,7 @@
   // 5) Array.from sur objets array-like pieges (length qui ment/leve/negatif/geant).
   F.resilience({
     id: 'fuzz.builtins.array.from', name: 'Array.from (trapped array-like)', category: CAT,
-    description: 'Array.from sur length negative/geante/qui leve : borne ou erreur rattrapee.',
+    description: 'Array.from on negative/giant/throwing length: bounded or caught error.',
     build: function (ctx) {
       if (typeof Array.from !== 'function') return { target: function () { throw new Error('Array.from absent'); }, inputs: [] };
       var inputs = F.trapObjects();
@@ -144,7 +144,7 @@
   // 6) Object.* avec cibles non-objets et descripteurs incoherents.
   F.resilience({
     id: 'fuzz.builtins.object.ops', name: 'Object.* · boundary targets/descriptors', category: CAT,
-    description: 'keys/assign/defineProperty/freeze/getOwnPropertyNames sur primitives et pieges.',
+    description: 'keys/assign/defineProperty/freeze/getOwnPropertyNames on primitives and traps.',
     build: function (ctx) {
       var inputs = F.nastyValues(ctx);
       return {
@@ -166,7 +166,7 @@
   // 7) JSON.stringify avec remplacants/espaces malformes et objets-pieges (toJSON/getters).
   F.resilience({
     id: 'fuzz.builtins.json.stringify', name: 'JSON.stringify (args/traps)', category: CAT,
-    description: 'stringify avec replacer absurde, indent limite, getters/toJSON qui levent.',
+    description: 'stringify with absurd replacer, boundary indent, getters/toJSON that throw.',
     build: function (ctx) {
       var inputs = [];
       // Valeurs a serialiser (dont pieges)
@@ -196,7 +196,7 @@
   // 8) Math.* : invariants simples sur nombres limites (jamais d exception, types coherents).
   F.invariant({
     id: 'fuzz.builtins.math', name: 'Math.* (numeric invariants)', category: CAT,
-    description: 'min/max/round/sign/abs/trunc sur valeurs limites : resultats coherents, jamais d exception.',
+    description: 'min/max/round/sign/abs/trunc on boundary values: consistent results, never an exception.',
     build: function (ctx) {
       var inputs = F.nastyNumbers();
       return { inputs: inputs };

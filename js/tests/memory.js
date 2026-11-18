@@ -16,12 +16,12 @@
     id: 'mem.heap.read',
     name: 'JS heap read',
     category: 'memory',
-    description: 'Releve performance.memory si disponible (sinon ignore).',
+    description: 'Reads performance.memory if available (otherwise skipped).',
     requires: ['timing.performanceMemory'],
     run: function (ctx) {
       var h = PSWKT.guard.readHeap();
       ctx.tick();
-      if (!h) return { status: 'skip', detail: 'performance.memory indisponible', measurements: null };
+      if (!h) return { status: 'skip', detail: 'performance.memory unavailable', measurements: null };
       return {
         status: 'pass',
         detail: 'utilise ' + Math.round(h.usedJSHeapSize / 1048576) + ' Mo / limite ' +
@@ -40,7 +40,7 @@
     id: 'mem.pressure.cycle',
     name: 'Allocation / release cycle',
     category: 'memory',
-    description: 'Alloue des buffers sous budget, mesure le tas, libere, re-mesure.',
+    description: 'Allocates buffers under budget, measures the heap, releases, re-measures.',
     requires: ['typedArrays.ArrayBuffer'],
     run: function (ctx) {
       var before = PSWKT.guard.readHeap();
@@ -79,7 +79,7 @@
     id: 'mem.weakref',
     name: 'WeakRef (presence et deref)',
     category: 'memory',
-    description: 'Cree une WeakRef et verifie deref() tant que la cible est vivante.',
+    description: 'Creates a WeakRef and checks deref() while the target is alive.',
     requires: ['objects.WeakRef'],
     run: function (ctx) {
       var obj = { marker: 'vivant' };
@@ -133,12 +133,12 @@
     id: 'mem.string.build',
     name: 'Large string building',
     category: 'memory',
-    description: 'Construit une chaine de ~1M caracteres par jointure et mesure la duree.',
+    description: 'Builds a ~1M-character string by join and measures the duration.',
     requires: [],
     run: function (ctx) {
       var n = 1000000;
       if (!ctx.charge(n * 2)) {
-        return { status: 'skip', detail: 'budget insuffisant pour ~2 Mo de chaine', measurements: null };
+        return { status: 'skip', detail: 'insufficient budget for ~2 MB string', measurements: null };
       }
       var parts = new Array(n / 10);
       for (var i = 0; i < parts.length; i++) {
@@ -152,7 +152,7 @@
       parts.length = 0;
       return {
         status: ok ? 'pass' : 'fail',
-        detail: 'chaine de ' + big.length + ' caracteres construite en ' + Math.round(dt * 100) / 100 + ' ms',
+        detail: 'string of ' + big.length + ' caracteres construite en ' + Math.round(dt * 100) / 100 + ' ms',
         measurements: { length: big.length, joinMs: Math.round(dt * 100) / 100, expected: n }
       };
     }

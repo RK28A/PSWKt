@@ -15,7 +15,7 @@
     id: 'str.unicode.codepoints',
     name: 'Unicode beyond BMP (code points)',
     category: 'strings',
-    description: 'Verifie codePointAt / fromCodePoint sur un emoji (paire de substitution).',
+    description: 'Checks codePointAt / fromCodePoint on an emoji (surrogate pair).',
     requires: [],
     run: function (ctx) {
       var emoji = '😀'; // U+1F600
@@ -92,7 +92,7 @@
     id: 'str.textencoder',
     name: 'TextEncoder / TextDecoder (UTF-8)',
     category: 'strings',
-    description: 'Encode une chaine accentuee en octets UTF-8 et la decode.',
+    description: 'Encodes an accented string to UTF-8 bytes and decodes it.',
     requires: ['platform.TextEncoder', 'platform.TextDecoder'],
     run: function (ctx) {
       var src = 'Café € 😀'; // Café € 😀
@@ -105,7 +105,7 @@
       var ok = (back === src);
       return {
         status: ok ? 'pass' : 'fail',
-        detail: 'octets=' + bytes.length + ', aller-retour=' + ok,
+        detail: 'bytes=' + bytes.length + ', aller-retour=' + ok,
         measurements: { byteLength: bytes.length, roundTrip: ok }
       };
     }
@@ -116,7 +116,7 @@
     id: 'str.base64',
     name: 'base64 (btoa / atob)',
     category: 'strings',
-    description: 'Encode/decode une suite d octets en base64 et verifie la fidelite.',
+    description: 'Encodes/decodes a byte sequence in base64 and checks fidelity.',
     requires: ['platform.base64'],
     run: function (ctx) {
       var raw = '';

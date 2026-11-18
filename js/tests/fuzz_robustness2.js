@@ -13,7 +13,7 @@
   // 1) Intl.NumberFormat / toLocaleString avec options extremes -> RangeError rattrapee.
   reg({
     id: 'fuzz.robust2.intl.extreme', name: 'Intl/toLocaleString extreme options',
-    description: 'Classe : validation d options. Chiffres fractionnaires absurdes, devises inconnues -> RangeError rattrapee.',
+    description: 'Class: option validation. Absurd fraction digits, unknown currencies -> caught RangeError.',
     run: function (ctx) {
       var out = {};
       function t(label, fn) { try { out[label] = String(fn()).slice(0, 24); } catch (e) { out[label] = 'throw:' + e.name; } }
@@ -25,14 +25,14 @@
         t('nf locale invalide', function () { return new Intl.NumberFormat('!!!').format(1); });
       }
       ctx.metric('intl', out);
-      return { status: 'pass', detail: 'options Intl extremes documentees', measurements: out };
+      return { status: 'pass', detail: 'extreme Intl options documented', measurements: out };
     }
   });
 
   // 2) Dates aux frontieres de l'intervalle valide (+/- 8.64e15 ms).
   reg({
     id: 'fuzz.robust2.date.bounds', name: 'Dates at the boundaries',
-    description: 'Classe : limites temporelles. +/-8640000000000000 valide, +/-1 au-dela = Invalid Date.',
+    description: 'Class: time boundaries. +/-8640000000000000 valid, +/-1 beyond = Invalid Date.',
     run: function (ctx) {
       var MAX = 8640000000000000;
       var r = {
@@ -49,7 +49,7 @@
   // 3) String.repeat/padStart avec comptes enormes -> RangeError rattrapee (pas de plantage).
   reg({
     id: 'fuzz.robust2.string.huge', name: 'String huge counts',
-    description: 'Classe : allocation refusee proprement. repeat/padStart demesures -> RangeError rattrapee.',
+    description: 'Class: allocation refused cleanly. Oversized repeat/padStart -> caught RangeError.',
     run: function (ctx) {
       var out = {};
       function t(label, fn) { try { out[label] = fn(); } catch (e) { out[label] = 'throw:' + e.name; } }
@@ -58,14 +58,14 @@
       if (''.padStart) { t('padStart 2^31', function () { return 'a'.padStart(2147483648, '.').length; }); }
       t('repeat 1e9 (borne)', function () { try { return 'a'.repeat(1e9).length; } catch (e) { return 'throw:' + e.name; } });
       ctx.metric('string huge', out);
-      return { status: 'pass', detail: 'comptes enormes documentes', measurements: out };
+      return { status: 'pass', detail: 'huge counts documented', measurements: out };
     }
   });
 
   // 4) Array.from avec iterateur qui leve en plein milieu.
   reg({
     id: 'fuzz.robust2.iter.midthrow', name: 'Iterator that throws midway',
-    description: 'Classe : rappel hostile. L iterateur leve apres quelques valeurs -> erreur propre, pas de corruption.',
+    description: 'Class: hostile callback. The iterator throws after a few values -> clean error, no corruption.',
     requires: ['objects.Symbol'],
     run: function (ctx) {
       var it = {}; var produced = 0;
@@ -81,7 +81,7 @@
   // 5) TextDecoder sur octets malformes (mode replacement vs fatal).
   reg({
     id: 'fuzz.robust2.textdecoder', name: 'TextDecoder malformed bytes',
-    description: 'Classe : decodage tolerant/strict. Sequences UTF-8 invalides -> U+FFFD ou TypeError (fatal).',
+    description: 'Class: tolerant/strict decoding. Invalid UTF-8 sequences -> U+FFFD or TypeError (fatal).',
     requires: ['platform.TextDecoder'],
     run: function (ctx) {
       var bad = new Uint8Array([0xFF, 0xFE, 0xC0, 0x80, 0xED, 0xA0, 0x80, 0xF8]);
@@ -89,17 +89,17 @@
       try { r.replace = new TextDecoder().decode(bad); r.replaceLen = r.replace.length; delete r.replace; } catch (e) { r.replace = e.name; }
       try { new TextDecoder('utf-8', { fatal: true }).decode(bad); r.fatal = 'pas leve (?)'; } catch (e) { r.fatal = e.name; }
       ctx.metric('textdecoder', r);
-      return { status: 'pass', detail: 'decodage malforme documente', measurements: r };
+      return { status: 'pass', detail: 'malformed decoding documented', measurements: r };
     }
   });
 
   // 6) URL : analyse de chaines malformees.
   reg({
     id: 'fuzz.robust2.url', name: 'Malformed URLs',
-    description: 'Classe : parsing d URL. Chaines invalides -> TypeError rattrapee ou normalisation.',
+    description: 'Class: URL parsing. Invalid strings -> caught TypeError or normalization.',
     requires: [],
     run: function (ctx) {
-      if (typeof URL !== 'function') return { status: 'skip', detail: 'URL absent' };
+      if (typeof URL !== 'function') return { status: 'skip', detail: 'URL unavailable' };
       var cand = ['', 'http://', 'http://[', 'ht!tp://x', '//no-scheme', 'http://a b', 'https://xn--/', 'http://user:pass@h:99999/', 'javascript:alert(1)', 'data:,x', 'http://' + new Array(2000).join('a') + '.com'];
       var out = [];
       for (var i = 0; i < cand.length; i++) {
@@ -109,28 +109,28 @@
         out.push(r); ctx.tick();
       }
       ctx.metric('url', out);
-      return { status: 'pass', detail: 'analyse d URL malformees documentee', measurements: { cases: out } };
+      return { status: 'pass', detail: 'malformed URL parsing documented', measurements: { cases: out } };
     }
   });
 
   // 7) Object.defineProperty : descripteurs incoherents.
   reg({
     id: 'fuzz.robust2.defineprop', name: 'defineProperty inconsistent descriptors',
-    description: 'Classe : validation de descripteurs. data+accessor, redefinition non-configurable -> TypeError rattrapee.',
+    description: 'Class: descriptor validation. data+accessor, non-configurable redefinition -> caught TypeError.',
     run: function (ctx) {
       var out = {};
       try { Object.defineProperty({}, 'x', { value: 1, get: function () {} }); out.mix = 'pas leve (?)'; } catch (e) { out.mix = e.name; }
       try { var o = {}; Object.defineProperty(o, 'x', { value: 1, configurable: false }); Object.defineProperty(o, 'x', { value: 2 }); out.redef = 'pas leve (?)'; } catch (e) { out.redef = e.name; }
       try { var o2 = Object.freeze({ a: 1 }); o2.a = 2; out.frozenWrite = o2.a; } catch (e) { out.frozenWrite = e.name; }
       ctx.metric('defineprop', out);
-      return { status: 'pass', detail: 'descripteurs incoherents documentes', measurements: out };
+      return { status: 'pass', detail: 'inconsistent descriptors documented', measurements: out };
     }
   });
 
   // 8) Comparateur de tri hostile (NaN / incoherent / qui leve).
   reg({
     id: 'fuzz.robust2.sort.comparator', name: 'Hostile sort comparator',
-    description: 'Classe : rappel hostile. Comparateurs renvoyant NaN, incoherents ou qui levent -> pas de corruption.',
+    description: 'Class: hostile callback. Comparators returning NaN, inconsistent or throwing -> no corruption.',
     run: function (ctx) {
       var out = {};
       try { var a = [3, 1, 2, 5, 4]; a.sort(function () { return NaN; }); out.nan = a.join(','); } catch (e) { out.nan = e.name; }
@@ -146,7 +146,7 @@
   // 9) getter qui se supprime / se redefinit pendant l'acces.
   reg({
     id: 'fuzz.robust2.getter.mutate', name: 'Getter that mutates during access',
-    description: 'Classe : effets de bord pendant acces. Un getter qui supprime/redefinit sa propre propriete.',
+    description: 'Class: side effects during access. A getter that deletes/redefines its own property.',
     run: function (ctx) {
       var out = {}; var calls = 0;
       var o = {};
@@ -160,7 +160,7 @@
   // 10) parseInt/parseFloat sur numeriques exotiques.
   reg({
     id: 'fuzz.robust2.parse.exotic', name: 'parseInt/parseFloat exotic inputs',
-    description: 'Classe : coercition numerique. Entrees exotiques -> nombre (ou NaN), jamais d exception.',
+    description: 'Class: numeric coercion. Exotic inputs -> a number (or NaN), never an exception.',
     run: function (ctx) {
       var cand = ['  0x1F  ', '0b101', '0o17', '1e3', '1e', 'Infinity', '-0', '١٢٣', '½', '1,5', '1.2.3', '  +.5e+1  ', '0x', '.', '٠x1'];
       var out = [], allNum = true;
@@ -177,7 +177,7 @@
   // 11) RegExp quantificateur enorme a la compilation.
   reg({
     id: 'fuzz.robust2.regex.quant', name: 'RegExp huge quantifier',
-    description: 'Classe : compilation de regex. {0,1000000}, classes larges -> compile ou SyntaxError, pas de plantage.',
+    description: 'Class: regex compilation. {0,1000000}, wide classes -> compiles or SyntaxError, no crash.',
     run: function (ctx) {
       var pats = ['a{0,1000000}', 'a{1000000}', '(?:ab){0,500000}', '[\\u0000-\\uffff]{1,100000}', '(a|b|c|d){0,100000}'];
       var out = [];
@@ -187,14 +187,14 @@
         out.push(r); ctx.tick();
       }
       ctx.metric('regex quant', out);
-      return { status: 'pass', detail: 'quantificateurs enormes documentes', measurements: { cases: out } };
+      return { status: 'pass', detail: 'huge quantifiers documented', measurements: { cases: out } };
     }
   });
 
   // 12) structuredClone de types natifs varies.
   reg({
     id: 'fuzz.robust2.clone.types', name: 'structuredClone of various types',
-    description: 'Classe : couverture de serialisation. Clone Date/RegExp/Map/Set/TypedArray/ArrayBuffer/Blob/Error.',
+    description: 'Class: serialization coverage. Clones Date/RegExp/Map/Set/TypedArray/ArrayBuffer/Blob/Error.',
     requires: ['objects.structuredClone'],
     run: function (ctx) {
       var out = {};
@@ -205,7 +205,7 @@
       if (typeof Blob === 'function') t('Blob', new Blob(['x']));
       try { structuredClone(function () {}); out.func = 'pas leve (?)'; } catch (e) { out.func = e.name; }
       ctx.metric('clone types', out);
-      return { status: 'pass', detail: 'clonage de types varies documente', measurements: out };
+      return { status: 'pass', detail: 'cloning of various types documented', measurements: out };
     }
   });
 

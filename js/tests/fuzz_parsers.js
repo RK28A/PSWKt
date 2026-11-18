@@ -18,7 +18,7 @@
   // 1) JSON.parse sur chaines malformees : doit renvoyer ou lever (jamais planter).
   F.resilience({
     id: 'fuzz.parse.json.malformed', name: 'JSON.parse (malformed)', category: CAT,
-    description: 'JSON invalide/tordu : attendu SyntaxError rattrapee, jamais de plantage.',
+    description: 'Invalid/twisted JSON: caught SyntaxError expected, never a crash.',
     build: function (ctx) {
       var seeds = ['{"a":1,"b":[1,2,3],"c":"x"}', '[1,2,3]', '{"k":{"n":[true,null,false]}}', '"txt"', '12345'];
       var inputs = [];
@@ -75,7 +75,7 @@
   // 3) Number() et parseInt/parseFloat : ne doivent JAMAIS lever (contrat du moteur).
   F.resilience({
     id: 'fuzz.parse.number', name: 'Number / parseInt / parseFloat (malformed)', category: CAT,
-    description: 'Conversions numeriques : toujours un nombre (eventuellement NaN), jamais d exception.',
+    description: 'Numeric conversions: always a number (possibly NaN), never an exception.',
     build: function (ctx) {
       var strs = F.nastyStrings(ctx);
       var extra = ['0x', '0b101', '0o17', '1e', '1e+', '--5', '+-5', '  0x1F  ', '1_0', '1,5',
@@ -127,7 +127,7 @@
   // 5) URI : encode/decode avec entrees illegales ; decode d'une sequence invalide -> URIError.
   F.resilience({
     id: 'fuzz.parse.uri.decode', name: 'decodeURI(Component) (malformed)', category: CAT,
-    description: 'Sequences %XX illegales : URIError rattrapee attendue, jamais de plantage.',
+    description: 'Illegal %XX sequences: caught URIError expected, never a crash.',
     build: function (ctx) {
       var cand = ['%', '%A', '%ZZ', '%E0%A4', '%C0%80', '%F8%88%80%80%80', '%ed%a0%80',
         '100%', 'a%b', '%%', '%u0041', '+', ' ', '%20%', '%FF', '%00', '\uD800'];
@@ -180,7 +180,7 @@
   // 7) RegExp : compilation de patterns aleatoires/malformes -> SyntaxError rattrapee.
   F.resilience({
     id: 'fuzz.parse.regexp.compile', name: 'RegExp (malformed compilation)', category: CAT,
-    description: 'Construction de motifs tordus : SyntaxError rattrapee attendue, jamais de plantage.',
+    description: 'Building twisted patterns: caught SyntaxError expected, never a crash.',
     build: function (ctx) {
       var rng = F.rngFrom(F.hashSeed('re-compile'));
       var atoms = '()[]{}|*+?.^$\\abc09-,:=!<>dswDSWbBnrt'.split('');
@@ -208,7 +208,7 @@
   //    Non destructif : la chaine est volontairement tres courte pour rester sous l echeance.
   F.resilience({
     id: 'fuzz.parse.regexp.backtrack', name: 'RegExp · bounded backtracking', category: CAT,
-    description: 'Motifs a backtracking exponentiel sur entrees TRES courtes (<=16) : on mesure le cout, sans bloquer.',
+    description: 'Exponential-backtracking patterns on VERY short inputs (<=16): measures the cost without blocking.',
     build: function (ctx) {
       var patterns = [/(a+)+$/, /(a|a)*$/, /(a*)*$/, /(.*a){1,}$/, /(a+)+b/];
       var inputs = [];

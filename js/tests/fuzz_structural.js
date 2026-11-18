@@ -31,7 +31,7 @@
   // 1) JSON.stringify/parse sur imbrication profonde croissante : trouve le seuil de RangeError.
   F.resilience({
     id: 'fuzz.struct.deep.json', name: 'JSON · deep nesting', category: CAT,
-    description: 'stringify/parse sur profondeurs croissantes : soit OK, soit RangeError (pile) rattrapee.',
+    description: 'stringify/parse at increasing depths: either OK, or caught RangeError (stack).',
     build: function (ctx) {
       var inputs = [];
       var depths = [10, 50, 100, 200, 500, 1000, 2000, 4000, 8000];
@@ -54,7 +54,7 @@
   // 2) Recursion profonde directe : mesure la profondeur de pile avant RangeError (documente).
   F.resilience({
     id: 'fuzz.struct.recursion', name: 'Recursion · stack depth', category: CAT,
-    description: 'Recursion auto-limitee : capture le RangeError de depassement de pile et rapporte la profondeur.',
+    description: 'Self-limited recursion: catches the stack-overflow RangeError and reports the depth.',
     build: function (ctx) {
       return {
         target: function () {
@@ -76,7 +76,7 @@
   // 3) structuredClone / JSON sur cycles : detection de cycle attendue (pas de boucle infinie).
   F.resilience({
     id: 'fuzz.struct.cycles', name: 'Cycles · clone & stringify', category: CAT,
-    description: 'Structures cycliques variees : TypeError (cycle) rattrapee ou clone reussi, jamais de boucle infinie.',
+    description: 'Various cyclic structures: caught TypeError (cycle) or successful clone, never an infinite loop.',
     build: function (ctx) {
       function makeCycle(kind) {
         var a, b;
@@ -116,7 +116,7 @@
   // 4) Proxy a trappes hostiles : le moteur doit faire respecter les invariants (TypeError).
   F.resilience({
     id: 'fuzz.struct.proxy.hostile', name: 'Proxy · hostile traps', category: CAT,
-    description: 'Trappes qui levent, mentent ou violent les invariants : le moteur impose TypeError, jamais de plantage.',
+    description: 'Traps that throw, lie or violate invariants: the engine enforces TypeError, never a crash.',
     requires: ['objects.Proxy'],
     build: function (ctx) {
       var inputs = [];
@@ -161,7 +161,7 @@
   // 5) Iterateurs piges : Symbol.iterator qui leve/ment, passes a from/spread/Map/Set.
   F.resilience({
     id: 'fuzz.struct.iterator.hostile', name: 'Hostile iterators', category: CAT,
-    description: 'next()/Symbol.iterator qui levent ou renvoient des objets invalides : erreur rattrapee, jamais de boucle folle.',
+    description: 'next()/Symbol.iterator that throw or return invalid objects: caught error, never a runaway loop.',
     requires: ['objects.Symbol'],
     build: function (ctx) {
       function mk(kind) {
@@ -234,7 +234,7 @@
   // 7) Croissance degeneree bornee : objet a tres nombreuses cles / chaine geante (sous budget).
   F.resilience({
     id: 'fuzz.struct.wide', name: 'Wide structures (bounded)', category: CAT,
-    description: 'Objet a N proprietes et chaine construite par doublement : respecte le budget, mesure le cout.',
+    description: 'Object with N properties and a string built by doubling: respects the budget, measures the cost.',
     build: function (ctx) {
       var inputs = [
         { v: 1000, label: '1 000 cles' },

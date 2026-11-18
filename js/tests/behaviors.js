@@ -23,7 +23,7 @@
     return ok(stable, stable ? 'tri stable' : 'tri NON stable');
   });
   T('array.flat.deep', 'Array.flat(Infinity)', [], function () {
-    if (![].flat) return { status: 'skip', detail: 'flat absent' };
+    if (![].flat) return { status: 'skip', detail: 'flat unavailable' };
     var r = [1, [2, [3, [4, [5]]]]].flat(Infinity);
     return ok(r.join(',') === '1,2,3,4,5', 'aplati = ' + r.join(','), { r: r });
   });
@@ -39,12 +39,12 @@
     return ok(arr.length === 3 && arr[1] === '😀', 'emoji compte pour 1 (' + arr.length + ')');
   });
   T('string.normalize', 'NFC/NFD normalization', [], function () {
-    if (!''.normalize) return { status: 'skip', detail: 'normalize absent' };
+    if (!''.normalize) return { status: 'skip', detail: 'normalize unavailable' };
     var nfc = 'é'; var nfd = 'é';
     return ok(nfc.normalize('NFD') === nfd && nfd.normalize('NFC') === nfc, 'NFC<->NFD coherent');
   });
   T('string.replaceAll', 'String.replaceAll', [], function () {
-    if (!''.replaceAll) return { status: 'skip', detail: 'replaceAll absent' };
+    if (!''.replaceAll) return { status: 'skip', detail: 'replaceAll unavailable' };
     return ok('a-a-a'.replaceAll('-', '+') === 'a+a+a', 'remplacement global');
   });
   T('number.tofixed', 'Number.toFixed rounding', [], function () {
@@ -61,7 +61,7 @@
     return ok(Math.abs(v - 1) < 1e-12, 'sin^2+cos^2 = ' + v);
   });
   T('math.fround', 'Math.fround (float32)', [], function () {
-    if (!Math.fround) return { status: 'skip', detail: 'fround absent' };
+    if (!Math.fround) return { status: 'skip', detail: 'fround unavailable' };
     return ok(Math.fround(1.1) !== 1.1 && Math.fround(1) === 1, 'perte float32 observee');
   });
   T('date.iso.roundtrip', 'Date ISO round-trip', [], function () {
@@ -139,7 +139,7 @@
   T('closure.let', 'Block scope (let in loop)', [], function () {
     var fns = [];
     try { eval('for (let i=0;i<3;i++){ fns.push(function(){return i;}); }'); }
-    catch (e) { return { status: 'skip', detail: 'let non supporte' }; }
+    catch (e) { return { status: 'skip', detail: 'let not supported' }; }
     return ok(fns[0]() === 0 && fns[2]() === 2, 'captures = ' + fns.map(function (f) { return f(); }).join(','));
   });
 

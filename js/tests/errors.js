@@ -15,7 +15,7 @@
     id: 'err.trycatchfinally',
     name: 'try / catch / finally',
     category: 'errors',
-    description: 'Verifie que finally s execute meme en cas d exception.',
+    description: 'Checks that finally runs even on exception.',
     requires: [],
     run: function (ctx) {
       var order = [];
@@ -31,7 +31,7 @@
       var ok = (order.join(',') === 'try,catch:intentionnelle,finally');
       return {
         status: ok ? 'pass' : 'fail',
-        detail: 'ordre : ' + order.join(' -> '),
+        detail: 'order: ' + order.join(' -> '),
         measurements: { order: order }
       };
     }
@@ -42,7 +42,7 @@
     id: 'err.types',
     name: 'Native error types',
     category: 'errors',
-    description: 'Declenche et capture chaque type d erreur standard.',
+    description: 'Triggers and catches each standard error type.',
     requires: [],
     run: function (ctx) {
       var results = {};
@@ -61,7 +61,7 @@
         results.URIError === 'URIError');
       return {
         status: ok ? 'pass' : 'fail',
-        detail: 'captures : ' + Object.keys(results).join(', '),
+        detail: 'caught: ' + Object.keys(results).join(', '),
         measurements: results
       };
     }
@@ -72,7 +72,7 @@
     id: 'err.stack',
     name: 'Call stack (error.stack)',
     category: 'errors',
-    description: 'Verifie la presence de la pile et compte ses niveaux.',
+    description: 'Checks the presence of the stack and counts its levels.',
     requires: [],
     run: function (ctx) {
       function deep3() { throw new Error('depuis deep3'); }
@@ -100,7 +100,7 @@
     id: 'err.custom',
     name: 'Custom error (subclass)',
     category: 'errors',
-    description: 'Cree une sous-classe d Error et verifie la chaine instanceof.',
+    description: 'Creates an Error subclass and checks the instanceof chain.',
     requires: [],
     run: function (ctx) {
       function AppError(msg, code) {
@@ -132,18 +132,18 @@
     id: 'err.promise.reject',
     name: 'Caught promise rejection',
     category: 'errors',
-    description: 'Rejette une promesse et la rattrape proprement (test asynchrone).',
+    description: 'Rejects a promise and catches it cleanly (asynchronous test).',
     requires: ['timing.Promise'],
     run: function (ctx) {
       ctx.info('creation d une promesse rejetee...');
       return Promise.reject(new Error('rejet volontaire'))
         .then(function () {
-          return { status: 'fail', detail: 'la promesse aurait du etre rejetee', measurements: null };
+          return { status: 'fail', detail: 'the promise should have been rejected', measurements: null };
         }, function (err) {
           ctx.info('rejet rattrape : ' + err.message);
           return {
             status: 'pass',
-            detail: 'rejet rattrape proprement : ' + err.message,
+            detail: 'rejection caught cleanly: ' + err.message,
             measurements: { caught: true, message: err.message }
           };
         });

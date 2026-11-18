@@ -32,7 +32,7 @@
   // 1) USE-AFTER-DETACH : transfere un ArrayBuffer puis l'utilise. Comportement a documenter.
   R.register({
     id: 'fuzz.robust.detached', name: 'Detached buffer (use after transfer)', category: CAT,
-    description: 'Classe : usage apres detachement. Transfere un ArrayBuffer puis lit/ecrit via une vue -> doit rester inoffensif (vue vide ou TypeError), jamais de corruption.',
+    description: 'Class: use after detach. Transfers an ArrayBuffer then reads/writes via a view -> must stay harmless (empty view or TypeError), never corrupt.',
     requires: ['objects.structuredClone', 'typedArrays.ArrayBuffer'],
     run: function (ctx) {
       var rounds = [];
@@ -50,14 +50,14 @@
         try { r.newView = new Uint8Array(buf).length; } catch (e) { r.newView = 'throw:' + e.name; }
         rounds.push(r); ctx.metric('round ' + i, r);
       }
-      return { status: 'pass', detail: 'usage apres detachement documente (' + rounds.length + ' rounds)', measurements: { rounds: rounds } };
+      return { status: 'pass', detail: 'use after detach documented (' + rounds.length + ' rounds)', measurements: { rounds: rounds } };
     }
   });
 
   // 2) VUE SUR BUFFER REDIMENSIONNE : rapetisse un ArrayBuffer sous une vue existante.
   R.register({
     id: 'fuzz.robust.resized', name: 'View over resized ArrayBuffer', category: CAT,
-    description: 'Classe : vue sur buffer retreci. Cree une vue, reduit le buffer sous-jacent, puis accede -> comportement a documenter (pas de lecture hors zone).',
+    description: 'Class: view over shrunk buffer. Creates a view, shrinks the underlying buffer, then accesses -> behaviour to document (no out-of-area read).',
     requires: ['typedArrays.resizableArrayBuffer'],
     run: function (ctx) {
       var out = [];
@@ -73,16 +73,16 @@
         out.push({ op: 'grow', readAt2000: (function () { try { return v[2000]; } catch (e) { return 'throw:' + e.name; } })(), len: v.length });
         ctx.metric('resize', out);
       } catch (e) {
-        return { status: 'pass', detail: 'resizable indispo/limite : ' + e.name, measurements: { error: e.name, steps: out } };
+        return { status: 'pass', detail: 'resizable unavailable/limited: ' + e.name, measurements: { error: e.name, steps: out } };
       }
-      return { status: 'pass', detail: 'redimensionnement sous vue documente', measurements: { steps: out } };
+      return { status: 'pass', detail: 'resize under view documented', measurements: { steps: out } };
     }
   });
 
   // 3) MUTATION PENDANT ITERATION : modifie des collections en cours de parcours.
   R.register({
     id: 'fuzz.robust.mutate.iter', name: 'Mutation during iteration', category: CAT,
-    description: 'Classe : mutation pendant iteration. Modifie Array/Map/Set (et collections DOM vivantes) en plein parcours -> doit rester coherent, jamais de corruption.',
+    description: 'Class: mutation during iteration. Modifies Array/Map/Set (and live DOM collections) mid-iteration -> must stay consistent, never corrupt.',
     run: function (ctx) {
       var res = {};
       // Array : push pendant forEach (borne pour ne pas boucler sans fin)
@@ -118,14 +118,14 @@
         } catch (e) { res.domLive = 'throw:' + e.name; }
       }
       ctx.metric('mutation pendant iteration', res);
-      return { status: 'pass', detail: 'mutations pendant iteration documentees (aucune corruption observee)', measurements: res };
+      return { status: 'pass', detail: 'mutations during iteration documented (no corruption observed)', measurements: res };
     }
   });
 
   // 4) structuredClone de graphes exotiques (cycles, types natifs, getters hostiles).
   R.register({
     id: 'fuzz.robust.clone.exotic', name: 'structuredClone of exotic graphs', category: CAT,
-    description: 'Classe : serialisation de graphes degeneres. Clone cycles, Map/Set imbriques, TypedArray, Date, RegExp, getters piges -> erreur rattrapee ou clone correct.',
+    description: 'Class: serialization of degenerate graphs. Clones cycles, nested Map/Set, TypedArray, Date, RegExp, trapped getters -> caught error or correct clone.',
     requires: ['objects.structuredClone'],
     run: function (ctx) {
       var cases = [];
@@ -152,7 +152,7 @@
   R.register({
     id: 'fuzz.robust.dom.tree', name: '⚠ Massive DOM (deep/wide tree)', category: CAT,
     destructive: true,
-    description: 'Classe : saturation DOM. Construit des arbres de plus en plus profonds et larges jusqu a la rupture du moteur de rendu. Peut figer l onglet.',
+    description: 'Class: DOM saturation. Builds ever deeper and wider trees until the rendering engine breaks. May freeze the tab.',
     requires: ['dom.createElement'],
     run: function (ctx) {
       var steps = [];
@@ -176,10 +176,10 @@
           host = null;
         }
       } catch (e) {
-        if (G.isAbort(e)) return { status: 'aborted', detail: 'arrete ; ' + steps.length + ' paliers', measurements: { steps: steps } };
+        if (G.isAbort(e)) return { status: 'aborted', detail: 'stopped; ' + steps.length + ' paliers', measurements: { steps: steps } };
         return { status: 'pass', detail: 'DOM a cede : ' + e.name + ' apres ' + steps.length + ' paliers', measurements: { steps: steps, error: e.name } };
       }
-      return { status: 'pass', detail: 'arbres DOM construits jusqu aux plafonds du test', measurements: { steps: steps } };
+      return { status: 'pass', detail: 'DOM trees built up to the test caps', measurements: { steps: steps } };
     }
   });
 
@@ -187,7 +187,7 @@
   R.register({
     id: 'fuzz.robust.innerhtml', name: '⚠ Giant / malformed innerHTML', category: CAT,
     destructive: true,
-    description: 'Classe : stress du parseur HTML. Injecte du balisage geant, profondement imbrique ou malforme dans un element detache. Peut saturer la memoire.',
+    description: 'Class: HTML parser stress. Injects giant, deeply nested or malformed markup into a detached element. May exhaust memory.',
     requires: ['dom.createElement'],
     run: function (ctx) {
       var out = [];
@@ -213,7 +213,7 @@
   R.register({
     id: 'fuzz.robust.canvas', name: '⚠ Giant canvas / absurd getImageData', category: CAT,
     destructive: true,
-    description: 'Classe : allocation graphique degeneree. Canvas de dimensions enormes, getImageData/putImageData sur rectangles absurdes. Peut planter par OOM GPU/CPU.',
+    description: 'Class: degenerate graphics allocation. Huge canvas dimensions, getImageData/putImageData on absurd rectangles. May crash via GPU/CPU OOM.',
     requires: ['canvas.context2d'],
     run: function (ctx) {
       var out = [];
@@ -245,7 +245,7 @@
         }
         out.push({ absurdRects: absurd }); ctx.metric('rects absurdes', absurd);
       } catch (e) { /* ignore */ }
-      return { status: 'pass', detail: 'allocations canvas degenerees documentees', measurements: { cases: out } };
+      return { status: 'pass', detail: 'degenerate canvas allocations documented', measurements: { cases: out } };
     }
   });
 
@@ -253,14 +253,14 @@
   R.register({
     id: 'fuzz.robust.webgl', name: '⚠ WebGL: resource exhaustion', category: CAT,
     destructive: true,
-    description: 'Classe : saturation GPU. Alloue des milliers de buffers/textures et de nombreux contextes pour provoquer une perte de contexte. Peut planter le pilote GPU.',
+    description: 'Class: GPU saturation. Allocates thousands of buffers/textures and many contexts to force a context loss. May crash the GPU driver.',
     requires: ['canvas.webgl'],
     run: function (ctx) {
       var r = { buffers: 0, textures: 0, contexts: 0, lost: false };
       try {
         var cv = document.createElement('canvas'); cv.width = 64; cv.height = 64;
         var gl = cv.getContext('webgl') || cv.getContext('experimental-webgl');
-        if (!gl) return { status: 'skip', detail: 'WebGL indisponible', measurements: null };
+        if (!gl) return { status: 'skip', detail: 'WebGL unavailable', measurements: null };
         ctx.info('allocation de buffers/textures en masse...'); ctx.flush();
         for (var i = 0; i < 200000; i++) {
           var b = gl.createBuffer(); if (b) r.buffers++;
@@ -273,7 +273,7 @@
         var ctxs = [];
         for (var c = 0; c < 64; c++) { var cc = document.createElement('canvas'); var gc = cc.getContext('webgl'); if (gc) { ctxs.push(gc); r.contexts++; } ctx.tick(); }
       } catch (e) {
-        if (G.isAbort(e)) return { status: 'aborted', detail: 'arrete', measurements: r };
+        if (G.isAbort(e)) return { status: 'aborted', detail: 'stopped', measurements: r };
         return { status: 'pass', detail: 'WebGL a cede : ' + e.name, measurements: { partial: r, error: e.name } };
       }
       return { status: 'pass', detail: 'ressources WebGL : ' + r.buffers + ' buffers, ' + r.textures + ' textures, ' + r.contexts + ' contextes, perte=' + r.lost, measurements: r };
@@ -283,7 +283,7 @@
   // 9) Recursion via coercition / getters / Proxy (profondeur de pile indirecte).
   R.register({
     id: 'fuzz.robust.recursion.indirect', name: 'Indirect recursion (coercion/Proxy)', category: CAT,
-    description: 'Classe : debordement de pile indirect. Recursion via toString/valueOf, getters chaines et Proxy -> RangeError rattrapee attendue.',
+    description: 'Class: indirect stack overflow. Recursion via toString/valueOf, chained getters and Proxy -> caught RangeError expected.',
     requires: [],
     run: function (ctx) {
       var out = {};
@@ -308,14 +308,14 @@
         } catch (e) { out.proxy = e.name; }
       }
       ctx.metric('recursion indirecte', out);
-      return { status: 'pass', detail: 'debordements indirects documentes', measurements: out };
+      return { status: 'pass', detail: 'indirect overflows documented', measurements: out };
     }
   });
 
   // 10) JSON.parse reviver hostile (mutation du graphe pendant la reconstruction).
   R.register({
     id: 'fuzz.robust.json.reviver', name: 'JSON.parse hostile reviver', category: CAT,
-    description: 'Classe : rappel hostile pendant reconstruction. Reviver qui mute/supprime/ajoute et qui leve -> le moteur doit rester coherent.',
+    description: 'Class: hostile callback during rebuild. A reviver that mutates/deletes/adds and throws -> the engine must stay consistent.',
     run: function (ctx) {
       var out = {};
       var payload = '{"a":1,"b":[1,2,3],"c":{"d":4,"e":{"f":5}}}';
@@ -328,7 +328,7 @@
       try { var n = 0; JSON.parse(payload, function (k, v) { n++; ctx.tick(); return v; }); out.calls = n; }
       catch (e) { out.calls = e.name; }
       ctx.metric('reviver hostile', out);
-      return { status: 'pass', detail: 'revivers hostiles documentes', measurements: out };
+      return { status: 'pass', detail: 'hostile revivers documented', measurements: out };
     }
   });
 
@@ -336,7 +336,7 @@
   R.register({
     id: 'fuzz.robust.workers', name: '⚠ Mass Workers', category: CAT,
     destructive: true,
-    description: 'Classe : saturation de threads. Cree de nombreux Web Workers (via Blob) et leur envoie des messages. Peut epuiser les ressources du navigateur.',
+    description: 'Class: thread saturation. Creates many Web Workers (via Blob) and posts messages to them. May exhaust browser resources.',
     requires: ['platform.Worker'],
     run: function (ctx) {
       var made = 0, workers = [];
@@ -352,7 +352,7 @@
       } catch (e) {
         for (var k = 0; k < workers.length; k++) { try { workers[k].terminate(); } catch (x) {} }
         if (G.isAbort(e)) return { status: 'aborted', detail: made + ' workers crees', measurements: { workers: made } };
-        return { status: 'pass', detail: 'limite workers atteinte a ' + made + ' (' + e.name + ')', measurements: { maxWorkers: made, error: e.name } };
+        return { status: 'pass', detail: 'worker limit reached at ' + made + ' (' + e.name + ')', measurements: { maxWorkers: made, error: e.name } };
       }
       for (var m = 0; m < workers.length; m++) { try { workers[m].terminate(); } catch (x) {} }
       return { status: 'pass', detail: made + ' workers crees sans echec (plafond du test)', measurements: { workers: made } };
@@ -362,7 +362,7 @@
   // 12) Tableaux a trous extremes / length poisoning (acces, tri, iteration).
   R.register({
     id: 'fuzz.robust.sparse', name: 'Extreme sparse arrays', category: CAT,
-    description: 'Classe : structures creuses degenerees. length enorme, trous massifs, tri/indexOf/iteration -> doit rester borne et coherent.',
+    description: 'Class: degenerate sparse structures. Huge length, massive holes, sort/indexOf/iteration -> must stay bounded and consistent.',
     run: function (ctx) {
       var out = {};
       try { var a = []; a[4294967294] = 'x'; out.maxIndex = { length: a.length, val: a[4294967294] }; }
@@ -376,7 +376,7 @@
       try { var p = { length: 1e9 }; out.arrayProtoCall = Array.prototype.indexOf.call(p, 'z'); }
       catch (e) { out.arrayProtoCall = e.name; }
       ctx.metric('tableaux creux', out);
-      return { status: 'pass', detail: 'structures creuses degenerees documentees', measurements: out };
+      return { status: 'pass', detail: 'degenerate sparse structures documented', measurements: out };
     }
   });
 

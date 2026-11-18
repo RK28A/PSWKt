@@ -16,10 +16,10 @@
   // 1) Tempete de noeuds WebAudio.
   R.register({
     id: 'fuzz.aggr3.audio.nodes', name: '⚠ WebAudio node storm', category: CAT, destructive: true,
-    description: 'Cree des milliers de noeuds audio (et contextes) pour saturer le moteur audio.',
+    description: 'Creates thousands of audio nodes (and contexts) to saturate the audio engine.',
     run: function (ctx) {
       var AC = global.AudioContext || global.webkitAudioContext;
-      if (!AC) return { status: 'skip', detail: 'AudioContext absent' };
+      if (!AC) return { status: 'skip', detail: 'AudioContext unavailable' };
       var ctxs = [], n = 0;
       try {
         var ac = new AC(); ctxs.push(ac);
@@ -44,7 +44,7 @@
   // 2) Remplissage de localStorage (quota). Nettoye a la fin.
   R.register({
     id: 'fuzz.aggr3.localstorage.fill', name: '⚠ localStorage saturation', category: CAT, destructive: true,
-    description: 'Ecrit dans localStorage jusqu au quota (QuotaExceededError). Nettoye ses cles apres.',
+    description: 'Writes to localStorage up to the quota (QuotaExceededError). Cleans up its keys afterwards.',
     requires: ['platform.localStorage'],
     run: function (ctx) {
       var chunk = new Array(1025).join('X'); // ~1 Ko
@@ -58,7 +58,7 @@
       } catch (e) {
         if (G.isAbort(e)) { cleanup(); return { status: 'aborted', detail: n + ' cles', measurements: { cles: n } }; }
         cleanup();
-        return { status: 'pass', detail: 'quota atteint a ~' + Math.round(written / 1024) + ' Ko (' + e.name + ')', measurements: { cles: n, ko: Math.round(written / 1024), error: e.name } };
+        return { status: 'pass', detail: 'quota reached at ~' + Math.round(written / 1024) + ' Ko (' + e.name + ')', measurements: { cles: n, ko: Math.round(written / 1024), error: e.name } };
       }
       cleanup();
       return { status: 'pass', detail: n + ' cles ecrites', measurements: { cles: n } };
@@ -89,7 +89,7 @@
   // 4) SVG geant (via innerHTML).
   R.register({
     id: 'fuzz.aggr3.svg.huge', name: '⚠ Giant SVG', category: CAT, destructive: true,
-    description: 'Injecte un SVG avec un chemin de centaines de milliers de commandes dans un element detache.',
+    description: 'Injects an SVG with a path of hundreds of thousands of commands into a detached element.',
     requires: ['dom.createElement'],
     run: function (ctx) {
       var out = [];
@@ -106,14 +106,14 @@
         if (G.isAbort(e)) return { status: 'aborted', detail: out.length + ' paliers', measurements: { steps: out } };
         return { status: 'pass', detail: 'SVG a cede (' + e.name + ')', measurements: { steps: out, error: e.name } };
       }
-      return { status: 'pass', detail: 'SVG construits jusqu au plafond', measurements: { steps: out } };
+      return { status: 'pass', detail: 'SVGs built up to the cap', measurements: { steps: out } };
     }
   });
 
   // 5) Secousses de mise en page (layout thrashing). Attache au document.
   R.register({
     id: 'fuzz.aggr3.reflow.thrash', name: '⚠ Layout thrashing', category: CAT, destructive: true,
-    description: 'Alterne ecriture de style et lecture forcee de geometrie pour marteler le moteur de rendu.',
+    description: 'Alternates style writes and forced geometry reads to hammer the rendering engine.',
     requires: ['dom.createElement'],
     run: function (ctx) {
       var host = document.createElement('div');
@@ -143,10 +143,10 @@
   // 6) Tempete de getComputedStyle.
   R.register({
     id: 'fuzz.aggr3.computedstyle', name: '⚠ getComputedStyle storm', category: CAT, destructive: true,
-    description: 'Appelle getComputedStyle et lit des proprietes en boucle serree (recalculs de style).',
+    description: 'Calls getComputedStyle and reads properties in a tight loop (style recalcs).',
     requires: ['dom.createElement'],
     run: function (ctx) {
-      if (!global.getComputedStyle) return { status: 'skip', detail: 'getComputedStyle absent' };
+      if (!global.getComputedStyle) return { status: 'skip', detail: 'getComputedStyle unavailable' };
       var host = document.createElement('div');
       for (var k = 0; k < 200; k++) host.appendChild(document.createElement('span'));
       (document.body || document.documentElement).appendChild(host);
@@ -170,42 +170,42 @@
   // 7) Chaine de prototypes tres profonde.
   R.register({
     id: 'fuzz.aggr3.proto.deep', name: '⚠ Deep prototype chain', category: CAT, destructive: true,
-    description: 'Construit une chaine de prototypes de grande profondeur et resout une propriete au bout.',
+    description: 'Builds a very deep prototype chain and resolves a property at the end.',
     run: function (ctx) {
       var base = { found: 42 }, cur = base, depth = 0;
       try {
         while (depth < 5000000) { cur = Object.create(cur); depth++; if ((depth & 16383) === 0) { ctx.tick(); ctx.metric('proto', { depth: depth, tasMo: heapMB() }); } }
       } catch (e) {
-        if (G.isAbort(e)) return { status: 'aborted', detail: 'profondeur ' + depth, measurements: { depth: depth } };
+        if (G.isAbort(e)) return { status: 'aborted', detail: 'depth ' + depth, measurements: { depth: depth } };
         return { status: 'pass', detail: 'cede a ' + depth + ' (' + e.name + ')', measurements: { depth: depth, error: e.name } };
       }
       var val; try { val = cur.found; } catch (e2) { val = 'throw:' + e2.name; }
-      return { status: 'pass', detail: 'profondeur ' + depth + ', resolution=' + val, measurements: { depth: depth, resolved: val } };
+      return { status: 'pass', detail: 'depth ' + depth + ', resolution=' + val, measurements: { depth: depth, resolved: val } };
     }
   });
 
   // 8) Chaine de Proxy imbriques.
   R.register({
     id: 'fuzz.aggr3.proxy.deep', name: '⚠ Deep nested Proxy', category: CAT, destructive: true,
-    description: 'Empile des milliers de Proxy et traverse la chaine (chaque acces descend tous les niveaux).',
+    description: 'Stacks thousands of Proxies and traverses the chain (each access descends every level).',
     requires: ['objects.Proxy'],
     run: function (ctx) {
       var target = { v: 1 }, depth = 0;
       try {
         while (depth < 200000) { target = new Proxy(target, { get: function (t, k) { return t[k]; } }); depth++; if ((depth & 1023) === 0) { ctx.tick(); if ((depth & 8191) === 0) { void target.v; ctx.metric('proxy', { depth: depth }); } } }
       } catch (e) {
-        if (G.isAbort(e)) return { status: 'aborted', detail: 'profondeur ' + depth, measurements: { depth: depth } };
+        if (G.isAbort(e)) return { status: 'aborted', detail: 'depth ' + depth, measurements: { depth: depth } };
         return { status: 'pass', detail: 'cede a ' + depth + ' (' + e.name + ')', measurements: { depth: depth, error: e.name } };
       }
       var val; try { val = target.v; } catch (e2) { val = 'throw:' + e2.name; }
-      return { status: 'pass', detail: 'profondeur ' + depth + ', acces=' + val, measurements: { depth: depth, access: val } };
+      return { status: 'pass', detail: 'depth ' + depth + ', acces=' + val, measurements: { depth: depth, access: val } };
     }
   });
 
   // 9) Tri d'un tres grand tableau avec comparateur.
   R.register({
     id: 'fuzz.aggr3.sort.huge', name: '⚠ Giant array sort', category: CAT, destructive: true,
-    description: 'Cree un grand tableau aleatoire et le trie avec un comparateur (CPU + memoire).',
+    description: 'Creates a large random array and sorts it with a comparator (CPU + memory).',
     run: function (ctx) {
       var size = 20000000, a = null, n = 0;
       try {
@@ -225,7 +225,7 @@
   // 10) Encodage/decodage de texte geant.
   R.register({
     id: 'fuzz.aggr3.textcodec', name: '⚠ Giant TextEncoder/Decoder', category: CAT, destructive: true,
-    description: 'Encode puis decode des chaines de plus en plus grandes jusqu a saturation.',
+    description: 'Encodes then decodes ever-larger strings until saturation.',
     requires: ['platform.TextEncoder'],
     run: function (ctx) {
       var enc = new TextEncoder(), dec = new TextDecoder(), last = 0;
@@ -239,16 +239,16 @@
         }
       } catch (e) {
         if (G.isAbort(e)) return { status: 'aborted', detail: '~' + mb(last) + ' Mo', measurements: { chars: last } };
-        return { status: 'pass', detail: 'limite a ~' + mb(last) + ' Mo (' + e.name + ')', measurements: { maxChars: last, error: e.name } };
+        return { status: 'pass', detail: 'limited to ~' + mb(last) + ' Mo (' + e.name + ')', measurements: { maxChars: last, error: e.name } };
       }
-      return { status: 'pass', detail: 'encodage/decodage jusqu au plafond', measurements: { maxChars: last } };
+      return { status: 'pass', detail: 'encoding/decoding up to the cap', measurements: { maxChars: last } };
     }
   });
 
   // 11) JSON.stringify d'une structure geante.
   R.register({
     id: 'fuzz.aggr3.json.huge', name: '⚠ Giant JSON.stringify', category: CAT, destructive: true,
-    description: 'Serialise un tableau de plus en plus grand jusqu a saturation memoire.',
+    description: 'Serializes an ever-larger array until memory saturation.',
     run: function (ctx) {
       var last = 0;
       try {
@@ -260,16 +260,16 @@
         }
       } catch (e) {
         if (G.isAbort(e)) return { status: 'aborted', detail: '~' + mb(last) + ' Mo JSON', measurements: { chars: last } };
-        return { status: 'pass', detail: 'limite a ~' + mb(last) + ' Mo (' + e.name + ')', measurements: { maxChars: last, error: e.name } };
+        return { status: 'pass', detail: 'limited to ~' + mb(last) + ' Mo (' + e.name + ')', measurements: { maxChars: last, error: e.name } };
       }
-      return { status: 'pass', detail: 'serialisation jusqu au plafond', measurements: { maxChars: last } };
+      return { status: 'pass', detail: 'serialization up to the cap', measurements: { maxChars: last } };
     }
   });
 
   // 12) Compilation de fonctions en masse (new Function).
   R.register({
     id: 'fuzz.aggr3.function.create', name: '⚠ Mass function compilation', category: CAT, destructive: true,
-    description: 'Compile des millions de fonctions distinctes (new Function) pour marteler le compilateur/JIT.',
+    description: 'Compiles millions of distinct functions (new Function) to hammer the compiler/JIT.',
     run: function (ctx) {
       var n = 0, sink = 0;
       try {
@@ -285,7 +285,7 @@
   // 13) Explosion megamorphique (beaucoup de formes d'objets).
   R.register({
     id: 'fuzz.aggr3.megamorphic', name: '⚠ Megamorphic explosion (shapes)', category: CAT, destructive: true,
-    description: 'Cree des millions de formes d objets distinctes pour saturer les caches en ligne / le JIT.',
+    description: 'Creates millions of distinct object shapes to saturate inline caches / the JIT.',
     run: function (ctx) {
       var hold = [], n = 0, sink = 0;
       try {
@@ -305,10 +305,10 @@
   // 14) crypto.getRandomValues en masse.
   R.register({
     id: 'fuzz.aggr3.crypto.random', name: '⚠ Mass getRandomValues', category: CAT, destructive: true,
-    description: 'Remplit des buffers aleatoires en boucle serree (CPU + entropie).',
+    description: 'Fills random buffers in a tight loop (CPU + entropy).',
     requires: ['platform.crypto'],
     run: function (ctx) {
-      if (!global.crypto || !crypto.getRandomValues) return { status: 'skip', detail: 'getRandomValues absent' };
+      if (!global.crypto || !crypto.getRandomValues) return { status: 'skip', detail: 'getRandomValues unavailable' };
       var buf = new Uint8Array(65536), n = 0, bytes = 0;
       try {
         for (var i = 0; i < 2000000; i++) { crypto.getRandomValues(buf); n++; bytes += 65536; if ((i & 1023) === 0) { ctx.tick(); ctx.metric('random', { appels: n, mo: mb(bytes) }); } }
@@ -323,7 +323,7 @@
   // 15) Un seul Blob geant.
   R.register({
     id: 'fuzz.aggr3.blob.huge', name: '⚠ Giant Blob', category: CAT, destructive: true,
-    description: 'Construit un unique Blob de plus en plus grand jusqu a saturation memoire.',
+    description: 'Builds a single ever-growing Blob until memory saturation.',
     requires: ['platform.Blob'],
     run: function (ctx) {
       var last = 0;
@@ -336,9 +336,9 @@
         }
       } catch (e) {
         if (G.isAbort(e)) return { status: 'aborted', detail: '~' + mb(last) + ' Mo', measurements: { bytes: last } };
-        return { status: 'pass', detail: 'limite a ~' + mb(last) + ' Mo (' + e.name + ')', measurements: { maxBytes: last, error: e.name } };
+        return { status: 'pass', detail: 'limited to ~' + mb(last) + ' Mo (' + e.name + ')', measurements: { maxBytes: last, error: e.name } };
       }
-      return { status: 'pass', detail: 'Blob jusqu au plafond (~' + mb(last) + ' Mo)', measurements: { maxBytes: last } };
+      return { status: 'pass', detail: 'Blob up to the cap (~' + mb(last) + ' Mo)', measurements: { maxBytes: last } };
     }
   });
 

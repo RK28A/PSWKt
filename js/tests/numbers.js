@@ -14,7 +14,7 @@
     id: 'num.float.precision',
     name: 'IEEE-754 precision (0.1 + 0.2)',
     category: 'numbers',
-    description: 'Documente l imprecision binaire attendue et son contournement.',
+    description: 'Documents the expected binary imprecision and its workaround.',
     requires: [],
     run: function (ctx) {
       var sum = 0.1 + 0.2;
@@ -37,7 +37,7 @@
     id: 'num.safe.integers',
     name: 'Safe integers (MAX_SAFE_INTEGER)',
     category: 'numbers',
-    description: 'Montre la perte de precision au-dela de 2^53-1.',
+    description: 'Shows the precision loss beyond 2^53-1.',
     requires: [],
     run: function (ctx) {
       var max = Number.MAX_SAFE_INTEGER;
@@ -89,7 +89,7 @@
     id: 'num.math',
     name: 'Fonctions Math',
     category: 'numbers',
-    description: 'Verifie sqrt, cbrt, hypot, fround, clz32, sign.',
+    description: 'Checks sqrt, cbrt, hypot, fround, clz32, sign.',
     requires: [],
     run: function (ctx) {
       var checks = {
@@ -107,7 +107,7 @@
       for (var k in checks) { if (checks[k] === false) fail = true; }
       return {
         status: fail ? 'fail' : 'pass',
-        detail: 'sqrt/pow ok, extensions : voir mesures',
+        detail: 'sqrt/pow ok, extensions: see measurements',
         measurements: checks
       };
     }
@@ -118,7 +118,7 @@
     id: 'num.bitwise',
     name: 'Bitwise operations (32-bit)',
     category: 'numbers',
-    description: 'Verifie le comportement 32 bits signe des operateurs bit a bit.',
+    description: 'Checks the signed 32-bit behaviour of bitwise operators.',
     requires: [],
     run: function (ctx) {
       var shift = 1 << 31;           // attendu : -2147483648 (int32 signe)
@@ -141,7 +141,7 @@
     id: 'num.parsing',
     name: 'Number parsing',
     category: 'numbers',
-    description: 'Documente parseInt/parseFloat/Number sur des entrees ambigues.',
+    description: 'Documents parseInt/parseFloat/Number on ambiguous inputs.',
     requires: [],
     run: function (ctx) {
       var cases = {
@@ -159,7 +159,7 @@
         cases['Number("")'] === 0 && isNaN(cases['parseInt("")']));
       return {
         status: ok ? 'pass' : 'fail',
-        detail: 'cas limites conformes a ECMAScript : ' + ok,
+        detail: 'edge cases conform to ECMAScript: ' + ok,
         measurements: cases
       };
     }

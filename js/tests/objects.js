@@ -15,7 +15,7 @@
     id: 'obj.freeze',
     name: 'Object.freeze et immuabilite',
     category: 'objects',
-    description: 'Verifie qu un objet gele reste inchange (la mutation leve en strict, est ignoree en non-strict).',
+    description: 'Checks that a frozen object stays unchanged (mutation throws in strict, is ignored in non-strict).',
     requires: ['objects.ObjectFreeze'],
     run: function (ctx) {
       var o = { a: 1, b: 2 };
@@ -44,7 +44,7 @@
     id: 'obj.mapset',
     name: 'Map / Set',
     category: 'objects',
-    description: 'Verifie l unicite, l ordre d insertion et les cles non primitives.',
+    description: 'Checks uniqueness, insertion order and non-primitive keys.',
     requires: ['objects.Map', 'objects.Set'],
     run: function (ctx) {
       var m = new Map();
@@ -69,7 +69,7 @@
     id: 'obj.proxy',
     name: 'Proxy et interception',
     category: 'objects',
-    description: 'Compte les lectures interceptees par un piege get.',
+    description: 'Counts reads intercepted by a get trap.',
     requires: ['objects.Proxy'],
     run: function (ctx) {
       var reads = 0;
@@ -86,7 +86,7 @@
       var ok = (a === 7 && b === 7 && c === undefined && reads === 3);
       return {
         status: ok ? 'pass' : 'fail',
-        detail: 'lectures interceptees=' + reads + ' (attendu 3), value=' + a,
+        detail: 'intercepted reads=' + reads + ' (attendu 3), value=' + a,
         measurements: { reads: reads, value: a, missing: c }
       };
     }
@@ -97,7 +97,7 @@
     id: 'obj.json',
     name: 'JSON round-trip',
     category: 'objects',
-    description: 'Serialise/deserialise des structures imbriquees et verifie la fidelite.',
+    description: 'Serializes/deserializes nested structures and checks fidelity.',
     requires: [],
     run: function (ctx) {
       var original = {
@@ -125,7 +125,7 @@
     id: 'obj.structuredclone',
     name: 'structuredClone',
     category: 'objects',
-    description: 'Clone profond ; verifie l independance et la copie des types riches.',
+    description: 'Deep clone; checks independence and copying of rich types.',
     requires: ['objects.structuredClone'],
     run: function (ctx) {
       var src = { arr: new Uint8Array([1, 2, 3]), map: new Map([['a', 1]]), nested: { x: [1, 2] } };
@@ -149,7 +149,7 @@
     id: 'obj.alloc.many',
     name: 'Creation massive d objets',
     category: 'objects',
-    description: 'Cree un grand nombre de petits objets sous budget et mesure le debit.',
+    description: 'Creates a large number of small objects under budget and measures the rate.',
     requires: [],
     run: function (ctx) {
       // Estimation prudente : ~64 octets par petit objet (approximation documentee).

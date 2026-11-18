@@ -64,7 +64,7 @@
     id: 'dom.selectors',
     name: 'Selecteurs CSS (querySelector)',
     category: 'dom',
-    description: 'Construit un arbre et verifie des selecteurs varies.',
+    description: 'Builds a tree and checks various selectors.',
     requires: ['dom.querySelector'],
     run: function (ctx) {
       var host = detachedHost();
@@ -91,7 +91,7 @@
     id: 'dom.classlist.dataset',
     name: 'classList & dataset',
     category: 'dom',
-    description: 'Verifie add/remove/toggle/contains et l acces dataset.',
+    description: 'Checks add/remove/toggle/contains and dataset access.',
     requires: ['dom.classList', 'dom.dataset'],
     run: function (ctx) {
       var e = document.createElement('div');
@@ -117,7 +117,7 @@
     id: 'dom.events',
     name: 'Evenements (dispatch + listener)',
     category: 'dom',
-    description: 'Enregistre un listener, dispatche un evenement, verifie la propagation.',
+    description: 'Registers a listener, dispatches an event, checks propagation.',
     requires: ['dom.addEventListener'],
     run: function (ctx) {
       var parent = document.createElement('div');
@@ -150,7 +150,7 @@
     id: 'dom.mutationobserver',
     name: 'MutationObserver',
     category: 'dom',
-    description: 'Observe un conteneur detache et confirme la notification d un ajout.',
+    description: 'Observes a detached container and confirms notification of an addition.',
     requires: ['dom.MutationObserver'],
     run: function (ctx) {
       var host = detachedHost();

@@ -20,7 +20,7 @@
     id: 'canvas.fill.readback',
     name: '2D fill and pixel readback',
     category: 'canvas',
-    description: 'Remplit un carre rouge opaque et verifie le pixel via getImageData.',
+    description: 'Fills an opaque red square and checks the pixel via getImageData.',
     requires: ['canvas.context2d'],
     run: function (ctx) {
       var c = makeCanvas(32, 32);
@@ -43,7 +43,7 @@
     id: 'canvas.alpha.blend',
     name: 'Composition alpha source-over',
     category: 'canvas',
-    description: 'Superpose un bleu semi-transparent sur un fond rouge et verifie le melange.',
+    description: 'Overlays a semi-transparent blue on a red background and checks the blend.',
     requires: ['canvas.context2d'],
     run: function (ctx) {
       var c = makeCanvas(8, 8);
@@ -106,7 +106,7 @@
     id: 'canvas.fillrate',
     name: '2D fill throughput',
     category: 'canvas',
-    description: 'Mesure le temps de N remplissages sur un canvas 256x256.',
+    description: 'Measures the time of N fills on a 256x256 canvas.',
     requires: ['canvas.context2d'],
     run: function (ctx) {
       var c = makeCanvas(256, 256);
@@ -133,7 +133,7 @@
     id: 'canvas.webgl.probe',
     name: 'WebGL probe',
     category: 'canvas',
-    description: 'Cree un contexte WebGL si possible et releve VENDOR/RENDERER/VERSION.',
+    description: 'Creates a WebGL context if possible and reads VENDOR/RENDERER/VERSION.',
     requires: [], // volontairement sans prerequis : on veut documenter l'absence aussi
     run: function (ctx) {
       var c = makeCanvas(1, 1);
@@ -141,7 +141,7 @@
       try { gl = c.getContext('webgl') || c.getContext('experimental-webgl'); } catch (e) {}
       ctx.tick();
       if (!gl) {
-        return { status: 'skip', detail: 'WebGL indisponible dans ce navigateur', measurements: { webgl: false } };
+        return { status: 'skip', detail: 'WebGL unavailable in this browser', measurements: { webgl: false } };
       }
       var info = {
         webgl: true,

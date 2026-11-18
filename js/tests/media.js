@@ -58,7 +58,7 @@
               ok = global.MediaSource.isTypeSupported(mime);
             }
           } catch (e) { ok = false; }
-          if (!available) return { status: 'skip', detail: 'MediaSource.isTypeSupported absent', measurements: { mime: mime } };
+          if (!available) return { status: 'skip', detail: 'MediaSource.isTypeSupported unavailable', measurements: { mime: mime } };
           return { status: ok ? 'pass' : 'skip', detail: ok ? 'supporte (MSE)' : 'non supporte (MSE)', measurements: { mime: mime, supported: ok } };
         }
       });

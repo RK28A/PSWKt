@@ -66,7 +66,7 @@
         id: prefix + '.' + idSafe(path),
         name: label || path,
         category: category,
-        description: 'Presence : ' + path,
+        description: 'Presence: ' + path,
         requires: [],
         quiet: true,
         run: function () {
@@ -166,7 +166,7 @@
         quiet: true,
         run: function () {
           var c = ctx2d();
-          if (!c) return { status: 'skip', detail: 'contexte 2D indisponible', measurements: { member: member, present: false } };
+          if (!c) return { status: 'skip', detail: '2D context unavailable', measurements: { member: member, present: false } };
           var present = (member in c) || (typeof c[member] !== 'undefined');
           return {
             status: present ? 'pass' : 'skip',
@@ -188,7 +188,7 @@
         quiet: true,
         run: function () {
           var g = gl();
-          if (!g) return { status: 'skip', detail: 'WebGL indisponible', measurements: { ext: extName, present: false } };
+          if (!g) return { status: 'skip', detail: 'WebGL unavailable', measurements: { ext: extName, present: false } };
           var listed = glExtensions().indexOf(extName) !== -1;
           var obj = null;
           try { obj = g.getExtension(extName); } catch (e) { obj = null; }

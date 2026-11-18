@@ -55,7 +55,7 @@
         quiet: true,
         run: function () {
           var g = F.gl();
-          if (!g) return { status: 'skip', detail: 'WebGL indisponible', measurements: { param: paramName } };
+          if (!g) return { status: 'skip', detail: 'WebGL unavailable', measurements: { param: paramName } };
           var val = null;
           try { val = g.getParameter(g[paramName]); } catch (e) { val = null; }
           if (val && val.length !== undefined) val = Array.prototype.slice.call(val);

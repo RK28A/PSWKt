@@ -28,11 +28,11 @@
     id: 'input.gamepads.live',
     name: 'Connected game-pads (getGamepads)',
     category: 'input',
-    description: 'Enumere les manettes actuellement vues par le navigateur.',
+    description: 'Enumerates the game-pads currently seen by the browser.',
     requires: [],
     run: function (ctx) {
       if (!(global.navigator && typeof global.navigator.getGamepads === 'function')) {
-        return { status: 'skip', detail: 'navigator.getGamepads absent', measurements: null };
+        return { status: 'skip', detail: 'navigator.getGamepads unavailable', measurements: null };
       }
       var pads = [];
       try {
@@ -42,7 +42,7 @@
           if (p) pads.push({ index: p.index, id: p.id, buttons: p.buttons.length, axes: p.axes.length, mapping: p.mapping });
         }
       } catch (e) {
-        return { status: 'skip', detail: 'lecture impossible : ' + e.message, measurements: null };
+        return { status: 'skip', detail: 'read failed: ' + e.message, measurements: null };
       }
       ctx.info('manettes detectees : ' + pads.length);
       for (var k = 0; k < pads.length; k++) ctx.info('manette ' + pads[k].index + ' : ' + pads[k].id + ' (' + pads[k].buttons + ' boutons, ' + pads[k].axes + ' axes)');

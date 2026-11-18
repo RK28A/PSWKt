@@ -16,7 +16,7 @@
     id: 'plat.worker.roundtrip',
     name: 'Web Worker (round-trip)',
     category: 'platform',
-    description: 'Cree un worker depuis un Blob, lui envoie un nombre, recoit le double.',
+    description: 'Creates a worker from a Blob, sends it a number, receives the double.',
     requires: ['platform.Worker', 'platform.Blob', 'platform.URLcreateObjectURL'],
     run: function (ctx) {
       var src = 'self.onmessage=function(e){var n=e.data;var s=0;for(var i=0;i<n;i++){s+=i;}self.postMessage({doubled:n*2,sum:s});};';
@@ -55,7 +55,7 @@
     id: 'plat.wasm.add',
     name: 'WebAssembly (module add)',
     category: 'platform',
-    description: 'Instancie un module WASM minimal exportant add(i32,i32) et verifie 7+35=42.',
+    description: 'Instantiates a minimal WASM module exporting add(i32,i32) and checks 7+35=42.',
     requires: ['platform.WebAssembly'],
     run: function (ctx) {
       // Module : (func (export "add") (param i32 i32) (result i32) local.get 0 local.get 1 i32.add)
@@ -84,7 +84,7 @@
     id: 'plat.crypto.random',
     name: 'crypto.getRandomValues',
     category: 'platform',
-    description: 'Remplit un tableau de 1024 octets aleatoires et verifie la distribution.',
+    description: 'Fills a 1024-byte random array and checks the distribution.',
     requires: ['platform.crypto'],
     run: function (ctx) {
       var buf = new Uint8Array(1024);
@@ -155,7 +155,7 @@
       }
       return {
         status: ok ? 'pass' : 'fail',
-        detail: 'aller-retour=' + ok + ', cle nettoyee',
+        detail: 'round-trip=' + ok + ', cle nettoyee',
         measurements: { roundTrip: ok, bytes: payload.length }
       };
     }
@@ -166,7 +166,7 @@
     id: 'plat.intl',
     name: 'Intl (numbers, dates, sorting)',
     category: 'platform',
-    description: 'Formate un nombre et une date, trie avec Collator.',
+    description: 'Formats a number and a date, sorts with Collator.',
     requires: ['lang.Intl'],
     run: function (ctx) {
       var out = {};
@@ -185,7 +185,7 @@
           ctx.info('tri Collator fr-FR : ' + out.sorted.join(', '));
         }
       } catch (e) {
-        return { status: 'fail', detail: 'erreur Intl : ' + e.message, measurements: out };
+        return { status: 'fail', detail: 'Intl error: ' + e.message, measurements: out };
       }
       var hasAny = !!(out.number || out.date || out.sorted);
       return {

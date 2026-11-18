@@ -19,7 +19,7 @@
   // 1) new ArrayBuffer(n) : tailles invalides/demesurees -> RangeError attendue.
   F.resilience({
     id: 'fuzz.ta.arraybuffer.size', name: 'ArrayBuffer(size) invalide', category: CAT,
-    description: 'Tailles negatives/fractionnaires/geantes : RangeError rattrapee, jamais de plantage.',
+    description: 'Negative/fractional/giant sizes: caught RangeError, never a crash.',
     requires: ['typedArrays.ArrayBuffer'],
     build: function (ctx) {
       var sizes = [-1, -0, 0, 0.5, 2.5, NaN, Infinity, -Infinity,
@@ -44,7 +44,7 @@
   // 2) TypedArray : acces hors limites en lecture/ecriture (doit etre inoffensif).
   F.resilience({
     id: 'fuzz.ta.oob.access', name: 'TypedArray · out-of-bounds access', category: CAT,
-    description: 'Lecture/ecriture a des index absurdes : undefined ou no-op, jamais de corruption ni plantage.',
+    description: 'Read/write at absurd indices: undefined or no-op, never corruption or crash.',
     requires: ['typedArrays.Uint8Array'],
     build: function (ctx) {
       var idx = F.nastyNumbers();
@@ -82,7 +82,7 @@
   // 3) TypedArray.prototype.* : subarray/set/slice/fill avec offsets limites.
   F.resilience({
     id: 'fuzz.ta.methods', name: 'TypedArray.* · boundary offsets', category: CAT,
-    description: 'subarray/slice/fill/copyWithin/set avec offsets absurdes : clamp ou RangeError.',
+    description: 'subarray/slice/fill/copyWithin/set with absurd offsets: clamp or RangeError.',
     requires: ['typedArrays.Int32Array'],
     build: function (ctx) {
       var args = F.nastyNumbers();
@@ -108,7 +108,7 @@
   // 4) DataView : get/set hors limites et offsets absurdes -> RangeError attendue.
   F.resilience({
     id: 'fuzz.ta.dataview', name: 'DataView · out-of-bounds offsets', category: CAT,
-    description: 'getInt32/setFloat64 a des offsets absurdes sur un buffer de 8 octets : RangeError rattrapee.',
+    description: 'getInt32/setFloat64 at absurd offsets on an 8-byte buffer: caught RangeError.',
     requires: ['typedArrays.DataView'],
     build: function (ctx) {
       var offs = F.nastyNumbers();
@@ -136,7 +136,7 @@
   // 5) DataView construit avec byteOffset/byteLength incoherents -> RangeError.
   F.resilience({
     id: 'fuzz.ta.dataview.ctor', name: 'DataView(buffer, offset, len) incoherent', category: CAT,
-    description: 'Construction avec offset/longueur qui debordent le buffer : RangeError rattrapee attendue.',
+    description: 'Construction with offset/length overflowing the buffer: caught RangeError expected.',
     requires: ['typedArrays.DataView'],
     build: function (ctx) {
       var buf = new ArrayBuffer(16);
@@ -156,7 +156,7 @@
   // 6) Invariant d integrite : une ecriture TypedArray hors borne ne change RIEN aux cases valides.
   F.invariant({
     id: 'fuzz.ta.integrity', name: 'TypedArray · out-of-bounds integrity (invariant)', category: CAT,
-    description: 'Ecrire a un index hors [0,len) ne doit jamais modifier une case valide (pas de debordement).',
+    description: 'Writing at an index outside [0,len) must never modify a valid slot (no overflow).',
     requires: ['typedArrays.Float64Array'],
     build: function (ctx) {
       var rng = F.rngFrom(F.hashSeed('ta-integrity'));
@@ -184,7 +184,7 @@
   // 7) Uint8ClampedArray : clamp correct des valeurs limites (invariant).
   F.invariant({
     id: 'fuzz.ta.clamped', name: 'Uint8ClampedArray · clamp (invariant)', category: CAT,
-    description: 'Les valeurs hors [0,255] doivent etre bornees a 0 ou 255 (arrondi au plus proche).',
+    description: 'Values outside [0,255] must be clamped to 0 or 255 (nearest rounding).',
     requires: ['typedArrays.Uint8ClampedArray'],
     build: function (ctx) {
       var vals = [-1, -0.6, 0, 0.4, 0.5, 0.6, 127.5, 128.5, 254.5, 255, 255.4, 256, 1000, NaN, Infinity, -Infinity, 1e100];

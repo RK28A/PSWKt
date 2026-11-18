@@ -16,7 +16,7 @@
   // 1) Deluge de promesses / microtaches.
   R.register({
     id: 'fuzz.aggr2.promise.flood', name: '⚠ Promise flood', category: CAT, destructive: true,
-    description: 'Cree des millions de promesses resolues et chaine des microtaches jusqu a l echeance ou l OOM.',
+    description: 'Creates millions of resolved promises and chains microtasks until the deadline or OOM.',
     requires: ['timing.Promise'],
     run: function (ctx) {
       var made = 0; var target = 20000000;
@@ -44,7 +44,7 @@
   // 2) Croissance Map/Set jusqu'a saturation.
   R.register({
     id: 'fuzz.aggr2.map.growth', name: '⚠ Map/Set growth', category: CAT, destructive: true,
-    description: 'Insere des entrees dans une Map et un Set jusqu a saturation memoire.',
+    description: 'Inserts entries into a Map and a Set until memory saturation.',
     requires: ['objects.Map'],
     run: function (ctx) {
       var m = new Map(), s = new Set(), n = 0;
@@ -63,7 +63,7 @@
   // 3) Deluge de timers.
   R.register({
     id: 'fuzz.aggr2.timers', name: '⚠ Timer flood', category: CAT, destructive: true,
-    description: 'Programme un tres grand nombre de setTimeout pour saturer la file de timers.',
+    description: 'Schedules a very large number of setTimeout to saturate the timer queue.',
     run: function (ctx) {
       var n = 0, ids = [];
       try {
@@ -71,7 +71,7 @@
       } catch (e) {
         for (var k = 0; k < ids.length; k++) { try { global.clearTimeout(ids[k]); } catch (x) {} }
         if (G.isAbort(e)) return { status: 'aborted', detail: n + ' timers', measurements: { timers: n } };
-        return { status: 'pass', detail: 'limite a ' + n + ' timers (' + e.name + ')', measurements: { maxTimers: n, error: e.name } };
+        return { status: 'pass', detail: 'limited to ' + n + ' timers (' + e.name + ')', measurements: { maxTimers: n, error: e.name } };
       }
       for (var j = 0; j < ids.length; j++) { try { global.clearTimeout(ids[j]); } catch (x) {} }
       return { status: 'pass', detail: n + ' timers programmes et annules', measurements: { timers: n } };
@@ -81,10 +81,10 @@
   // 4) Deluge d'URL d'objets (Blob).
   R.register({
     id: 'fuzz.aggr2.bloburl', name: '⚠ Object URL flood', category: CAT, destructive: true,
-    description: 'Cree de tres nombreux Blob + URL.createObjectURL (fuite memoire volontaire bornee).',
+    description: 'Creates very many Blob + URL.createObjectURL (deliberate bounded memory leak).',
     requires: ['platform.Blob'],
     run: function (ctx) {
-      if (!global.URL || !URL.createObjectURL) return { status: 'skip', detail: 'createObjectURL absent' };
+      if (!global.URL || !URL.createObjectURL) return { status: 'skip', detail: 'createObjectURL unavailable' };
       var n = 0, urls = [];
       try {
         while (true) {
@@ -104,7 +104,7 @@
   // 5) Tempete d'evenements synthetiques.
   R.register({
     id: 'fuzz.aggr2.events', name: '⚠ Event storm', category: CAT, destructive: true,
-    description: 'Cree une cible et dispatche des millions d evenements synthetiques.',
+    description: 'Creates a target and dispatches millions of synthetic events.',
     requires: ['dom.addEventListener'],
     run: function (ctx) {
       var target = document.createElement('div'); var count = 0; var n = 0;
@@ -122,7 +122,7 @@
   // 6) toDataURL repete sur canvas.
   R.register({
     id: 'fuzz.aggr2.todataurl', name: '⚠ Repeated toDataURL', category: CAT, destructive: true,
-    description: 'Serialise un canvas en dataURL en boucle serree (CPU + memoire).',
+    description: 'Serializes a canvas to dataURL in a tight loop (CPU + memory).',
     requires: ['canvas.context2d'],
     run: function (ctx) {
       var cv = document.createElement('canvas'); cv.width = 512; cv.height = 512;
@@ -141,7 +141,7 @@
   // 7) Tempete throw/catch (piles).
   R.register({
     id: 'fuzz.aggr2.throwcatch', name: '⚠ throw/catch storm', category: CAT, destructive: true,
-    description: 'Leve et rattrape des millions d exceptions (avec capture de pile) en boucle serree.',
+    description: 'Throws and catches millions of exceptions (with stack capture) in a tight loop.',
     run: function (ctx) {
       var n = 0, stackLen = 0;
       try {
@@ -160,14 +160,14 @@
   // 8) Concatenation lineaire geante.
   R.register({
     id: 'fuzz.aggr2.concat', name: '⚠ Giant concatenation (linear)', category: CAT, destructive: true,
-    description: 'Fait grossir une chaine par petits ajouts repetes jusqu a la limite memoire.',
+    description: 'Grows a string by small repeated appends until the memory limit.',
     run: function (ctx) {
       var s = '', n = 0, chunk = 'x'.repeat(4096);
       try {
         while (true) { s += chunk; n++; if ((n & 255) === 0) { ctx.tick(); ctx.metric('chaine', { ko: Math.round(s.length / 1024), tasMo: heapMB() }); } }
       } catch (e) {
         if (G.isAbort(e)) return { status: 'aborted', detail: Math.round(s.length / 1048576) + ' Mo', measurements: { chars: s.length } };
-        return { status: 'pass', detail: 'limite a ~' + mb(s.length * 2) + ' Mo (' + e.name + ')', measurements: { maxChars: s.length, error: e.name } };
+        return { status: 'pass', detail: 'limited to ~' + mb(s.length * 2) + ' Mo (' + e.name + ')', measurements: { maxChars: s.length, error: e.name } };
       } finally { s = null; }
     }
   });
@@ -175,14 +175,14 @@
   // 9) Nids de tableaux (profondeur par imbrication reelle).
   R.register({
     id: 'fuzz.aggr2.nested.arrays', name: '⚠ Giant nested arrays', category: CAT, destructive: true,
-    description: 'Construit un tableau profondement imbrique et le parcourt jusqu a saturation/pile.',
+    description: 'Builds a deeply nested array and walks it until saturation/stack.',
     run: function (ctx) {
       var root = [], cur = root, depth = 0;
       try {
         while (depth < 10000000) { var n = []; cur.push(n); cur = n; depth++; if ((depth & 4095) === 0) { ctx.tick(); ctx.metric('profondeur', { depth: depth, tasMo: heapMB() }); } }
-        return { status: 'pass', detail: 'profondeur ' + depth + ' (plafond)', measurements: { depth: depth } };
+        return { status: 'pass', detail: 'depth ' + depth + ' (plafond)', measurements: { depth: depth } };
       } catch (e) {
-        if (G.isAbort(e)) return { status: 'aborted', detail: 'profondeur ' + depth, measurements: { depth: depth } };
+        if (G.isAbort(e)) return { status: 'aborted', detail: 'depth ' + depth, measurements: { depth: depth } };
         return { status: 'pass', detail: 'cede a ' + depth + ' niveaux (' + e.name + ')', measurements: { maxDepth: depth, error: e.name } };
       } finally { root = null; }
     }
@@ -191,7 +191,7 @@
   // 10) Compilation RegExp en masse.
   R.register({
     id: 'fuzz.aggr2.regex.compile', name: '⚠ Mass RegExp compilation', category: CAT, destructive: true,
-    description: 'Compile des millions de RegExp distinctes pour marteler le compilateur de regex.',
+    description: 'Compiles millions of distinct RegExps to hammer the regex compiler.',
     run: function (ctx) {
       var n = 0;
       try {
@@ -207,7 +207,7 @@
   // 11) WeakMap + WeakRef en masse.
   R.register({
     id: 'fuzz.aggr2.weak', name: '⚠ Mass WeakMap/WeakRef', category: CAT, destructive: true,
-    description: 'Cree de tres nombreux objets references par WeakMap/WeakRef pour stresser le GC.',
+    description: 'Creates very many objects referenced by WeakMap/WeakRef to stress the GC.',
     requires: ['objects.WeakMap'],
     run: function (ctx) {
       var wm = new WeakMap(), hold = [], n = 0;
@@ -227,7 +227,7 @@
   // 12) Deluge de nombres (CPU pur).
   R.register({
     id: 'fuzz.aggr2.cpu.math', name: '⚠ Intensive computation (CPU)', category: CAT, destructive: true,
-    description: 'Boucle de calcul flottant tres longue pour saturer le CPU (teste la reactivite/echeance).',
+    description: 'Very long floating-point loop to saturate the CPU (tests responsiveness/deadline).',
     run: function (ctx) {
       var acc = 0, n = 0;
       try {

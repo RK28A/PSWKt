@@ -17,7 +17,7 @@
     id: 'async.ordering',
     name: 'Microtask / macrotask order',
     category: 'async',
-    description: 'Verifie que les microtaches passent avant les timers.',
+    description: 'Checks that microtasks run before timers.',
     requires: ['timing.Promise', 'timing.setTimeout'],
     run: function (ctx) {
       var order = [];
@@ -48,7 +48,7 @@
     id: 'async.timer.drift',
     name: 'setTimeout drift',
     category: 'async',
-    description: 'Mesure l ecart entre le delai demande et le delai reel sur 5 timers.',
+    description: 'Measures the gap between requested and actual delay over 5 timers.',
     requires: ['timing.setTimeout'],
     run: function (ctx) {
       var samples = [];
@@ -86,7 +86,7 @@
     id: 'async.raf',
     name: 'requestAnimationFrame (cadence)',
     category: 'async',
-    description: 'Mesure l intervalle entre 10 trames et estime les FPS.',
+    description: 'Measures the interval between 10 frames and estimates FPS.',
     requires: ['timing.requestAnimationFrame'],
     run: function (ctx) {
       var times = [];
@@ -152,7 +152,7 @@
     id: 'async.queuemicrotask',
     name: 'queueMicrotask',
     category: 'async',
-    description: 'Verifie que queueMicrotask s execute avant un setTimeout(0).',
+    description: 'Checks that queueMicrotask runs before a setTimeout(0).',
     requires: ['timing.queueMicrotask', 'timing.setTimeout'],
     run: function (ctx) {
       var order = [];

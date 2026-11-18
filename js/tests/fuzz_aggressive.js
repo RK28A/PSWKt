@@ -40,7 +40,7 @@
   R.register({
     id: 'fuzz.aggr.mem.bomb', name: '⚠ Memory bomb (retained allocation)', category: CAT,
     destructive: true,
-    description: 'Alloue des ArrayBuffer de 16 Mo et les GARDE jusqu a l echec (ou plantage OOM). Rapporte le total atteint.',
+    description: 'Allocates 16 MB ArrayBuffers and KEEPS them until failure (or OOM crash). Reports the total reached.',
     requires: ['typedArrays.ArrayBuffer'],
     run: function (ctx) {
       var kept = [];            // on retient tout -> le GC ne peut rien liberer
@@ -59,9 +59,9 @@
           if ((blocks % 8) === 0) ctx.metric('progression', { blocsRetenus: blocks, totalMo: mb(total), tasMo: heapMB() });
         }
       } catch (e) {
-        if (G.isAbort(e)) return { status: 'aborted', detail: 'arrete a ' + mb(total) + ' Mo (' + blocks + ' blocs)', measurements: { totalMo: mb(total), blocks: blocks } };
+        if (G.isAbort(e)) return { status: 'aborted', detail: 'stopped at ' + mb(total) + ' Mo (' + blocks + ' blocs)', measurements: { totalMo: mb(total), blocks: blocks } };
         ctx.info('ECHEC d allocation a ' + mb(total) + ' Mo : ' + e.name + ' (' + e.message + ')');
-        return { status: 'pass', detail: 'limite memoire atteinte : ' + mb(total) + ' Mo retenus avant ' + e.name,
+        return { status: 'pass', detail: 'memory limit reached: ' + mb(total) + ' Mo retenus avant ' + e.name,
                  measurements: { ceilingMo: mb(total), blocks: blocks, error: e.name } };
       } finally { kept.length = 0; } // relache (si on y arrive encore)
     }
@@ -71,7 +71,7 @@
   R.register({
     id: 'fuzz.aggr.string.double', name: '⚠ Giant string (doubling)', category: CAT,
     destructive: true,
-    description: 'Double une chaine (s += s) jusqu a RangeError (longueur max) ou plantage memoire. Rapporte la longueur max.',
+    description: 'Doubles a string (s += s) until RangeError (max length) or memory crash. Reports the max length.',
     run: function (ctx) {
       var s = 'A', steps = 0, last = 1;
       try {
@@ -83,9 +83,9 @@
           if ((steps % 4) === 0) ctx.metric('longueur', { chars: s.length, approxMo: mb(s.length * 2), tasMo: heapMB() });
         }
       } catch (e) {
-        if (G.isAbort(e)) return { status: 'aborted', detail: 'arrete a ' + last + ' chars', measurements: { chars: last } };
+        if (G.isAbort(e)) return { status: 'aborted', detail: 'stopped at ' + last + ' chars', measurements: { chars: last } };
         ctx.info('limite chaine : ' + e.name + ' apres ' + last + ' chars (~' + mb(last * 2) + ' Mo)');
-        return { status: 'pass', detail: 'longueur max supportee ~' + last + ' chars (' + e.name + ')',
+        return { status: 'pass', detail: 'max supported length ~' + last + ' chars (' + e.name + ')',
                  measurements: { maxChars: last, maxApproxMo: mb(last * 2), error: e.name } };
       } finally { s = null; }
     }
@@ -95,16 +95,16 @@
   R.register({
     id: 'fuzz.aggr.recursion', name: '⚠ Stack overflow (recursion)', category: CAT,
     destructive: true,
-    description: 'Recursion non bornee jusqu au debordement de pile. Rapporte la profondeur maximale atteinte.',
+    description: 'Unbounded recursion until stack overflow. Reports the maximum depth reached.',
     run: function (ctx) {
       var depth = 0;
       function rec() { depth++; rec(); return depth; } // pas de condition d arret
       try {
         rec();
-        return { status: 'pass', detail: 'aucune limite atteinte (inattendu)', measurements: { depth: depth } };
+        return { status: 'pass', detail: 'no limit reached (unexpected)', measurements: { depth: depth } };
       } catch (e) {
         // RangeError 'Maximum call stack size exceeded' attendu, rattrape proprement.
-        return { status: 'pass', detail: 'pile debordee a une profondeur de ' + depth + ' (' + e.name + ')',
+        return { status: 'pass', detail: 'stack overflowed at a depth of ' + depth + ' (' + e.name + ')',
                  measurements: { maxDepth: depth, error: e.name } };
       }
     }
@@ -114,7 +114,7 @@
   R.register({
     id: 'fuzz.aggr.json.deep', name: '⚠ Nested JSON to overflow', category: CAT,
     destructive: true,
-    description: 'Imbrique un tableau de plus en plus profond jusqu a ce que JSON.stringify/parse leve (pile). Rapporte la profondeur.',
+    description: 'Nests an array ever deeper until JSON.stringify/parse throws (stack). Reports the depth.',
     run: function (ctx) {
       var lastOk = 0;
       try {
@@ -128,9 +128,9 @@
           lastOk = depth;
           if ((depth % 5000) === 0) ctx.metric('profondeur OK', { depth: depth, chars: s.length, tasMo: heapMB() });
         }
-        return { status: 'pass', detail: 'aucun debordement jusqu a 20M (plafond du test)', measurements: { lastOk: lastOk } };
+        return { status: 'pass', detail: 'no overflow up to 20M (test cap)', measurements: { lastOk: lastOk } };
       } catch (e) {
-        if (G.isAbort(e)) return { status: 'aborted', detail: 'arrete ; derniere profondeur OK ' + lastOk, measurements: { lastOk: lastOk } };
+        if (G.isAbort(e)) return { status: 'aborted', detail: 'stopped; last depth OK ' + lastOk, measurements: { lastOk: lastOk } };
         return { status: 'pass', detail: 'JSON a cede au-dela de ~' + lastOk + ' niveaux (' + e.name + ')',
                  measurements: { lastDepthOk: lastOk, error: e.name } };
       }
@@ -141,7 +141,7 @@
   R.register({
     id: 'fuzz.aggr.typedarray.giant', name: '⚠ Giant typed array (binary search)', category: CAT,
     destructive: true,
-    description: 'Recherche par dichotomie la plus grande Uint8Array allouable (jusqu a 4 Go). Peut planter par OOM.',
+    description: 'Binary-searches the largest allocatable Uint8Array (up to 4 GB). May crash via OOM.',
     requires: ['typedArrays.Uint8Array'],
     run: function (ctx) {
       // Dichotomie sur la taille : borne haute volontairement enorme (2^32-1).
@@ -162,7 +162,7 @@
         return { status: 'pass', detail: 'plus grande Uint8Array allouee ~' + mb(best) + ' Mo (' + best + ' octets)',
                  measurements: { maxBytes: best, maxMo: mb(best) } };
       } catch (e2) {
-        if (G.isAbort(e2)) return { status: 'aborted', detail: 'arrete ; meilleur ~' + mb(best) + ' Mo', measurements: { maxBytes: best } };
+        if (G.isAbort(e2)) return { status: 'aborted', detail: 'stopped; best ~' + mb(best) + ' Mo', measurements: { maxBytes: best } };
         return { status: 'pass', detail: 'interrompu par ' + e2.name + ' ; meilleur ~' + mb(best) + ' Mo', measurements: { maxBytes: best, error: e2.name } };
       }
     }
@@ -172,7 +172,7 @@
   R.register({
     id: 'fuzz.aggr.regex.freeze', name: '⚠⚠ Catastrophic regex (may freeze the tab)', category: CAT,
     destructive: true,
-    description: 'Motif (a+)+$ sur des entrees de plus en plus longues : le temps explose. CE TEST PEUT GELER LE NAVIGATEUR.',
+    description: 'Pattern (a+)+$ on ever-longer inputs: time explodes. THIS TEST MAY FREEZE THE BROWSER.',
     run: function (ctx) {
       var re = /(a+)+$/;
       var results = [];
@@ -192,7 +192,7 @@
       }
       var worst = results.length ? results[results.length - 1] : null;
       return { status: 'pass',
-               detail: 'backtracking mesure jusqu a longueur ' + (worst ? worst.len : '?') + ' (' + (worst ? worst.ms : '?') + ' ms)',
+               detail: 'backtracking measured up to length ' + (worst ? worst.len : '?') + ' (' + (worst ? worst.ms : '?') + ' ms)',
                measurements: { timings: results } };
     }
   });
@@ -201,7 +201,7 @@
   R.register({
     id: 'fuzz.aggr.gc.churn', name: '⚠ GC churn (tight allocation)', category: CAT,
     destructive: true,
-    description: 'Cree des millions d objets ephemeres en boucle serree pour marteler le ramasse-miettes. Rapporte le debit.',
+    description: 'Creates millions of ephemeral objects in a tight loop to hammer the garbage collector. Reports the rate.',
     run: function (ctx) {
       var sink = null, made = 0;
       var target = 50000000;        // 50 M objets : tres long, prevu pour etre arrete par l echeance filet
@@ -231,7 +231,7 @@
   R.register({
     id: 'fuzz.aggr.array.fill', name: '⚠ Giant dense array (fill)', category: CAT,
     destructive: true,
-    description: 'Fait croitre un tableau dense par push jusqu a saturation memoire (ou plantage). Rapporte la taille atteinte.',
+    description: 'Grows a dense array via push until memory saturation (or crash). Reports the size reached.',
     run: function (ctx) {
       var arr = [], n = 0;
       var chunk = 1000000; // 1 M elements par palier
@@ -243,8 +243,8 @@
           ctx.metric('taille', { elements: n, tasMo: heapMB() });
         }
       } catch (e) {
-        if (G.isAbort(e)) return { status: 'aborted', detail: 'arrete a ' + n + ' elements', measurements: { elements: n } };
-        return { status: 'pass', detail: 'tableau sature a ~' + n + ' elements (' + e.name + ')',
+        if (G.isAbort(e)) return { status: 'aborted', detail: 'stopped at ' + n + ' elements', measurements: { elements: n } };
+        return { status: 'pass', detail: 'array saturated at ~' + n + ' elements (' + e.name + ')',
                  measurements: { maxElements: n, error: e.name } };
       } finally { arr = null; }
     }
