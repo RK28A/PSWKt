@@ -10,10 +10,28 @@
   'use strict';
   var PSWKT = global.PSWKT = global.PSWKT || {};
 
+  // Ne conserve que les annotations reellement renseignees (etiquette ou note).
+  function collectAnnotations() {
+    var src = PSWKT.annotations || {};
+    var out = {};
+    var count = 0;
+    for (var id in src) {
+      if (!src.hasOwnProperty(id)) continue;
+      var a = src[id];
+      if (a && (a.tag || (a.note && a.note.length))) {
+        out[id] = { name: a.name || null, tag: a.tag || '', note: a.note || '' };
+        count++;
+      }
+    }
+    return { count: count, items: out };
+  }
+
   function buildReport(lastRun) {
     var featuresReport = PSWKT.features.report();
     var snap = PSWKT.logger.snapshot();
+    var annotations = collectAnnotations();
     return {
+      annotations: annotations,
       meta: {
         tool: 'PSWKT - Laboratoire de tests WebKit',
         formatVersion: 1,
@@ -76,6 +94,19 @@
         if (r.detail) line('    ' + r.detail);
         if (r.error) line('    ERREUR ' + r.error.name + ': ' + r.error.message);
         if (r.measurements) line('    mesures : ' + JSON.stringify(r.measurements));
+        var an = report.annotations.items[r.id];
+        if (an && (an.tag || an.note)) line('    >> ANNOTATION : ' + (an.tag ? ('[' + an.tag + '] ') : '') + (an.note || ''));
+      }
+      line('');
+    }
+
+    if (report.annotations && report.annotations.count) {
+      line('--- Annotations (' + report.annotations.count + ') ---');
+      var items = report.annotations.items;
+      for (var id in items) {
+        if (!items.hasOwnProperty(id)) continue;
+        var a = items[id];
+        line('[' + (a.tag || '-') + '] ' + (a.name || id) + (a.note ? (' : ' + a.note) : ''));
       }
       line('');
     }

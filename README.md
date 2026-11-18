@@ -48,6 +48,11 @@ HTML/CSS/JS statiques.
   - `Média & codecs` — matrice `canPlayType` audio/vidéo (AVC, HEVC, AV1, VP9, Opus…).
   - `Entrées & manette` — Gamepad/DualSense, pointeur, clavier, plein écran, vibration.
   - `Syntaxe ECMAScript` — ~45 constructions du langage (classes, `?.`, `??=`, champs privés…).
+- **Annotations** : sur chaque résultat, une étiquette rapide (OK / Lent / Figé /
+  Rechargé / Autre) et une note libre. Pratique pour consigner un comportement observé
+  sur la console (ex. « a fait recharger le navigateur »). Les annotations sont reprises
+  dans le rapport exporté (JSON et texte). L'outil reste **non destructif** : il n'essaie
+  pas de provoquer de plantage, il te laisse noter ce que *tu* observes.
 - **Journal en direct, copiable** : chaque test écrit son début, ses sous-étapes, ses
   **mesures**, l'évolution du tas et sa fin ; les erreurs JS globales y figurent aussi.
   Boutons **Copier le journal** (presse-papiers + zone sélectionnable) et

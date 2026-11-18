@@ -207,6 +207,42 @@
     return map[status] || status;
   }
 
+  // Barre d'annotation par resultat : etiquette rapide + note libre, incluse dans l'export.
+  var ANNOT_TAGS = ['OK', 'Lent', 'Fige', 'Recharge', 'Autre'];
+  function buildAnnotationBar(testId, testName) {
+    var current = PSWKT.annotations[testId] || { tag: '', note: '' };
+    var bar = el('div', { class: 'annot' });
+    var btns = [];
+    for (var i = 0; i < ANNOT_TAGS.length; i++) {
+      (function (tag) {
+        var b = el('button', { type: 'button', class: 'tag' + (current.tag === tag ? ' tag-on' : ''), text: tag });
+        b.onclick = function (ev) {
+          ev.preventDefault();
+          var a = PSWKT.annotations[testId] || { tag: '', note: '' };
+          a.tag = (a.tag === tag) ? '' : tag;
+          a.name = testName;
+          PSWKT.annotations[testId] = a;
+          for (var j = 0; j < btns.length; j++) {
+            btns[j].className = 'tag' + (a.tag === ANNOT_TAGS[j] ? ' tag-on' : '');
+          }
+        };
+        btns.push(b);
+        bar.appendChild(b);
+      })(ANNOT_TAGS[i]);
+    }
+    var note = el('input', { type: 'text', class: 'annot-note' });
+    note.setAttribute('placeholder', 'annotation libre (ex : a fait recharger le navigateur)...');
+    note.value = current.note || '';
+    note.oninput = function () {
+      var a = PSWKT.annotations[testId] || { tag: '', note: '' };
+      a.note = note.value;
+      a.name = testName;
+      PSWKT.annotations[testId] = a;
+    };
+    bar.appendChild(note);
+    return bar;
+  }
+
   function appendResultRow(record) {
     var meas = record.measurements ? JSON.stringify(record.measurements) : '';
     var row = el('div', { class: 'result-row status-' + record.status }, [
@@ -215,7 +251,8 @@
         el('div', { class: 'result-name', text: record.name + '  (' + record.durationMs + ' ms)' }),
         el('div', { class: 'result-detail', text: record.detail || '' }),
         meas ? el('div', { class: 'result-meas', text: meas }) : null,
-        record.error ? el('div', { class: 'result-error', text: 'ERREUR ' + record.error.name + ': ' + record.error.message }) : null
+        record.error ? el('div', { class: 'result-error', text: 'ERREUR ' + record.error.name + ': ' + record.error.message }) : null,
+        buildAnnotationBar(record.id, record.name)
       ])
     ]);
     $('results').appendChild(row);
@@ -401,6 +438,7 @@
 
   // --- Initialisation ---
   function init() {
+    PSWKT.annotations = PSWKT.annotations || {};
     renderEnvironment();
     renderCatalog();
     wireLogger();

@@ -139,6 +139,12 @@ button.primary.mini { background: var(--accent); }
 .status-aborted { border-left-color: var(--aborted); }
 .status-aborted .result-status { color: var(--aborted); }
 
+/* Annotations par resultat */
+.annot { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+.tag { padding: 2px 9px; font-size: 12px; border: 1px solid var(--border); background: transparent; color: var(--muted); border-radius: 999px; cursor: pointer; }
+.tag-on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.annot-note { flex: 1; min-width: 180px; background: #0a0d12; border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 5px 9px; font-size: 12px; }
+
 /* Journal */
 .log-toolbar { margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .log-autoscroll { color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 6px; margin-left: auto; }
