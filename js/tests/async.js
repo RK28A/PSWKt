@@ -15,7 +15,7 @@
   // 1) Ordre d'execution : synchrone -> microtaches (Promise) -> macrotaches (setTimeout).
   R.register({
     id: 'async.ordering',
-    name: 'Ordre microtaches / macrotaches',
+    name: 'Microtask / macrotask order',
     category: 'async',
     description: 'Verifie que les microtaches passent avant les timers.',
     requires: ['timing.Promise', 'timing.setTimeout'],
@@ -46,7 +46,7 @@
   // 2) Derive des timers setTimeout (mesure).
   R.register({
     id: 'async.timer.drift',
-    name: 'Derive de setTimeout',
+    name: 'setTimeout drift',
     category: 'async',
     description: 'Mesure l ecart entre le delai demande et le delai reel sur 5 timers.',
     requires: ['timing.setTimeout'],

@@ -43,7 +43,7 @@
 
   // 2) TypedArray : acces hors limites en lecture/ecriture (doit etre inoffensif).
   F.resilience({
-    id: 'fuzz.ta.oob.access', name: 'TypedArray · acces hors limites', category: CAT,
+    id: 'fuzz.ta.oob.access', name: 'TypedArray · out-of-bounds access', category: CAT,
     description: 'Lecture/ecriture a des index absurdes : undefined ou no-op, jamais de corruption ni plantage.',
     requires: ['typedArrays.Uint8Array'],
     build: function (ctx) {
@@ -81,7 +81,7 @@
 
   // 3) TypedArray.prototype.* : subarray/set/slice/fill avec offsets limites.
   F.resilience({
-    id: 'fuzz.ta.methods', name: 'TypedArray.* · offsets limites', category: CAT,
+    id: 'fuzz.ta.methods', name: 'TypedArray.* · boundary offsets', category: CAT,
     description: 'subarray/slice/fill/copyWithin/set avec offsets absurdes : clamp ou RangeError.',
     requires: ['typedArrays.Int32Array'],
     build: function (ctx) {
@@ -107,7 +107,7 @@
 
   // 4) DataView : get/set hors limites et offsets absurdes -> RangeError attendue.
   F.resilience({
-    id: 'fuzz.ta.dataview', name: 'DataView · offsets hors limites', category: CAT,
+    id: 'fuzz.ta.dataview', name: 'DataView · out-of-bounds offsets', category: CAT,
     description: 'getInt32/setFloat64 a des offsets absurdes sur un buffer de 8 octets : RangeError rattrapee.',
     requires: ['typedArrays.DataView'],
     build: function (ctx) {
@@ -155,7 +155,7 @@
 
   // 6) Invariant d integrite : une ecriture TypedArray hors borne ne change RIEN aux cases valides.
   F.invariant({
-    id: 'fuzz.ta.integrity', name: 'TypedArray · integrite hors borne (invariant)', category: CAT,
+    id: 'fuzz.ta.integrity', name: 'TypedArray · out-of-bounds integrity (invariant)', category: CAT,
     description: 'Ecrire a un index hors [0,len) ne doit jamais modifier une case valide (pas de debordement).',
     requires: ['typedArrays.Float64Array'],
     build: function (ctx) {

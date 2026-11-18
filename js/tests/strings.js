@@ -13,7 +13,7 @@
   // 1) Unicode : points de code hors BMP (emoji), surrogate pairs.
   R.register({
     id: 'str.unicode.codepoints',
-    name: 'Unicode hors BMP (points de code)',
+    name: 'Unicode beyond BMP (code points)',
     category: 'strings',
     description: 'Verifie codePointAt / fromCodePoint sur un emoji (paire de substitution).',
     requires: [],
@@ -138,7 +138,7 @@
   // 6) Comparaison de methodes de construction de chaine (debit).
   R.register({
     id: 'str.build.methods',
-    name: 'Construction : concat vs join',
+    name: 'Building: concat vs join',
     category: 'strings',
     description: 'Compare concatenation += et Array.join sur 50000 morceaux.',
     requires: [],

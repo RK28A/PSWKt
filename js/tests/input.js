@@ -26,7 +26,7 @@
   // Lecture en direct des manettes connectees (comportemental, non destructif).
   R.register({
     id: 'input.gamepads.live',
-    name: 'Manettes connectees (getGamepads)',
+    name: 'Connected game-pads (getGamepads)',
     category: 'input',
     description: 'Enumere les manettes actuellement vues par le navigateur.',
     requires: [],

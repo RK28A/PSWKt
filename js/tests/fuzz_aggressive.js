@@ -38,7 +38,7 @@
 
   // 1) BOMBE MEMOIRE : alloue et RETIENT des blocs jusqu'a l'echec d'allocation.
   R.register({
-    id: 'fuzz.aggr.mem.bomb', name: '⚠ Bombe memoire (allocation retenue)', category: CAT,
+    id: 'fuzz.aggr.mem.bomb', name: '⚠ Memory bomb (retained allocation)', category: CAT,
     destructive: true,
     description: 'Alloue des ArrayBuffer de 16 Mo et les GARDE jusqu a l echec (ou plantage OOM). Rapporte le total atteint.',
     requires: ['typedArrays.ArrayBuffer'],
@@ -69,7 +69,7 @@
 
   // 2) CHAINE GEANTE : double une chaine jusqu'a la longueur maximale du moteur.
   R.register({
-    id: 'fuzz.aggr.string.double', name: '⚠ Chaine geante (doublement)', category: CAT,
+    id: 'fuzz.aggr.string.double', name: '⚠ Giant string (doubling)', category: CAT,
     destructive: true,
     description: 'Double une chaine (s += s) jusqu a RangeError (longueur max) ou plantage memoire. Rapporte la longueur max.',
     run: function (ctx) {
@@ -93,7 +93,7 @@
 
   // 3) DEBORDEMENT DE PILE : recursion directe jusqu'a RangeError. Rapporte la profondeur.
   R.register({
-    id: 'fuzz.aggr.recursion', name: '⚠ Debordement de pile (recursion)', category: CAT,
+    id: 'fuzz.aggr.recursion', name: '⚠ Stack overflow (recursion)', category: CAT,
     destructive: true,
     description: 'Recursion non bornee jusqu au debordement de pile. Rapporte la profondeur maximale atteinte.',
     run: function (ctx) {
@@ -112,7 +112,7 @@
 
   // 4) IMBRICATION JSON : profondeur croissante jusqu'a l'echec de stringify/parse.
   R.register({
-    id: 'fuzz.aggr.json.deep', name: '⚠ JSON imbrique jusqu au debordement', category: CAT,
+    id: 'fuzz.aggr.json.deep', name: '⚠ Nested JSON to overflow', category: CAT,
     destructive: true,
     description: 'Imbrique un tableau de plus en plus profond jusqu a ce que JSON.stringify/parse leve (pile). Rapporte la profondeur.',
     run: function (ctx) {
@@ -139,7 +139,7 @@
 
   // 5) TABLEAU TYPE GEANT : cherche la plus grande allocation contigue possible.
   R.register({
-    id: 'fuzz.aggr.typedarray.giant', name: '⚠ Tableau type geant (dichotomie)', category: CAT,
+    id: 'fuzz.aggr.typedarray.giant', name: '⚠ Giant typed array (binary search)', category: CAT,
     destructive: true,
     description: 'Recherche par dichotomie la plus grande Uint8Array allouable (jusqu a 4 Go). Peut planter par OOM.',
     requires: ['typedArrays.Uint8Array'],
@@ -170,7 +170,7 @@
 
   // 6) BACKTRACKING REGEX CATASTROPHIQUE : NON borne. Peut FIGER l'onglet.
   R.register({
-    id: 'fuzz.aggr.regex.freeze', name: '⚠⚠ Regex catastrophique (peut figer l onglet)', category: CAT,
+    id: 'fuzz.aggr.regex.freeze', name: '⚠⚠ Catastrophic regex (may freeze the tab)', category: CAT,
     destructive: true,
     description: 'Motif (a+)+$ sur des entrees de plus en plus longues : le temps explose. CE TEST PEUT GELER LE NAVIGATEUR.',
     run: function (ctx) {
@@ -199,7 +199,7 @@
 
   // 7) CHURN SYNCHRONE : boucle d'allocation serree pour saturer le GC.
   R.register({
-    id: 'fuzz.aggr.gc.churn', name: '⚠ Churn GC (allocation serree)', category: CAT,
+    id: 'fuzz.aggr.gc.churn', name: '⚠ GC churn (tight allocation)', category: CAT,
     destructive: true,
     description: 'Cree des millions d objets ephemeres en boucle serree pour marteler le ramasse-miettes. Rapporte le debit.',
     run: function (ctx) {
@@ -229,7 +229,7 @@
 
   // 8) TABLEAU DENSE GEANT : materialise un tableau enorme jusqu'a l'echec.
   R.register({
-    id: 'fuzz.aggr.array.fill', name: '⚠ Tableau dense geant (fill)', category: CAT,
+    id: 'fuzz.aggr.array.fill', name: '⚠ Giant dense array (fill)', category: CAT,
     destructive: true,
     description: 'Fait croitre un tableau dense par push jusqu a saturation memoire (ou plantage). Rapporte la taille atteinte.',
     run: function (ctx) {

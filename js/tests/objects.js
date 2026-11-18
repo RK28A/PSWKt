@@ -95,7 +95,7 @@
   // 4) JSON : fidelite aller-retour (y compris cas limites).
   R.register({
     id: 'obj.json',
-    name: 'JSON aller-retour',
+    name: 'JSON round-trip',
     category: 'objects',
     description: 'Serialise/deserialise des structures imbriquees et verifie la fidelite.',
     requires: [],

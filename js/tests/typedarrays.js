@@ -12,7 +12,7 @@
   // 1) Aller-retour ecriture/lecture sur chaque type disponible.
   R.register({
     id: 'ta.roundtrip',
-    name: 'Aller-retour lecture/ecriture par type',
+    name: 'Read/write round-trip per type',
     category: 'typedarrays',
     description: 'Ecrit puis relit des valeurs representatives dans chaque vue typee.',
     requires: ['typedArrays.ArrayBuffer'],
@@ -84,7 +84,7 @@
   // 3) set() / subarray() / slice() corrects.
   R.register({
     id: 'ta.views',
-    name: 'Vues partagees (subarray/set/slice)',
+    name: 'Shared views (subarray/set/slice)',
     category: 'typedarrays',
     description: 'Verifie le partage de memoire (subarray) et la copie (slice).',
     requires: ['typedArrays.Uint16Array'],
@@ -112,7 +112,7 @@
   // 4) Acces hors limites : doit renvoyer undefined, sans lever (non destructif).
   R.register({
     id: 'ta.bounds',
-    name: 'Acces hors limites (lecture)',
+    name: 'Out-of-bounds access (read)',
     category: 'typedarrays',
     description: 'Lit au-dela des bornes ; attendu : undefined, pas de plantage.',
     requires: ['typedArrays.Int32Array'],
@@ -138,7 +138,7 @@
   // 5) Allocation progressive sous budget memoire (gestion des allocations).
   R.register({
     id: 'ta.alloc.budget',
-    name: 'Allocation progressive sous budget',
+    name: 'Progressive allocation under budget',
     category: 'typedarrays',
     description: 'Alloue des blocs Float64 jusqu au budget memoire, puis libere.',
     requires: ['typedArrays.Float64Array'],
@@ -176,7 +176,7 @@
   // 6) Debit lecture/ecriture (mesure de duree, reproductible).
   R.register({
     id: 'ta.throughput',
-    name: 'Debit sequentiel Float64',
+    name: 'Float64 sequential throughput',
     category: 'typedarrays',
     description: 'Mesure le temps de remplissage et de somme d un tableau de 1M elements.',
     requires: ['typedArrays.Float64Array'],

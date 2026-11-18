@@ -28,18 +28,18 @@
     if (![].flatMap) return { status: 'skip', detail: 'flatMap absent' };
     return ok([1, 2, 3].flatMap(function (x) { return [x, x * 2]; }).join(',') === '1,2,2,4,3,6', 'flatMap OK');
   });
-  T('array.tosorted', 'toSorted ne mute pas', [], function () {
+  T('array.tosorted', 'toSorted does not mutate', [], function () {
     if (![].toSorted) return { status: 'skip', detail: 'toSorted absent' };
     var a = [3, 1, 2]; var b = a.toSorted(); return ok(b.join(',') === '1,2,3' && a.join(',') === '3,1,2', 'original intact');
   });
-  T('string.at', 'String.at negatif', [], function () {
+  T('string.at', 'String.at negative', [], function () {
     if (!''.at) return { status: 'skip', detail: 'at absent' };
     return ok('abc'.at(-1) === 'c' && 'abc'.at(0) === 'a', 'at OK');
   });
-  T('string.split.limit', 'split avec limite', [], function () {
+  T('string.split.limit', 'split with limit', [], function () {
     return ok('a,b,c,d'.split(',', 2).join('|') === 'a|b', 'limite respectee');
   });
-  T('string.replace.fn', 'replace avec fonction', [], function () {
+  T('string.replace.fn', 'replace with a function', [], function () {
     var r = 'a1b2'.replace(/\d/g, function (m) { return '[' + m + ']'; });
     return ok(r === 'a[1]b[2]', 'remplacement fonctionnel');
   });
@@ -57,7 +57,7 @@
   T('number.epsilon', 'Number.EPSILON', [], function () {
     return ok(0.1 + 0.2 !== 0.3 && Math.abs(0.1 + 0.2 - 0.3) < Number.EPSILON, 'epsilon couvre l erreur');
   });
-  T('math.minmax.empty', 'Math.min/max sans argument', [], function () {
+  T('math.minmax.empty', 'Math.min/max with no argument', [], function () {
     return ok(Math.min() === Infinity && Math.max() === -Infinity, 'infinis signes');
   });
   T('math.hypot', 'Math.hypot', [], function () {
@@ -72,18 +72,18 @@
     var o = { a: 1, b: 2 }; var o2 = Object.fromEntries(Object.entries(o));
     return ok(o2.a === 1 && o2.b === 2, 'aller-retour OK');
   });
-  T('object.assign.getter', 'assign declenche les getters', [], function () {
+  T('object.assign.getter', 'assign triggers getters', [], function () {
     var n = 0; var src = {}; Object.defineProperty(src, 'x', { enumerable: true, get: function () { n++; return 1; } });
     var d = Object.assign({}, src); return ok(d.x === 1 && n === 1, 'getter appele une fois');
   });
-  T('generator.return', 'Generator.return termine', [], function () {
+  T('generator.return', 'Generator.return terminates', [], function () {
     try { eval('0'); } catch (e) {}
     function make() { return (function* () { yield 1; yield 2; yield 3; })(); }
     var g; try { g = make(); } catch (e) { return { status: 'skip', detail: 'generateur absent' }; }
     g.next(); var r = g.return(99);
     return ok(r.value === 99 && r.done === true && g.next().done === true, 'return termine le generateur');
   });
-  T('iterator.custom', 'Iterateur personnalise', ['objects.Symbol'], function () {
+  T('iterator.custom', 'Custom iterator', ['objects.Symbol'], function () {
     var obj = {}; obj[Symbol.iterator] = function () { var i = 0; return { next: function () { return i < 3 ? { value: i++, done: false } : { value: undefined, done: true }; } }; };
     var a = []; for (var x of obj) a.push(x);
     return ok(a.join(',') === '0,1,2', 'iteration = ' + a.join(','));
@@ -94,17 +94,17 @@
       return ok(r[0].status === 'fulfilled' && r[1].status === 'rejected', 'etats = ' + r[0].status + '/' + r[1].status);
     });
   });
-  T('promise.any', 'Promise.any (premier resolu)', ['timing.Promise'], function () {
+  T('promise.any', 'Promise.any (first resolved)', ['timing.Promise'], function () {
     if (!Promise.any) return { status: 'skip', detail: 'any absent' };
     return Promise.any([Promise.reject(new Error('a')), Promise.resolve(42)]).then(function (v) {
       return ok(v === 42, 'valeur = ' + v);
     });
   });
-  T('typedarray.subarray.shares', 'subarray partage le buffer', ['typedArrays.Uint8Array'], function () {
+  T('typedarray.subarray.shares', 'subarray shares the buffer', ['typedArrays.Uint8Array'], function () {
     var ta = new Uint8Array([1, 2, 3, 4]); var sub = ta.subarray(1, 3); sub[0] = 99;
     return ok(ta[1] === 99, 'modification partagee (ta[1]=' + ta[1] + ')');
   });
-  T('arraybuffer.slice.indep', 'ArrayBuffer.slice independant', ['typedArrays.ArrayBuffer'], function () {
+  T('arraybuffer.slice.indep', 'ArrayBuffer.slice independent', ['typedArrays.ArrayBuffer'], function () {
     var ab = new ArrayBuffer(4); var v = new Uint8Array(ab); v[0] = 1;
     var ab2 = ab.slice(0); var v2 = new Uint8Array(ab2); v2[0] = 99;
     return ok(v[0] === 1 && v2[0] === 99, 'copie independante');
@@ -113,7 +113,7 @@
     var re = /a/y; re.lastIndex = 1; var m = re.exec('baa');
     return ok(m && m.index === 1 && re.lastIndex === 2, 'sticky avance lastIndex');
   });
-  T('regex.namedreplace', 'replace avec $<name>', [], function () {
+  T('regex.namedreplace', 'replace with $<name>', [], function () {
     try { var r = '2024-06'.replace(/(?<y>\d+)-(?<m>\d+)/, '$<m>/$<y>'); return ok(r === '06/2024', 'remplacement nomme = ' + r); }
     catch (e) { return { status: 'skip', detail: 'groupes nommes absents' }; }
   });
@@ -122,12 +122,12 @@
     var e = new AggregateError([new Error('a'), new Error('b')], 'multi');
     return ok(e.errors.length === 2 && e.message === 'multi', 'agrege 2 erreurs');
   });
-  T('intl.collator', 'Intl.Collator tri accents', [], function () {
+  T('intl.collator', 'Intl.Collator accent sorting', [], function () {
     if (!global.Intl || !Intl.Collator) return { status: 'skip', detail: 'Intl.Collator absent' };
     var arr = ['e', 'é', 'a', 'z']; arr.sort(new Intl.Collator('fr').compare);
     return ok(arr[0] === 'a' && arr[arr.length - 1] === 'z', 'tri = ' + arr.join(','));
   });
-  T('label.break', 'break etiquete', [], function () {
+  T('label.break', 'labeled break', [], function () {
     var hits = 0; outer: for (var i = 0; i < 3; i++) { for (var j = 0; j < 3; j++) { hits++; if (j === 1) continue outer; if (i === 2) break outer; } }
     return ok(hits > 0, 'boucles etiquetees executees (' + hits + ')');
   });

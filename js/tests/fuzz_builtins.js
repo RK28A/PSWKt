@@ -25,7 +25,7 @@
 
   // 1) String.prototype.* avec index/longueurs absurdes et objets-pieges en argument.
   F.resilience({
-    id: 'fuzz.builtins.string.indexing', name: 'String · index/longueurs absurdes', category: CAT,
+    id: 'fuzz.builtins.string.indexing', name: 'String · absurd indices/lengths', category: CAT,
     description: 'slice/substr/substring/repeat/padStart/charAt/codePointAt avec arguments limites.',
     build: function (ctx) {
       var base = 'abcdef😀xyz';
@@ -54,7 +54,7 @@
 
   // 2) String.prototype.repeat : count negatif/Infini/NaN -> RangeError OU gestion propre.
   F.resilience({
-    id: 'fuzz.builtins.string.repeat', name: 'String.repeat (count limite)', category: CAT,
+    id: 'fuzz.builtins.string.repeat', name: 'String.repeat (boundary count)', category: CAT,
     description: 'repeat(-1/Infinity/NaN/2^30) : RangeError rattrapee ou chaine bornee, jamais de plantage.',
     requires: [],
     build: function (ctx) {
@@ -92,7 +92,7 @@
 
   // 4) Array.prototype.* avec callbacks/arguments pieges et tableaux degeneres.
   F.resilience({
-    id: 'fuzz.builtins.array.methods', name: 'Array.* · callbacks/args pieges', category: CAT,
+    id: 'fuzz.builtins.array.methods', name: 'Array.* · trapped callbacks/args', category: CAT,
     description: 'map/filter/reduce/slice/fill/copyWithin/sort avec arguments limites et objets-pieges.',
     build: function (ctx) {
       var args = badArgs(ctx);
@@ -119,7 +119,7 @@
 
   // 5) Array.from sur objets array-like pieges (length qui ment/leve/negatif/geant).
   F.resilience({
-    id: 'fuzz.builtins.array.from', name: 'Array.from (array-like piege)', category: CAT,
+    id: 'fuzz.builtins.array.from', name: 'Array.from (trapped array-like)', category: CAT,
     description: 'Array.from sur length negative/geante/qui leve : borne ou erreur rattrapee.',
     build: function (ctx) {
       if (typeof Array.from !== 'function') return { target: function () { throw new Error('Array.from absent'); }, inputs: [] };
@@ -143,7 +143,7 @@
 
   // 6) Object.* avec cibles non-objets et descripteurs incoherents.
   F.resilience({
-    id: 'fuzz.builtins.object.ops', name: 'Object.* · cibles/descripteurs limites', category: CAT,
+    id: 'fuzz.builtins.object.ops', name: 'Object.* · boundary targets/descriptors', category: CAT,
     description: 'keys/assign/defineProperty/freeze/getOwnPropertyNames sur primitives et pieges.',
     build: function (ctx) {
       var inputs = F.nastyValues(ctx);
@@ -165,7 +165,7 @@
 
   // 7) JSON.stringify avec remplacants/espaces malformes et objets-pieges (toJSON/getters).
   F.resilience({
-    id: 'fuzz.builtins.json.stringify', name: 'JSON.stringify (args/pieges)', category: CAT,
+    id: 'fuzz.builtins.json.stringify', name: 'JSON.stringify (args/traps)', category: CAT,
     description: 'stringify avec replacer absurde, indent limite, getters/toJSON qui levent.',
     build: function (ctx) {
       var inputs = [];
@@ -195,7 +195,7 @@
 
   // 8) Math.* : invariants simples sur nombres limites (jamais d exception, types coherents).
   F.invariant({
-    id: 'fuzz.builtins.math', name: 'Math.* (invariants numeriques)', category: CAT,
+    id: 'fuzz.builtins.math', name: 'Math.* (numeric invariants)', category: CAT,
     description: 'min/max/round/sign/abs/trunc sur valeurs limites : resultats coherents, jamais d exception.',
     build: function (ctx) {
       var inputs = F.nastyNumbers();

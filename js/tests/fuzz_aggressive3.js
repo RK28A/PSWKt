@@ -15,7 +15,7 @@
 
   // 1) Tempete de noeuds WebAudio.
   R.register({
-    id: 'fuzz.aggr3.audio.nodes', name: '⚠ Tempete de noeuds WebAudio', category: CAT, destructive: true,
+    id: 'fuzz.aggr3.audio.nodes', name: '⚠ WebAudio node storm', category: CAT, destructive: true,
     description: 'Cree des milliers de noeuds audio (et contextes) pour saturer le moteur audio.',
     run: function (ctx) {
       var AC = global.AudioContext || global.webkitAudioContext;
@@ -43,7 +43,7 @@
 
   // 2) Remplissage de localStorage (quota). Nettoye a la fin.
   R.register({
-    id: 'fuzz.aggr3.localstorage.fill', name: '⚠ Saturation localStorage', category: CAT, destructive: true,
+    id: 'fuzz.aggr3.localstorage.fill', name: '⚠ localStorage saturation', category: CAT, destructive: true,
     description: 'Ecrit dans localStorage jusqu au quota (QuotaExceededError). Nettoye ses cles apres.',
     requires: ['platform.localStorage'],
     run: function (ctx) {
@@ -68,7 +68,7 @@
 
   // 3) Chemin Canvas geant (millions de segments).
   R.register({
-    id: 'fuzz.aggr3.canvas.path', name: '⚠ Chemin Canvas geant', category: CAT, destructive: true,
+    id: 'fuzz.aggr3.canvas.path', name: '⚠ Giant Canvas path', category: CAT, destructive: true,
     description: 'Construit un chemin de millions de segments et le trace (CPU/GPU + memoire).',
     requires: ['canvas.context2d'],
     run: function (ctx) {
@@ -88,7 +88,7 @@
 
   // 4) SVG geant (via innerHTML).
   R.register({
-    id: 'fuzz.aggr3.svg.huge', name: '⚠ SVG geant', category: CAT, destructive: true,
+    id: 'fuzz.aggr3.svg.huge', name: '⚠ Giant SVG', category: CAT, destructive: true,
     description: 'Injecte un SVG avec un chemin de centaines de milliers de commandes dans un element detache.',
     requires: ['dom.createElement'],
     run: function (ctx) {
@@ -112,7 +112,7 @@
 
   // 5) Secousses de mise en page (layout thrashing). Attache au document.
   R.register({
-    id: 'fuzz.aggr3.reflow.thrash', name: '⚠ Secousses de mise en page', category: CAT, destructive: true,
+    id: 'fuzz.aggr3.reflow.thrash', name: '⚠ Layout thrashing', category: CAT, destructive: true,
     description: 'Alterne ecriture de style et lecture forcee de geometrie pour marteler le moteur de rendu.',
     requires: ['dom.createElement'],
     run: function (ctx) {
@@ -142,7 +142,7 @@
 
   // 6) Tempete de getComputedStyle.
   R.register({
-    id: 'fuzz.aggr3.computedstyle', name: '⚠ Tempete getComputedStyle', category: CAT, destructive: true,
+    id: 'fuzz.aggr3.computedstyle', name: '⚠ getComputedStyle storm', category: CAT, destructive: true,
     description: 'Appelle getComputedStyle et lit des proprietes en boucle serree (recalculs de style).',
     requires: ['dom.createElement'],
     run: function (ctx) {
@@ -169,7 +169,7 @@
 
   // 7) Chaine de prototypes tres profonde.
   R.register({
-    id: 'fuzz.aggr3.proto.deep', name: '⚠ Chaine de prototypes profonde', category: CAT, destructive: true,
+    id: 'fuzz.aggr3.proto.deep', name: '⚠ Deep prototype chain', category: CAT, destructive: true,
     description: 'Construit une chaine de prototypes de grande profondeur et resout une propriete au bout.',
     run: function (ctx) {
       var base = { found: 42 }, cur = base, depth = 0;
@@ -186,7 +186,7 @@
 
   // 8) Chaine de Proxy imbriques.
   R.register({
-    id: 'fuzz.aggr3.proxy.deep', name: '⚠ Proxy imbriques profonds', category: CAT, destructive: true,
+    id: 'fuzz.aggr3.proxy.deep', name: '⚠ Deep nested Proxy', category: CAT, destructive: true,
     description: 'Empile des milliers de Proxy et traverse la chaine (chaque acces descend tous les niveaux).',
     requires: ['objects.Proxy'],
     run: function (ctx) {
@@ -204,7 +204,7 @@
 
   // 9) Tri d'un tres grand tableau avec comparateur.
   R.register({
-    id: 'fuzz.aggr3.sort.huge', name: '⚠ Tri d un tableau geant', category: CAT, destructive: true,
+    id: 'fuzz.aggr3.sort.huge', name: '⚠ Giant array sort', category: CAT, destructive: true,
     description: 'Cree un grand tableau aleatoire et le trie avec un comparateur (CPU + memoire).',
     run: function (ctx) {
       var size = 20000000, a = null, n = 0;
@@ -224,7 +224,7 @@
 
   // 10) Encodage/decodage de texte geant.
   R.register({
-    id: 'fuzz.aggr3.textcodec', name: '⚠ TextEncoder/Decoder geant', category: CAT, destructive: true,
+    id: 'fuzz.aggr3.textcodec', name: '⚠ Giant TextEncoder/Decoder', category: CAT, destructive: true,
     description: 'Encode puis decode des chaines de plus en plus grandes jusqu a saturation.',
     requires: ['platform.TextEncoder'],
     run: function (ctx) {
@@ -247,7 +247,7 @@
 
   // 11) JSON.stringify d'une structure geante.
   R.register({
-    id: 'fuzz.aggr3.json.huge', name: '⚠ JSON.stringify geant', category: CAT, destructive: true,
+    id: 'fuzz.aggr3.json.huge', name: '⚠ Giant JSON.stringify', category: CAT, destructive: true,
     description: 'Serialise un tableau de plus en plus grand jusqu a saturation memoire.',
     run: function (ctx) {
       var last = 0;
@@ -268,7 +268,7 @@
 
   // 12) Compilation de fonctions en masse (new Function).
   R.register({
-    id: 'fuzz.aggr3.function.create', name: '⚠ Compilation de fonctions en masse', category: CAT, destructive: true,
+    id: 'fuzz.aggr3.function.create', name: '⚠ Mass function compilation', category: CAT, destructive: true,
     description: 'Compile des millions de fonctions distinctes (new Function) pour marteler le compilateur/JIT.',
     run: function (ctx) {
       var n = 0, sink = 0;
@@ -284,7 +284,7 @@
 
   // 13) Explosion megamorphique (beaucoup de formes d'objets).
   R.register({
-    id: 'fuzz.aggr3.megamorphic', name: '⚠ Explosion megamorphique (formes)', category: CAT, destructive: true,
+    id: 'fuzz.aggr3.megamorphic', name: '⚠ Megamorphic explosion (shapes)', category: CAT, destructive: true,
     description: 'Cree des millions de formes d objets distinctes pour saturer les caches en ligne / le JIT.',
     run: function (ctx) {
       var hold = [], n = 0, sink = 0;
@@ -304,7 +304,7 @@
 
   // 14) crypto.getRandomValues en masse.
   R.register({
-    id: 'fuzz.aggr3.crypto.random', name: '⚠ getRandomValues en masse', category: CAT, destructive: true,
+    id: 'fuzz.aggr3.crypto.random', name: '⚠ Mass getRandomValues', category: CAT, destructive: true,
     description: 'Remplit des buffers aleatoires en boucle serree (CPU + entropie).',
     requires: ['platform.crypto'],
     run: function (ctx) {
@@ -322,7 +322,7 @@
 
   // 15) Un seul Blob geant.
   R.register({
-    id: 'fuzz.aggr3.blob.huge', name: '⚠ Blob geant', category: CAT, destructive: true,
+    id: 'fuzz.aggr3.blob.huge', name: '⚠ Giant Blob', category: CAT, destructive: true,
     description: 'Construit un unique Blob de plus en plus grand jusqu a saturation memoire.',
     requires: ['platform.Blob'],
     run: function (ctx) {

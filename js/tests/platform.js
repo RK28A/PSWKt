@@ -14,7 +14,7 @@
   // 1) Web Worker : cree via Blob, aller-retour de message.
   R.register({
     id: 'plat.worker.roundtrip',
-    name: 'Web Worker (aller-retour)',
+    name: 'Web Worker (round-trip)',
     category: 'platform',
     description: 'Cree un worker depuis un Blob, lui envoie un nombre, recoit le double.',
     requires: ['platform.Worker', 'platform.Blob', 'platform.URLcreateObjectURL'],
@@ -134,7 +134,7 @@
   // 5) localStorage : aller-retour et nettoyage (non destructif : cle dediee, retiree ensuite).
   R.register({
     id: 'plat.storage.roundtrip',
-    name: 'localStorage (aller-retour)',
+    name: 'localStorage (round-trip)',
     category: 'platform',
     description: 'Ecrit puis relit une cle dediee, puis la supprime (non destructif).',
     requires: ['platform.localStorage'],
@@ -164,7 +164,7 @@
   // 6) Intl : formatage des nombres et dates (i18n).
   R.register({
     id: 'plat.intl',
-    name: 'Intl (nombres, dates, tri)',
+    name: 'Intl (numbers, dates, sorting)',
     category: 'platform',
     description: 'Formate un nombre et une date, trie avec Collator.',
     requires: ['lang.Intl'],

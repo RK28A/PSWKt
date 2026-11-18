@@ -31,7 +31,7 @@
 
   // 1) USE-AFTER-DETACH : transfere un ArrayBuffer puis l'utilise. Comportement a documenter.
   R.register({
-    id: 'fuzz.robust.detached', name: 'Buffer detache (usage apres transfert)', category: CAT,
+    id: 'fuzz.robust.detached', name: 'Detached buffer (use after transfer)', category: CAT,
     description: 'Classe : usage apres detachement. Transfere un ArrayBuffer puis lit/ecrit via une vue -> doit rester inoffensif (vue vide ou TypeError), jamais de corruption.',
     requires: ['objects.structuredClone', 'typedArrays.ArrayBuffer'],
     run: function (ctx) {
@@ -56,7 +56,7 @@
 
   // 2) VUE SUR BUFFER REDIMENSIONNE : rapetisse un ArrayBuffer sous une vue existante.
   R.register({
-    id: 'fuzz.robust.resized', name: 'Vue sur ArrayBuffer redimensionne', category: CAT,
+    id: 'fuzz.robust.resized', name: 'View over resized ArrayBuffer', category: CAT,
     description: 'Classe : vue sur buffer retreci. Cree une vue, reduit le buffer sous-jacent, puis accede -> comportement a documenter (pas de lecture hors zone).',
     requires: ['typedArrays.resizableArrayBuffer'],
     run: function (ctx) {
@@ -81,7 +81,7 @@
 
   // 3) MUTATION PENDANT ITERATION : modifie des collections en cours de parcours.
   R.register({
-    id: 'fuzz.robust.mutate.iter', name: 'Mutation pendant iteration', category: CAT,
+    id: 'fuzz.robust.mutate.iter', name: 'Mutation during iteration', category: CAT,
     description: 'Classe : mutation pendant iteration. Modifie Array/Map/Set (et collections DOM vivantes) en plein parcours -> doit rester coherent, jamais de corruption.',
     run: function (ctx) {
       var res = {};
@@ -124,7 +124,7 @@
 
   // 4) structuredClone de graphes exotiques (cycles, types natifs, getters hostiles).
   R.register({
-    id: 'fuzz.robust.clone.exotic', name: 'structuredClone de graphes exotiques', category: CAT,
+    id: 'fuzz.robust.clone.exotic', name: 'structuredClone of exotic graphs', category: CAT,
     description: 'Classe : serialisation de graphes degeneres. Clone cycles, Map/Set imbriques, TypedArray, Date, RegExp, getters piges -> erreur rattrapee ou clone correct.',
     requires: ['objects.structuredClone'],
     run: function (ctx) {
@@ -150,7 +150,7 @@
 
   // 5) ⚠ DOM : arbre profond + large (peut figer/planter le rendu). Destructif.
   R.register({
-    id: 'fuzz.robust.dom.tree', name: '⚠ DOM massif (arbre profond/large)', category: CAT,
+    id: 'fuzz.robust.dom.tree', name: '⚠ Massive DOM (deep/wide tree)', category: CAT,
     destructive: true,
     description: 'Classe : saturation DOM. Construit des arbres de plus en plus profonds et larges jusqu a la rupture du moteur de rendu. Peut figer l onglet.',
     requires: ['dom.createElement'],
@@ -185,7 +185,7 @@
 
   // 6) ⚠ innerHTML geant / malforme (parseur HTML). Destructif possible.
   R.register({
-    id: 'fuzz.robust.innerhtml', name: '⚠ innerHTML geant / malforme', category: CAT,
+    id: 'fuzz.robust.innerhtml', name: '⚠ Giant / malformed innerHTML', category: CAT,
     destructive: true,
     description: 'Classe : stress du parseur HTML. Injecte du balisage geant, profondement imbrique ou malforme dans un element detache. Peut saturer la memoire.',
     requires: ['dom.createElement'],
@@ -211,7 +211,7 @@
 
   // 7) ⚠ Canvas : dimensions geantes + getImageData absurde. Destructif (grosse allocation).
   R.register({
-    id: 'fuzz.robust.canvas', name: '⚠ Canvas geant / getImageData absurde', category: CAT,
+    id: 'fuzz.robust.canvas', name: '⚠ Giant canvas / absurd getImageData', category: CAT,
     destructive: true,
     description: 'Classe : allocation graphique degeneree. Canvas de dimensions enormes, getImageData/putImageData sur rectangles absurdes. Peut planter par OOM GPU/CPU.',
     requires: ['canvas.context2d'],
@@ -251,7 +251,7 @@
 
   // 8) ⚠ WebGL : epuisement de ressources (buffers/textures/contextes). Destructif.
   R.register({
-    id: 'fuzz.robust.webgl', name: '⚠ WebGL : epuisement de ressources', category: CAT,
+    id: 'fuzz.robust.webgl', name: '⚠ WebGL: resource exhaustion', category: CAT,
     destructive: true,
     description: 'Classe : saturation GPU. Alloue des milliers de buffers/textures et de nombreux contextes pour provoquer une perte de contexte. Peut planter le pilote GPU.',
     requires: ['canvas.webgl'],
@@ -282,7 +282,7 @@
 
   // 9) Recursion via coercition / getters / Proxy (profondeur de pile indirecte).
   R.register({
-    id: 'fuzz.robust.recursion.indirect', name: 'Recursion indirecte (coercition/Proxy)', category: CAT,
+    id: 'fuzz.robust.recursion.indirect', name: 'Indirect recursion (coercion/Proxy)', category: CAT,
     description: 'Classe : debordement de pile indirect. Recursion via toString/valueOf, getters chaines et Proxy -> RangeError rattrapee attendue.',
     requires: [],
     run: function (ctx) {
@@ -314,7 +314,7 @@
 
   // 10) JSON.parse reviver hostile (mutation du graphe pendant la reconstruction).
   R.register({
-    id: 'fuzz.robust.json.reviver', name: 'JSON.parse reviver hostile', category: CAT,
+    id: 'fuzz.robust.json.reviver', name: 'JSON.parse hostile reviver', category: CAT,
     description: 'Classe : rappel hostile pendant reconstruction. Reviver qui mute/supprime/ajoute et qui leve -> le moteur doit rester coherent.',
     run: function (ctx) {
       var out = {};
@@ -334,7 +334,7 @@
 
   // 11) ⚠ Workers en masse (via Blob) : saturation de threads. Destructif.
   R.register({
-    id: 'fuzz.robust.workers', name: '⚠ Workers en masse', category: CAT,
+    id: 'fuzz.robust.workers', name: '⚠ Mass Workers', category: CAT,
     destructive: true,
     description: 'Classe : saturation de threads. Cree de nombreux Web Workers (via Blob) et leur envoie des messages. Peut epuiser les ressources du navigateur.',
     requires: ['platform.Worker'],
@@ -361,7 +361,7 @@
 
   // 12) Tableaux a trous extremes / length poisoning (acces, tri, iteration).
   R.register({
-    id: 'fuzz.robust.sparse', name: 'Tableaux a trous extremes', category: CAT,
+    id: 'fuzz.robust.sparse', name: 'Extreme sparse arrays', category: CAT,
     description: 'Classe : structures creuses degenerees. length enorme, trous massifs, tri/indexOf/iteration -> doit rester borne et coherent.',
     run: function (ctx) {
       var out = {};

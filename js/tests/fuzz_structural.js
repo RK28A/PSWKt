@@ -30,7 +30,7 @@
 
   // 1) JSON.stringify/parse sur imbrication profonde croissante : trouve le seuil de RangeError.
   F.resilience({
-    id: 'fuzz.struct.deep.json', name: 'JSON · imbrication profonde', category: CAT,
+    id: 'fuzz.struct.deep.json', name: 'JSON · deep nesting', category: CAT,
     description: 'stringify/parse sur profondeurs croissantes : soit OK, soit RangeError (pile) rattrapee.',
     build: function (ctx) {
       var inputs = [];
@@ -53,7 +53,7 @@
 
   // 2) Recursion profonde directe : mesure la profondeur de pile avant RangeError (documente).
   F.resilience({
-    id: 'fuzz.struct.recursion', name: 'Recursion · profondeur de pile', category: CAT,
+    id: 'fuzz.struct.recursion', name: 'Recursion · stack depth', category: CAT,
     description: 'Recursion auto-limitee : capture le RangeError de depassement de pile et rapporte la profondeur.',
     build: function (ctx) {
       return {
@@ -115,7 +115,7 @@
 
   // 4) Proxy a trappes hostiles : le moteur doit faire respecter les invariants (TypeError).
   F.resilience({
-    id: 'fuzz.struct.proxy.hostile', name: 'Proxy · trappes hostiles', category: CAT,
+    id: 'fuzz.struct.proxy.hostile', name: 'Proxy · hostile traps', category: CAT,
     description: 'Trappes qui levent, mentent ou violent les invariants : le moteur impose TypeError, jamais de plantage.',
     requires: ['objects.Proxy'],
     build: function (ctx) {
@@ -160,7 +160,7 @@
 
   // 5) Iterateurs piges : Symbol.iterator qui leve/ment, passes a from/spread/Map/Set.
   F.resilience({
-    id: 'fuzz.struct.iterator.hostile', name: 'Iterateurs hostiles', category: CAT,
+    id: 'fuzz.struct.iterator.hostile', name: 'Hostile iterators', category: CAT,
     description: 'next()/Symbol.iterator qui levent ou renvoient des objets invalides : erreur rattrapee, jamais de boucle folle.',
     requires: ['objects.Symbol'],
     build: function (ctx) {
@@ -208,7 +208,7 @@
 
   // 6) Map/Set avec cles pieges (NaN, -0, objets a hashCode-like) : invariants d identite.
   F.invariant({
-    id: 'fuzz.struct.mapset.keys', name: 'Map/Set · cles limites (invariant)', category: CAT,
+    id: 'fuzz.struct.mapset.keys', name: 'Map/Set · boundary keys (invariant)', category: CAT,
     description: 'SameValueZero : NaN est une cle unique egale a elle-meme, +0 et -0 coincident.',
     requires: ['objects.Map'],
     build: function (ctx) {
@@ -233,7 +233,7 @@
 
   // 7) Croissance degeneree bornee : objet a tres nombreuses cles / chaine geante (sous budget).
   F.resilience({
-    id: 'fuzz.struct.wide', name: 'Structures larges (bornees)', category: CAT,
+    id: 'fuzz.struct.wide', name: 'Wide structures (bounded)', category: CAT,
     description: 'Objet a N proprietes et chaine construite par doublement : respecte le budget, mesure le cout.',
     build: function (ctx) {
       var inputs = [

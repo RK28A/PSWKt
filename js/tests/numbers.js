@@ -12,7 +12,7 @@
   // 1) Precision flottante : le fameux 0.1 + 0.2.
   R.register({
     id: 'num.float.precision',
-    name: 'Precision IEEE-754 (0.1 + 0.2)',
+    name: 'IEEE-754 precision (0.1 + 0.2)',
     category: 'numbers',
     description: 'Documente l imprecision binaire attendue et son contournement.',
     requires: [],
@@ -35,7 +35,7 @@
   // 2) Entiers surs et perte de precision au-dela de 2^53.
   R.register({
     id: 'num.safe.integers',
-    name: 'Entiers surs (MAX_SAFE_INTEGER)',
+    name: 'Safe integers (MAX_SAFE_INTEGER)',
     category: 'numbers',
     description: 'Montre la perte de precision au-dela de 2^53-1.',
     requires: [],
@@ -116,7 +116,7 @@
   // 5) Conversions et operations bit a bit (32 bits).
   R.register({
     id: 'num.bitwise',
-    name: 'Operations bit a bit (32 bits)',
+    name: 'Bitwise operations (32-bit)',
     category: 'numbers',
     description: 'Verifie le comportement 32 bits signe des operateurs bit a bit.',
     requires: [],
@@ -139,7 +139,7 @@
   // 6) parseInt / parseFloat / Number : cas limites.
   R.register({
     id: 'num.parsing',
-    name: 'Analyse de nombres (parse)',
+    name: 'Number parsing',
     category: 'numbers',
     description: 'Documente parseInt/parseFloat/Number sur des entrees ambigues.',
     requires: [],

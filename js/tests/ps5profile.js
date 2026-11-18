@@ -12,7 +12,7 @@
   // 1) Decodage du User-Agent et extraction de la version WebKit.
   R.register({
     id: 'ps5.useragent',
-    name: 'User-Agent et version WebKit',
+    name: 'User-Agent and WebKit version',
     category: 'ps5',
     description: 'Extrait la version AppleWebKit et les indices PlayStation du UA.',
     requires: [],
@@ -75,7 +75,7 @@
   // 3) Ecran, HDR, gamut, densite de pixels.
   R.register({
     id: 'ps5.display',
-    name: 'Ecran, HDR et gamut',
+    name: 'Screen, HDR and gamut',
     category: 'ps5',
     description: 'Releve resolution, profondeur, dynamic-range et color-gamut via matchMedia.',
     requires: [],
@@ -107,7 +107,7 @@
   // 4) Resolution de l'horloge performance.now (precision temporelle reelle).
   R.register({
     id: 'ps5.clock.resolution',
-    name: 'Resolution de performance.now',
+    name: 'performance.now resolution',
     category: 'ps5',
     description: 'Mesure le plus petit increment non nul observable de l horloge.',
     requires: ['timing.performanceNow'],
@@ -169,7 +169,7 @@
   // 6) Quirks connus de WebKit : comportements historiques a verifier.
   R.register({
     id: 'ps5.webkit.quirks',
-    name: 'Quirks WebKit (comportements)',
+    name: 'WebKit quirks (behaviours)',
     category: 'ps5',
     description: 'Verifie quelques comportements specifiques historiquement variables sur WebKit.',
     requires: [],

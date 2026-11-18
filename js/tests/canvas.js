@@ -18,7 +18,7 @@
   // 1) Contexte 2D : dessin d'un rectangle et relecture du pixel central.
   R.register({
     id: 'canvas.fill.readback',
-    name: 'Remplissage 2D et relecture pixel',
+    name: '2D fill and pixel readback',
     category: 'canvas',
     description: 'Remplit un carre rouge opaque et verifie le pixel via getImageData.',
     requires: ['canvas.context2d'],
@@ -68,7 +68,7 @@
   // 3) ImageData : ecriture directe des octets puis putImageData/getImageData.
   R.register({
     id: 'canvas.imagedata.roundtrip',
-    name: 'ImageData aller-retour',
+    name: 'ImageData round-trip',
     category: 'canvas',
     description: 'Construit un motif en memoire, le pose, le relit, compare octet a octet.',
     requires: ['canvas.context2d', 'canvas.imageData'],
@@ -104,7 +104,7 @@
   // 4) Debit de remplissage (mesure de duree).
   R.register({
     id: 'canvas.fillrate',
-    name: 'Debit de remplissage 2D',
+    name: '2D fill throughput',
     category: 'canvas',
     description: 'Mesure le temps de N remplissages sur un canvas 256x256.',
     requires: ['canvas.context2d'],
@@ -131,7 +131,7 @@
   // 5) Sondage WebGL : rapporte le renderer sans dependre de sa presence.
   R.register({
     id: 'canvas.webgl.probe',
-    name: 'Sondage WebGL',
+    name: 'WebGL probe',
     category: 'canvas',
     description: 'Cree un contexte WebGL si possible et releve VENDOR/RENDERER/VERSION.',
     requires: [], // volontairement sans prerequis : on veut documenter l'absence aussi

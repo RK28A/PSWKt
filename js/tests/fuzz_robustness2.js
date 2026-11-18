@@ -12,7 +12,7 @@
 
   // 1) Intl.NumberFormat / toLocaleString avec options extremes -> RangeError rattrapee.
   reg({
-    id: 'fuzz.robust2.intl.extreme', name: 'Intl/toLocaleString options extremes',
+    id: 'fuzz.robust2.intl.extreme', name: 'Intl/toLocaleString extreme options',
     description: 'Classe : validation d options. Chiffres fractionnaires absurdes, devises inconnues -> RangeError rattrapee.',
     run: function (ctx) {
       var out = {};
@@ -31,7 +31,7 @@
 
   // 2) Dates aux frontieres de l'intervalle valide (+/- 8.64e15 ms).
   reg({
-    id: 'fuzz.robust2.date.bounds', name: 'Dates aux frontieres',
+    id: 'fuzz.robust2.date.bounds', name: 'Dates at the boundaries',
     description: 'Classe : limites temporelles. +/-8640000000000000 valide, +/-1 au-dela = Invalid Date.',
     run: function (ctx) {
       var MAX = 8640000000000000;
@@ -48,7 +48,7 @@
 
   // 3) String.repeat/padStart avec comptes enormes -> RangeError rattrapee (pas de plantage).
   reg({
-    id: 'fuzz.robust2.string.huge', name: 'String comptes enormes',
+    id: 'fuzz.robust2.string.huge', name: 'String huge counts',
     description: 'Classe : allocation refusee proprement. repeat/padStart demesures -> RangeError rattrapee.',
     run: function (ctx) {
       var out = {};
@@ -64,7 +64,7 @@
 
   // 4) Array.from avec iterateur qui leve en plein milieu.
   reg({
-    id: 'fuzz.robust2.iter.midthrow', name: 'Iterateur qui leve a mi-parcours',
+    id: 'fuzz.robust2.iter.midthrow', name: 'Iterator that throws midway',
     description: 'Classe : rappel hostile. L iterateur leve apres quelques valeurs -> erreur propre, pas de corruption.',
     requires: ['objects.Symbol'],
     run: function (ctx) {
@@ -80,7 +80,7 @@
 
   // 5) TextDecoder sur octets malformes (mode replacement vs fatal).
   reg({
-    id: 'fuzz.robust2.textdecoder', name: 'TextDecoder octets malformes',
+    id: 'fuzz.robust2.textdecoder', name: 'TextDecoder malformed bytes',
     description: 'Classe : decodage tolerant/strict. Sequences UTF-8 invalides -> U+FFFD ou TypeError (fatal).',
     requires: ['platform.TextDecoder'],
     run: function (ctx) {
@@ -95,7 +95,7 @@
 
   // 6) URL : analyse de chaines malformees.
   reg({
-    id: 'fuzz.robust2.url', name: 'URL malformees',
+    id: 'fuzz.robust2.url', name: 'Malformed URLs',
     description: 'Classe : parsing d URL. Chaines invalides -> TypeError rattrapee ou normalisation.',
     requires: [],
     run: function (ctx) {
@@ -115,7 +115,7 @@
 
   // 7) Object.defineProperty : descripteurs incoherents.
   reg({
-    id: 'fuzz.robust2.defineprop', name: 'defineProperty descripteurs incoherents',
+    id: 'fuzz.robust2.defineprop', name: 'defineProperty inconsistent descriptors',
     description: 'Classe : validation de descripteurs. data+accessor, redefinition non-configurable -> TypeError rattrapee.',
     run: function (ctx) {
       var out = {};
@@ -129,7 +129,7 @@
 
   // 8) Comparateur de tri hostile (NaN / incoherent / qui leve).
   reg({
-    id: 'fuzz.robust2.sort.comparator', name: 'Comparateur de tri hostile',
+    id: 'fuzz.robust2.sort.comparator', name: 'Hostile sort comparator',
     description: 'Classe : rappel hostile. Comparateurs renvoyant NaN, incoherents ou qui levent -> pas de corruption.',
     run: function (ctx) {
       var out = {};
@@ -145,7 +145,7 @@
 
   // 9) getter qui se supprime / se redefinit pendant l'acces.
   reg({
-    id: 'fuzz.robust2.getter.mutate', name: 'Getter qui mute pendant l acces',
+    id: 'fuzz.robust2.getter.mutate', name: 'Getter that mutates during access',
     description: 'Classe : effets de bord pendant acces. Un getter qui supprime/redefinit sa propre propriete.',
     run: function (ctx) {
       var out = {}; var calls = 0;
@@ -159,7 +159,7 @@
 
   // 10) parseInt/parseFloat sur numeriques exotiques.
   reg({
-    id: 'fuzz.robust2.parse.exotic', name: 'parseInt/parseFloat exotiques',
+    id: 'fuzz.robust2.parse.exotic', name: 'parseInt/parseFloat exotic inputs',
     description: 'Classe : coercition numerique. Entrees exotiques -> nombre (ou NaN), jamais d exception.',
     run: function (ctx) {
       var cand = ['  0x1F  ', '0b101', '0o17', '1e3', '1e', 'Infinity', '-0', '١٢٣', '½', '1,5', '1.2.3', '  +.5e+1  ', '0x', '.', '٠x1'];
@@ -176,7 +176,7 @@
 
   // 11) RegExp quantificateur enorme a la compilation.
   reg({
-    id: 'fuzz.robust2.regex.quant', name: 'RegExp quantificateur enorme',
+    id: 'fuzz.robust2.regex.quant', name: 'RegExp huge quantifier',
     description: 'Classe : compilation de regex. {0,1000000}, classes larges -> compile ou SyntaxError, pas de plantage.',
     run: function (ctx) {
       var pats = ['a{0,1000000}', 'a{1000000}', '(?:ab){0,500000}', '[\\u0000-\\uffff]{1,100000}', '(a|b|c|d){0,100000}'];
@@ -193,7 +193,7 @@
 
   // 12) structuredClone de types natifs varies.
   reg({
-    id: 'fuzz.robust2.clone.types', name: 'structuredClone types varies',
+    id: 'fuzz.robust2.clone.types', name: 'structuredClone of various types',
     description: 'Classe : couverture de serialisation. Clone Date/RegExp/Map/Set/TypedArray/ArrayBuffer/Blob/Error.',
     requires: ['objects.structuredClone'],
     run: function (ctx) {

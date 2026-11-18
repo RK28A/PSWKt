@@ -17,7 +17,7 @@
 
   // 1) JSON.parse sur chaines malformees : doit renvoyer ou lever (jamais planter).
   F.resilience({
-    id: 'fuzz.parse.json.malformed', name: 'JSON.parse (malforme)', category: CAT,
+    id: 'fuzz.parse.json.malformed', name: 'JSON.parse (malformed)', category: CAT,
     description: 'JSON invalide/tordu : attendu SyntaxError rattrapee, jamais de plantage.',
     build: function (ctx) {
       var seeds = ['{"a":1,"b":[1,2,3],"c":"x"}', '[1,2,3]', '{"k":{"n":[true,null,false]}}', '"txt"', '12345'];
@@ -42,7 +42,7 @@
 
   // 2) JSON invariant : parse(stringify(x)) reconstruit des valeurs structurees.
   F.invariant({
-    id: 'fuzz.parse.json.roundtrip', name: 'JSON aller-retour (invariant)', category: CAT,
+    id: 'fuzz.parse.json.roundtrip', name: 'JSON round-trip (invariant)', category: CAT,
     description: 'JSON.parse(JSON.stringify(x)) doit egaler x pour des structures serialisables.',
     build: function (ctx) {
       var rng = F.rngFrom(F.hashSeed('json-rt'));
@@ -74,7 +74,7 @@
 
   // 3) Number() et parseInt/parseFloat : ne doivent JAMAIS lever (contrat du moteur).
   F.resilience({
-    id: 'fuzz.parse.number', name: 'Number / parseInt / parseFloat (malforme)', category: CAT,
+    id: 'fuzz.parse.number', name: 'Number / parseInt / parseFloat (malformed)', category: CAT,
     description: 'Conversions numeriques : toujours un nombre (eventuellement NaN), jamais d exception.',
     build: function (ctx) {
       var strs = F.nastyStrings(ctx);
@@ -101,7 +101,7 @@
 
   // 4) Date : parsing de chaines bizarres (resultat valide OU Invalid Date, jamais d exception).
   F.resilience({
-    id: 'fuzz.parse.date', name: 'Date.parse / new Date (malforme)', category: CAT,
+    id: 'fuzz.parse.date', name: 'Date.parse / new Date (malformed)', category: CAT,
     description: 'Dates tordues : Invalid Date (NaN) attendu, jamais de plantage.',
     build: function (ctx) {
       var cand = ['2024-13-45', '0000-00-00', '2024-02-30T99:99:99', 'not a date', '2024-02-29',
@@ -126,7 +126,7 @@
 
   // 5) URI : encode/decode avec entrees illegales ; decode d'une sequence invalide -> URIError.
   F.resilience({
-    id: 'fuzz.parse.uri.decode', name: 'decodeURI(Component) (malforme)', category: CAT,
+    id: 'fuzz.parse.uri.decode', name: 'decodeURI(Component) (malformed)', category: CAT,
     description: 'Sequences %XX illegales : URIError rattrapee attendue, jamais de plantage.',
     build: function (ctx) {
       var cand = ['%', '%A', '%ZZ', '%E0%A4', '%C0%80', '%F8%88%80%80%80', '%ed%a0%80',
@@ -149,7 +149,7 @@
 
   // 6) URI invariant : decodeURIComponent(encodeURIComponent(x)) === x (aller-retour exact).
   F.invariant({
-    id: 'fuzz.parse.uri.roundtrip', name: 'URI aller-retour (invariant)', category: CAT,
+    id: 'fuzz.parse.uri.roundtrip', name: 'URI round-trip (invariant)', category: CAT,
     description: 'decodeURIComponent(encodeURIComponent(x)) doit redonner x, y compris Unicode.',
     build: function (ctx) {
       var rng = F.rngFrom(F.hashSeed('uri-rt'));
@@ -179,7 +179,7 @@
 
   // 7) RegExp : compilation de patterns aleatoires/malformes -> SyntaxError rattrapee.
   F.resilience({
-    id: 'fuzz.parse.regexp.compile', name: 'RegExp (compilation malformee)', category: CAT,
+    id: 'fuzz.parse.regexp.compile', name: 'RegExp (malformed compilation)', category: CAT,
     description: 'Construction de motifs tordus : SyntaxError rattrapee attendue, jamais de plantage.',
     build: function (ctx) {
       var rng = F.rngFrom(F.hashSeed('re-compile'));
@@ -207,7 +207,7 @@
   // 8) RegExp : backtracking (ReDoS) BORNE. Entree courte -> cout plafonne, on MESURE le temps.
   //    Non destructif : la chaine est volontairement tres courte pour rester sous l echeance.
   F.resilience({
-    id: 'fuzz.parse.regexp.backtrack', name: 'RegExp · backtracking borne', category: CAT,
+    id: 'fuzz.parse.regexp.backtrack', name: 'RegExp · bounded backtracking', category: CAT,
     description: 'Motifs a backtracking exponentiel sur entrees TRES courtes (<=16) : on mesure le cout, sans bloquer.',
     build: function (ctx) {
       var patterns = [/(a+)+$/, /(a|a)*$/, /(a*)*$/, /(.*a){1,}$/, /(a+)+b/];

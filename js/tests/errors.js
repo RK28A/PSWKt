@@ -40,7 +40,7 @@
   // 2) Types d'erreurs natifs : TypeError, RangeError, ReferenceError, SyntaxError.
   R.register({
     id: 'err.types',
-    name: 'Types d erreurs natifs',
+    name: 'Native error types',
     category: 'errors',
     description: 'Declenche et capture chaque type d erreur standard.',
     requires: [],
@@ -70,7 +70,7 @@
   // 3) Pile d'appels : presence et profondeur de error.stack.
   R.register({
     id: 'err.stack',
-    name: 'Pile d appels (error.stack)',
+    name: 'Call stack (error.stack)',
     category: 'errors',
     description: 'Verifie la presence de la pile et compte ses niveaux.',
     requires: [],
@@ -98,7 +98,7 @@
   // 4) Sous-classe d'erreur personnalisee et instanceof.
   R.register({
     id: 'err.custom',
-    name: 'Erreur personnalisee (sous-classe)',
+    name: 'Custom error (subclass)',
     category: 'errors',
     description: 'Cree une sous-classe d Error et verifie la chaine instanceof.',
     requires: [],
@@ -130,7 +130,7 @@
   // 5) Rejet de promesse capture (asynchrone, ne remonte pas en erreur globale).
   R.register({
     id: 'err.promise.reject',
-    name: 'Rejet de promesse capture',
+    name: 'Caught promise rejection',
     category: 'errors',
     description: 'Rejette une promesse et la rattrape proprement (test asynchrone).',
     requires: ['timing.Promise'],

@@ -14,7 +14,7 @@
   // 1) Lecture du tas JS (API non standard performance.memory).
   R.register({
     id: 'mem.heap.read',
-    name: 'Lecture du tas JS',
+    name: 'JS heap read',
     category: 'memory',
     description: 'Releve performance.memory si disponible (sinon ignore).',
     requires: ['timing.performanceMemory'],
@@ -38,7 +38,7 @@
   // 2) Pression memoire controlee : alloue puis libere, observe le tas si possible.
   R.register({
     id: 'mem.pressure.cycle',
-    name: 'Cycle allocation / liberation',
+    name: 'Allocation / release cycle',
     category: 'memory',
     description: 'Alloue des buffers sous budget, mesure le tas, libere, re-mesure.',
     requires: ['typedArrays.ArrayBuffer'],
@@ -98,7 +98,7 @@
   // 4) Fragmentation : alloue/libere en alternance, verifie l'absence de plantage.
   R.register({
     id: 'mem.churn',
-    name: 'Rotation d allocations (churn)',
+    name: 'Allocation churn',
     category: 'memory',
     description: 'Alloue et libere rapidement de petits buffers pour solliciter le GC.',
     requires: ['typedArrays.ArrayBuffer'],
@@ -131,7 +131,7 @@
   // 5) Grosse chaine : construction et mesure (allocation de chaines).
   R.register({
     id: 'mem.string.build',
-    name: 'Construction de grande chaine',
+    name: 'Large string building',
     category: 'memory',
     description: 'Construit une chaine de ~1M caracteres par jointure et mesure la duree.',
     requires: [],
