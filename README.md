@@ -11,7 +11,7 @@ Aucune dépendance, aucun build : des fichiers HTML/CSS/JS statiques.
 - **Détection d'environnement et de fonctionnalités** : vérifie ce qui est *réellement*
   disponible (tableaux typés, Canvas/WebGL, Proxy/Map/Set, WeakRef, `performance.memory`,
   WebAssembly…). Les tests dont un prérequis manque sont automatiquement **ignorés**.
-- **~1700 tests indépendants** répartis en **27 catégories**, avec des *techniques variées*
+- **~1800 tests indépendants** répartis en **27 catégories**, avec des *techniques variées*
   (synchrone, asynchrone/Promise, Web Worker, microtâches, `requestAnimationFrame`,
   sondage par `try/catch`, timing haute résolution, génération pilotée par données,
   **fuzzing d'entrées malformées** et **stress test agressif/destructif**).
@@ -224,6 +224,9 @@ js/tests/strings.js      numbers.js errors.js  async.js  platform.js  dom.js
 js/tests/_fuzz.js        infrastructure de fuzzing (PRNG semé, corpus malformés, fabriques)
 js/tests/fuzz_parsers.js fuzz_builtins.js fuzz_typedarrays.js fuzz_structural.js
 js/tests/webapis.js          sondes de présence : ~340 API Web (réseau, média, stockage, capteurs…)
+js/tests/media_more.js       sondes : codecs vidéo/audio supplémentaires + MediaSource (MSE)
+js/tests/webgl_more.js       sondes : extensions WebGL1/WebGL2 supplémentaires
+js/tests/behaviors2.js       comportements JS (2) : reduce/findLast/Object.is/generateurs/Promise…
 js/tests/natives_more.js     sondes : méthodes natives (TypedArray, DataView, Reflect, Intl, Promise…)
 js/tests/css_more.js         sondes : ~110 CSS modernes supplémentaires
 js/tests/syntax_more.js      sondes : ~40 constructions ECMAScript récentes
@@ -284,8 +287,8 @@ restent locales (IndexedDB) et s'exportent en JSON/TXT.
   partiel ; on relance manuellement).
 
 **Validation effectuée.** Contrôle de syntaxe de tous les scripts ; chargement de la page
-sans erreur console ; suite complète **~1700 tests / 27 catégories** verte (1609 réussis,
-83 ignorés, 0 échec, 0 erreur) ; persistance IndexedDB, historique, filtres, comparaison et
+sans erreur console ; suite complète **~1800 tests / 27 catégories** verte (1674 réussis,
+120 ignorés, 0 échec, 0 erreur) ; persistance IndexedDB, historique, filtres, comparaison et
 **bannière de crash au rechargement** validés en navigateur headless ; fonctionnement **sans
 PHP ni serveur Python** confirmé (chemin IndexedDB pur).
 
