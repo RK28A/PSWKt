@@ -1,24 +1,24 @@
 /*
- * PSWKT - Garde-fous de ressources
- * Fournit aux tests : une echeance (deadline), un budget memoire d'allocation,
- * un plafond d'iterations et un signal d'arret cooperatif.
+ * PSWKT - Resource guards
+ * Gives tests: a deadline, an allocation memory budget,
+ * an iteration cap and a cooperative abort signal.
  *
- * Important : JavaScript est mono-thread. Une boucle synchrone infinie ne peut PAS
- * etre interrompue de l'exterieur. Les tests doivent donc appeler ctx.tick()
- * regulierement pour respecter l'echeance et le signal d'arret.
+ * Important: JavaScript is single-threaded. An infinite synchronous loop CANNOT
+ * be interrupted from the outside. Tests must therefore call ctx.tick()
+ * regularly to honour the deadline and the abort signal.
  */
 (function (global) {
   'use strict';
   var PSWKT = global.PSWKT = global.PSWKT || {};
 
   var DEFAULTS = {
-    timeoutMs: 4000,          // echeance par test
-    memoryBudgetBytes: 64 * 1024 * 1024, // 64 Mo d'allocations cumulees max par test
-    maxIterations: 5000000,   // plafond dur d'iterations
+    timeoutMs: 4000,          // per-test deadline
+    memoryBudgetBytes: 64 * 1024 * 1024, // max 64 MB cumulative allocations per test
+    maxIterations: 5000000,   // hard iteration cap
     tickEveryMs: 50           // frequence de reddition de main a l'event loop (si chunke)
   };
 
-  // Erreur typee pour distinguer un arret volontaire d'une vraie erreur JS.
+  // Typed error to tell a deliberate abort apart from a real JS error.
   function AbortError(reason) {
     this.name = 'PSWKTAbort';
     this.message = reason || 'arret';
@@ -39,7 +39,7 @@
     this._abortReason = null;
   }
 
-  // Demande d'arret externe (bouton Stop).
+  // External abort request (Stop button).
   Budget.prototype.requestAbort = function (reason) {
     this._aborted = true;
     this._abortReason = reason || 'user request';
@@ -53,7 +53,7 @@
     return Math.max(0, this.deadline - PSWKT.now());
   };
 
-  // Enregistre une intention d'allocation ; renvoie false si le budget est depasse.
+  // Records an allocation intent; returns false if the budget is exceeded.
   Budget.prototype.charge = function (bytes) {
     this.allocatedBytes += bytes;
     return this.allocatedBytes <= this.memoryBudgetBytes;
@@ -64,9 +64,9 @@
   };
 
   /*
-   * tick() : a appeler dans les boucles. Compte une iteration et verifie
-   * l'arret, l'echeance et le plafond d'iterations. Leve AbortError le cas echeant.
-   * Renvoie le nombre d'iterations courant.
+   * tick(): call inside loops. Counts an iteration and checks
+   * the abort, the deadline and the iteration cap. Throws AbortError if needed.
+   * Returns the current iteration count.
    */
   Budget.prototype.tick = function (step) {
     this.iterations += (step || 1);
@@ -93,7 +93,7 @@
     };
   };
 
-  // Enveloppe une Promise avec un delai maximal (pour les tests asynchrones :
+  // Wraps a Promise with a maximum delay (for asynchronous tests:
   // workers, crypto, timers...). Rejette avec AbortError si le delai expire.
   function withTimeout(promise, ms, label) {
     return new Promise(function (resolve, reject) {
@@ -117,12 +117,12 @@
     });
   }
 
-  // Attend ms millisecondes (pour mesurer la derive des timers).
+  // Waits ms milliseconds (to measure timer drift).
   function delay(ms) {
     return new Promise(function (resolve) { global.setTimeout(resolve, ms); });
   }
 
-  // Rend la main a l'event loop (laisse l'UI respirer et le bouton Stop agir).
+  // Yields to the event loop (lets the UI breathe and the Stop button act).
   function yieldToEventLoop() {
     return new Promise(function (resolve) {
       if (typeof global.setTimeout === 'function') {
@@ -133,7 +133,7 @@
     });
   }
 
-  // Lit la memoire JS si l'API non standard est disponible (Chrome/anciens WebKit).
+  // Reads JS memory if the non-standard API is available (Chrome/old WebKit).
   function readHeap() {
     try {
       if (global.performance && global.performance.memory) {
