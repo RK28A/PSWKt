@@ -112,6 +112,7 @@ button.primary.mini { background: var(--accent); }
 .cat-desc { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
 .cat-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .cat-tests { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; }
+.cat-tests.collapsed { display: none; }
 .test-line { display: flex; align-items: center; gap: 8px; justify-content: space-between; padding: 4px 0; border-top: 1px dashed var(--border); }
 .test-row { display: flex; align-items: baseline; gap: 10px; flex: 1; cursor: pointer; }
 .test-row input { transform: translateY(2px); }

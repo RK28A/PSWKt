@@ -10,9 +10,11 @@ HTML/CSS/JS statiques.
 - **Détection d'environnement et de fonctionnalités** : vérifie ce qui est *réellement*
   disponible (tableaux typés, Canvas/WebGL, Proxy/Map/Set, WeakRef, `performance.memory`,
   WebAssembly…). Les tests dont un prérequis manque sont automatiquement **ignorés**.
-- **55 tests indépendants** répartis en **10 catégories**, avec des *techniques variées*
+- **860+ tests indépendants** répartis en **19 catégories**, avec des *techniques variées*
   (synchrone, asynchrone/Promise, Web Worker, microtâches, `requestAnimationFrame`,
-  sondage par `try/catch`, timing haute résolution) :
+  sondage par `try/catch`, timing haute résolution, génération pilotée par données).
+
+  Catégories comportementales (exercent réellement l'API) :
   - `Tableaux typés` — aller-retour par type, DataView/endianness, vues partagées,
     accès hors limites, allocation progressive sous budget, débit séquentiel.
   - `Canvas & graphismes` — remplissage + relecture de pixels, composition alpha,
@@ -33,6 +35,19 @@ HTML/CSS/JS statiques.
     `crypto.getRandomValues`, SHA-256 (`crypto.subtle`), localStorage, Intl.
   - `DOM` — DocumentFragment par lot, sélecteurs CSS, classList/dataset,
     événements synthétiques, MutationObserver.
+  - `Profil PS5 / WebKit` — version WebKit, GPU démasqué, écran/HDR/gamut,
+    résolution de `performance.now`, capacités `navigator`, quirks WebKit.
+
+  Catégories de **sondes massives** (cartographie du support, non destructif —
+  réussi = supporté, ignoré = absent), générées par tables de données :
+  - `Natifs JS (méthodes)` — ~230 membres de Array/String/Object/Math/Date/JSON/…
+  - `Objets globaux & API Web` — ~110 constructeurs et API exposés.
+  - `CSS (CSS.supports)` — ~115 propriétés/valeurs modernes (grid, oklch, :has()…).
+  - `Canvas 2D (API)` — ~55 membres du contexte 2D.
+  - `WebGL (capacités)` — extensions + limites matérielles du GPU.
+  - `Média & codecs` — matrice `canPlayType` audio/vidéo (AVC, HEVC, AV1, VP9, Opus…).
+  - `Entrées & manette` — Gamepad/DualSense, pointeur, clavier, plein écran, vibration.
+  - `Syntaxe ECMAScript` — ~45 constructions du langage (classes, `?.`, `??=`, champs privés…).
 - **Journal en direct, copiable** : chaque test écrit son début, ses sous-étapes, ses
   **mesures**, l'évolution du tas et sa fin ; les erreurs JS globales y figurent aussi.
   Boutons **Copier le journal** (presse-papiers + zone sélectionnable) et

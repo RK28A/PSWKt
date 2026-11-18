@@ -140,9 +140,10 @@
     var heapBefore = PSWKT.guard.readHeap();
     var started = PSWKT.now();
 
-    logger.info(test.id, 'Debut : ' + test.name);
+    if (!test.quiet) logger.info(test.id, 'Debut : ' + test.name);
 
-    return PSWKT.guard.yieldToEventLoop()
+    // Microtache (pas de macrotache forcee) : la suite gere la reddition periodique.
+    return Promise.resolve()
       .then(function () {
         return test.run(ctx); // peut etre sync ou retourner une Promise
       })
@@ -161,10 +162,10 @@
           heap: { before: heapBefore, after: heapAfter },
           error: null
         };
-        if (record.measurements) {
+        if (!test.quiet && record.measurements) {
           logger.log('metric', test.id, 'mesures', record.measurements);
         }
-        if (record.heap && record.heap.before && record.heap.after) {
+        if (!test.quiet && record.heap && record.heap.before && record.heap.after) {
           logger.log('metric', test.id, 'tas JS (Mo)', {
             avant: Math.round(record.heap.before.usedJSHeapSize / 1048576 * 100) / 100,
             apres: Math.round(record.heap.after.usedJSHeapSize / 1048576 * 100) / 100
@@ -216,6 +217,7 @@
 
     options.registerBudget = function (b) { control.currentBudget = b; };
 
+    var lastYield = PSWKT.now();
     function step() {
       if (i >= tests.length || control.aborted) {
         return Promise.resolve();
@@ -227,8 +229,14 @@
         if (typeof options.onProgress === 'function') {
           try { options.onProgress(i, tests.length, record); } catch (e) { /* UI ne doit pas casser la suite */ }
         }
-        // Rend la main avant le test suivant : l'UI se met a jour, Stop peut agir.
-        return PSWKT.guard.yieldToEventLoop().then(step);
+        // Reddition de main a l'event loop seulement toutes les ~30 ms : l'UI se met
+        // a jour et Stop peut agir, sans payer une macrotache par test (centaines de tests).
+        var nowT = PSWKT.now();
+        if (nowT - lastYield > 30) {
+          lastYield = nowT;
+          return PSWKT.guard.yieldToEventLoop().then(step);
+        }
+        return Promise.resolve().then(step);
       });
     }
 

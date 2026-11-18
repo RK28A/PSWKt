@@ -99,7 +99,10 @@
     for (var i = 0; i < cats.length; i++) {
       (function (cat) {
         var tests = R.listTests(cat.id);
-        var body = el('div', { class: 'cat-tests' });
+        // Grandes categories (sondes) : pas de bouton par test ni d'affichage deplie,
+        // pour eviter des milliers de noeuds DOM sur la console.
+        var bulky = tests.length > 25;
+        var body = el('div', { class: 'cat-tests' + (bulky ? ' collapsed' : '') });
         for (var j = 0; j < tests.length; j++) {
           (function (t) {
             var cb = el('input', { type: 'checkbox', id: 'cb-' + t.id, checked: 'checked' });
@@ -110,13 +113,16 @@
               el('span', { class: 'test-name', text: t.name }),
               el('span', { class: 'test-desc', text: t.description })
             ]);
-            var runBtn = el('button', { class: 'mini', type: 'button', text: 'Lancer', title: 'Lancer ce test seul' });
-            runBtn.onclick = function (ev) {
-              ev.preventDefault();
-              if (!state.running) runTests([t], 'test « ' + t.name + ' »');
-            };
-            var wrap = el('div', { class: 'test-line' }, [row, runBtn]);
-            body.appendChild(wrap);
+            var children = [row];
+            if (!bulky) {
+              var runBtn = el('button', { class: 'mini', type: 'button', text: 'Lancer', title: 'Lancer ce test seul' });
+              runBtn.onclick = function (ev) {
+                ev.preventDefault();
+                if (!state.running) runTests([t], 'test « ' + t.name + ' »');
+              };
+              children.push(runBtn);
+            }
+            body.appendChild(el('div', { class: 'test-line' }, children));
           })(tests[j]);
         }
 
@@ -129,13 +135,24 @@
           if (!state.running) runTests(R.listTests(cat.id), 'categorie « ' + cat.label + ' »');
         };
 
+        var actions = [selectAll, selectNone, runCat];
+        if (bulky) {
+          var toggle = el('button', { class: 'mini ghost', type: 'button', text: 'Afficher (' + tests.length + ')' });
+          toggle.onclick = function () {
+            var hidden = body.className.indexOf('collapsed') !== -1;
+            body.className = 'cat-tests' + (hidden ? '' : ' collapsed');
+            toggle.textContent = hidden ? 'Masquer' : ('Afficher (' + tests.length + ')');
+          };
+          actions.unshift(toggle);
+        }
+
         var card = el('section', { class: 'cat-card', 'data-cat': cat.id }, [
           el('header', { class: 'cat-head' }, [
             el('div', {}, [
               el('h3', { text: cat.label }),
               el('p', { class: 'cat-desc', text: cat.description + ' (' + cat.count + ' tests)' })
             ]),
-            el('div', { class: 'cat-actions' }, [selectAll, selectNone, runCat])
+            el('div', { class: 'cat-actions' }, actions)
           ]),
           body
         ]);
