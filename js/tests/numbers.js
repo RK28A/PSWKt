@@ -7,7 +7,7 @@
   var PSWKT = global.PSWKT;
   var R = PSWKT.runner;
 
-  R.defineCategory('numbers', 'Nombres & arithmetique', 'Precision IEEE-754, entiers surs, BigInt, Math, conversions.');
+  R.defineCategory('numbers', 'Numbers & arithmetic', 'IEEE-754 precision, safe integers, BigInt, Math, conversions.');
 
   // 1) Precision flottante : le fameux 0.1 + 0.2.
   R.register({

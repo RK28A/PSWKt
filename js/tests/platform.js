@@ -9,7 +9,7 @@
   var R = PSWKT.runner;
   var G = PSWKT.guard;
 
-  R.defineCategory('platform', 'Plateforme & API', 'Web Worker, WebAssembly, crypto, localStorage, Intl.');
+  R.defineCategory('platform', 'Platform & APIs', 'Web Worker, WebAssembly, crypto, localStorage, Intl.');
 
   // 1) Web Worker : cree via Blob, aller-retour de message.
   R.register({

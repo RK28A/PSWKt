@@ -8,7 +8,7 @@
   var PSWKT = global.PSWKT;
   var R = PSWKT.runner;
 
-  R.defineCategory('strings', 'Chaines & texte', 'Unicode, normalisation, regex, encodage, base64, debit de construction.');
+  R.defineCategory('strings', 'Strings & text', 'Unicode, normalization, regex, encoding, base64, build throughput.');
 
   // 1) Unicode : points de code hors BMP (emoji), surrogate pairs.
   R.register({

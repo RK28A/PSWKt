@@ -10,7 +10,7 @@
   var R = PSWKT.runner;
   var G = PSWKT.guard;
 
-  R.defineCategory('dom', 'DOM', 'Creation d elements, DocumentFragment, selecteurs, evenements, observers.');
+  R.defineCategory('dom', 'DOM', 'Element creation, DocumentFragment, selectors, events, observers.');
 
   function detachedHost() {
     var d = document.createElement('div'); // jamais insere dans le document visible

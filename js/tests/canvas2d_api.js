@@ -8,7 +8,7 @@
   var R = PSWKT.runner;
   var F = PSWKT.factory;
 
-  R.defineCategory('canvas2d', 'Canvas 2D (API)', 'Presence des methodes et proprietes du contexte 2D.');
+  R.defineCategory('canvas2d', 'Canvas 2D (API)', 'Presence of 2D context methods and properties.');
 
   var MEMBERS = [
     // Etat

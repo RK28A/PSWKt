@@ -10,8 +10,8 @@
   var F = PSWKT.fuzz;
   var R = PSWKT.runner;
 
-  R.defineCategory('fuzz_builtins', 'Fuzz · natifs JS',
-    'String/Array/Object/Math nourris d arguments malformes et d objets-pieges (coercition).');
+  R.defineCategory('fuzz_builtins', 'Fuzz \u00b7 JS builtins',
+    'String/Array/Object/Math fed malformed arguments and trap objects (coercion).');
 
   var CAT = 'fuzz_builtins';
 

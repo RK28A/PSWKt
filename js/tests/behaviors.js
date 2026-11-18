@@ -8,7 +8,7 @@
   var PSWKT = global.PSWKT;
   var R = PSWKT.runner;
 
-  R.defineCategory('behaviors', 'Comportements JS', 'Verifications de correction : tableaux, chaines, nombres, dates, async, objets.');
+  R.defineCategory('behaviors', 'JS behaviours', 'Correctness checks: arrays, strings, numbers, dates, async, objects.');
 
   function T(id, name, requires, fn) {
     R.register({ id: 'beh.' + id, name: name, category: 'behaviors', requires: requires || [], run: fn });

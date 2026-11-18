@@ -8,7 +8,7 @@
   var R = PSWKT.runner;
   var F = PSWKT.factory;
 
-  R.defineCategory('globals', 'Objets globaux & API Web', 'Presence des constructeurs et API exposes par le navigateur.');
+  R.defineCategory('globals', 'Global objects & Web APIs', 'Presence of constructors and APIs exposed by the browser.');
 
   var NAMES = [
     // Types fondamentaux et collections

@@ -7,7 +7,7 @@
   var PSWKT = global.PSWKT;
   var R = PSWKT.runner;
 
-  R.defineCategory('typedarrays', 'Tableaux types', 'ArrayBuffer, vues typees, DataView, allocations.');
+  R.defineCategory('typedarrays', 'Typed arrays', 'ArrayBuffer, typed views, DataView, allocations.');
 
   // 1) Aller-retour ecriture/lecture sur chaque type disponible.
   R.register({

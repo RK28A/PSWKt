@@ -11,8 +11,8 @@
   var F = PSWKT.fuzz;
   var R = PSWKT.runner;
 
-  R.defineCategory('fuzz_structural', 'Fuzz · structures & pieges',
-    'Imbrication profonde, cycles, Proxy hostiles, structuredClone, iterateurs piges (borne).');
+  R.defineCategory('fuzz_structural', 'Fuzz \u00b7 structures & traps',
+    'Deep nesting, cycles, hostile Proxy, structuredClone, trapped iterators (bounded).');
 
   var CAT = 'fuzz_structural';
 

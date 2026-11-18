@@ -9,7 +9,7 @@
   var PSWKT = global.PSWKT;
   var R = PSWKT.runner;
 
-  R.defineCategory('memory', 'Allocations & memoire', 'Pression memoire controlee, liberation, WeakRef, mesure du tas.');
+  R.defineCategory('memory', 'Allocations & memory', 'Controlled memory pressure, release, WeakRef, heap measurement.');
 
   // 1) Lecture du tas JS (API non standard performance.memory).
   R.register({

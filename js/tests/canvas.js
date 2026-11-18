@@ -7,7 +7,7 @@
   var PSWKT = global.PSWKT;
   var R = PSWKT.runner;
 
-  R.defineCategory('canvas', 'Canvas & graphismes', 'Contexte 2D, ImageData, operations de pixels, sondage WebGL.');
+  R.defineCategory('canvas', 'Canvas & graphics', '2D context, ImageData, pixel operations, WebGL probe.');
 
   function makeCanvas(w, h) {
     var c = document.createElement('canvas');

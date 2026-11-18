@@ -9,7 +9,7 @@
   var R = PSWKT.runner;
   var F = PSWKT.factory;
 
-  R.defineCategory('builtins', 'Natifs JS (methodes)', 'Presence des methodes/proprietes natives : Array, String, Object, Math, Date, etc.');
+  R.defineCategory('builtins', 'JS builtins (methods)', 'Presence of native methods/properties: Array, String, Object, Math, Date, etc.');
 
   // table : { base: 'chemin', prefix: 'id', members: [...] }
   var TABLES = [

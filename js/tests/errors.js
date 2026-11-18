@@ -8,7 +8,7 @@
   var PSWKT = global.PSWKT;
   var R = PSWKT.runner;
 
-  R.defineCategory('errors', 'Erreurs & exceptions', 'try/catch/finally, types d erreurs, pile d appels, rejets de promesses (captures).');
+  R.defineCategory('errors', 'Errors & exceptions', 'try/catch/finally, error types, call stack, promise rejections (caught).');
 
   // 1) try / catch / finally : ordre d'execution.
   R.register({

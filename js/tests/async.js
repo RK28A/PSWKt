@@ -10,7 +10,7 @@
   var R = PSWKT.runner;
   var G = PSWKT.guard;
 
-  R.defineCategory('async', 'Asynchronisme', 'Microtaches vs macrotaches, timers, rAF, async/await, Promise.all.');
+  R.defineCategory('async', 'Asynchrony', 'Microtasks vs macrotasks, timers, rAF, async/await, Promise.all.');
 
   // 1) Ordre d'execution : synchrone -> microtaches (Promise) -> macrotaches (setTimeout).
   R.register({

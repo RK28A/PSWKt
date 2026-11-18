@@ -42,7 +42,7 @@
   // Demande d'arret externe (bouton Stop).
   Budget.prototype.requestAbort = function (reason) {
     this._aborted = true;
-    this._abortReason = reason || 'demande utilisateur';
+    this._abortReason = reason || 'user request';
   };
 
   Budget.prototype.isExpired = function () {
@@ -71,13 +71,13 @@
   Budget.prototype.tick = function (step) {
     this.iterations += (step || 1);
     if (this._aborted) {
-      throw new AbortError('arret : ' + (this._abortReason || 'inconnu'));
+      throw new AbortError('abort: ' + (this._abortReason || 'unknown'));
     }
     if (this.iterations > this.maxIterations) {
-      throw new AbortError('plafond d iterations atteint (' + this.maxIterations + ')');
+      throw new AbortError('iteration cap reached (' + this.maxIterations + ')');
     }
     if (this.isExpired()) {
-      throw new AbortError('echeance depassee (' + this.timeoutMs + ' ms)');
+      throw new AbortError('deadline exceeded (' + this.timeoutMs + ' ms)');
     }
     return this.iterations;
   };
@@ -101,7 +101,7 @@
       var timer = global.setTimeout(function () {
         if (settled) return;
         settled = true;
-        reject(new AbortError('delai asynchrone depasse' + (label ? ' (' + label + ')' : '') + ' apres ' + ms + ' ms'));
+        reject(new AbortError('async deadline exceeded' + (label ? ' (' + label + ')' : '') + ' after ' + ms + ' ms'));
       }, ms);
       Promise.resolve(promise).then(function (v) {
         if (settled) return;

@@ -30,7 +30,7 @@
   }
   function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
 
-  // --- Etat applicatif ---
+  // --- Application state ---
   var state = {
     control: null,
     running: false,
@@ -39,7 +39,24 @@
     compareSel: {}
   };
 
-  // --- Rendu : environnement et fonctionnalites (tolerant aux elements absents) ---
+  // --- Tab navigation (single page, real tabs) ---
+  function switchTab(name) {
+    var tabs = document.querySelectorAll('.tab');
+    for (var i = 0; i < tabs.length; i++) {
+      var active = tabs[i].getAttribute('data-tab') === name;
+      tabs[i].className = 'tab' + (active ? ' is-active' : '');
+      tabs[i].setAttribute('aria-selected', active ? 'true' : 'false');
+    }
+    var panels = document.querySelectorAll('.tabpanel');
+    for (var j = 0; j < panels.length; j++) {
+      var show = panels[j].id === 'panel-' + name;
+      if (show) { panels[j].hidden = false; panels[j].className = 'tabpanel is-active'; }
+      else { panels[j].hidden = true; panels[j].className = 'tabpanel'; }
+    }
+    try { if (window.scrollTo) window.scrollTo(0, 0); } catch (e) {}
+  }
+
+  // --- Rendu: environment + features (tolerant to missing elements) ---
   function renderEnvironment() {
     var rep = PSWKT.features.report();
     var env = rep.environment;
@@ -49,12 +66,12 @@
       clear(envBox);
       var rows = [
         ['User-Agent', env.userAgent],
-        ['Plateforme', env.platform],
-        ['Langue', env.language],
-        ['Coeurs logiques', env.hardwareConcurrency],
-        ['Memoire (GB)', env.deviceMemoryGB],
-        ['Ecran', env.screen.width + ' x ' + env.screen.height + ' @' + env.screen.pixelRatio],
-        ['Fenetre', env.viewport.innerWidth + ' x ' + env.viewport.innerHeight]
+        ['Platform', env.platform],
+        ['Language', env.language],
+        ['Logical cores', env.hardwareConcurrency],
+        ['Memory (GB)', env.deviceMemoryGB],
+        ['Screen', env.screen.width + ' x ' + env.screen.height + ' @' + env.screen.pixelRatio],
+        ['Window', env.viewport.innerWidth + ' x ' + env.viewport.innerHeight]
       ];
       for (var i = 0; i < rows.length; i++) {
         envBox.appendChild(el('div', { class: 'kv' }, [
@@ -64,16 +81,19 @@
       }
     }
 
+    var nTests = R.listTests().length, nCats = R.listCategories().length;
     var hint = $('ps-hint');
     if (hint) {
       clear(hint);
       if (rep.playstation.likelyPlaystation) {
-        hint.appendChild(el('span', { class: 'badge badge-ps', text: 'PlayStation detectee' }));
+        hint.appendChild(el('span', { class: 'badge badge-ps', text: 'PlayStation detected' }));
       } else {
-        hint.appendChild(el('span', { class: 'badge badge-neutral', text: 'PlayStation non detectee' }));
+        hint.appendChild(el('span', { class: 'badge badge-neutral', text: 'PlayStation not detected' }));
       }
-      hint.appendChild(el('span', { class: 'env-ua', text: ' ' + env.platform + ' · ' + R.listTests().length + ' tests / ' + R.listCategories().length + ' categories' }));
+      hint.appendChild(el('span', { class: 'env-ua', text: '  ' + env.platform + ' · ' + nTests + ' tests / ' + nCats + ' categories' }));
     }
+    var stats = $('brand-stats');
+    if (stats) stats.textContent = nTests + ' tests · ' + nCats + ' categories';
 
     var grid = $('feature-grid');
     if (grid) {
@@ -96,75 +116,76 @@
     }
   }
 
-  // --- Rendu : categories et tests ---
+  // --- Categories & tests (collapsible, collapsed by default, lazy bodies) ---
+  // Bodies are built only when a category is first expanded: keeps the initial
+  // DOM tiny (just headers), which matters a lot on the PS5 browser.
+  function buildCatBody(cat, body) {
+    if (body.getAttribute('data-built')) return;
+    var tests = R.listTests(cat.id);
+    var bulky = tests.length > 25; // for huge probe lists, skip per-test run buttons
+    var actions = el('div', { class: 'cat-actions' }, [
+      mkMini('Check all', function () { toggleCategory(cat.id, true); }),
+      mkMini('Uncheck all', function () { toggleCategory(cat.id, false); }),
+      (function () { var b = el('button', { class: 'btn mini primary', type: 'button', text: 'Run category' }); b.onclick = function () { if (!state.running) runTests(R.listTests(cat.id), 'category: ' + cat.label); }; return b; })()
+    ]);
+    body.appendChild(actions);
+    var list = el('div', { class: 'cat-list' });
+    for (var j = 0; j < tests.length; j++) {
+      (function (t) {
+        var cb = el('input', { type: 'checkbox', id: 'cb-' + t.id });
+        cb.checked = true; cb.setAttribute('data-test', t.id);
+        var row = el('label', { class: 'test-row', 'for': 'cb-' + t.id }, [
+          cb,
+          el('span', { class: 'test-name', text: t.name + (t.destructive ? ' ⚠' : '') }),
+          el('span', { class: 'test-desc', text: t.description || '' })
+        ]);
+        var children = [row];
+        if (!bulky) {
+          var runBtn = el('button', { class: 'btn mini', type: 'button', text: 'Run', title: 'Run this test alone' });
+          runBtn.onclick = function (ev) { ev.preventDefault(); if (!state.running) runTests([t], 'test: ' + t.name); };
+          children.push(runBtn);
+        }
+        list.appendChild(el('div', { class: 'test-line' }, children));
+      })(tests[j]);
+    }
+    body.appendChild(list);
+    body.setAttribute('data-built', '1');
+  }
+
   function renderCatalog() {
     var container = $('categories');
-    if (!container) return; // page sans catalogue (accueil)
+    if (!container) return;
     var cats = R.listCategories();
     clear(container);
-
     for (var i = 0; i < cats.length; i++) {
       (function (cat) {
-        var tests = R.listTests(cat.id);
-        // Grandes categories (sondes) : pas de bouton par test ni d'affichage deplie,
-        // pour eviter des milliers de noeuds DOM sur la console.
-        var bulky = tests.length > 25;
-        var body = el('div', { class: 'cat-tests' + (bulky ? ' collapsed' : '') });
-        for (var j = 0; j < tests.length; j++) {
-          (function (t) {
-            var cb = el('input', { type: 'checkbox', id: 'cb-' + t.id, checked: 'checked' });
-            cb.checked = true;
-            cb.setAttribute('data-test', t.id);
-            var row = el('label', { class: 'test-row', 'for': 'cb-' + t.id }, [
-              cb,
-              el('span', { class: 'test-name', text: t.name }),
-              el('span', { class: 'test-desc', text: t.description })
-            ]);
-            var children = [row];
-            if (!bulky) {
-              var runBtn = el('button', { class: 'mini', type: 'button', text: 'Lancer', title: 'Lancer ce test seul' });
-              runBtn.onclick = function (ev) {
-                ev.preventDefault();
-                if (!state.running) runTests([t], 'test « ' + t.name + ' »');
-              };
-              children.push(runBtn);
-            }
-            body.appendChild(el('div', { class: 'test-line' }, children));
-          })(tests[j]);
-        }
-
-        var selectAll = el('button', { class: 'mini ghost', type: 'button', text: 'Tout cocher' });
-        selectAll.onclick = function () { toggleCategory(cat.id, true); };
-        var selectNone = el('button', { class: 'mini ghost', type: 'button', text: 'Tout decocher' });
-        selectNone.onclick = function () { toggleCategory(cat.id, false); };
-        var runCat = el('button', { class: 'mini primary', type: 'button', text: 'Lancer la categorie' });
-        runCat.onclick = function () {
-          if (!state.running) runTests(R.listTests(cat.id), 'categorie « ' + cat.label + ' »');
-        };
-
-        var actions = [selectAll, selectNone, runCat];
-        if (bulky) {
-          var toggle = el('button', { class: 'mini ghost', type: 'button', text: 'Afficher (' + tests.length + ')' });
-          toggle.onclick = function () {
-            var hidden = body.className.indexOf('collapsed') !== -1;
-            body.className = 'cat-tests' + (hidden ? '' : ' collapsed');
-            toggle.textContent = hidden ? 'Masquer' : ('Afficher (' + tests.length + ')');
-          };
-          actions.unshift(toggle);
-        }
-
-        var card = el('section', { class: 'cat-card', 'data-cat': cat.id }, [
-          el('header', { class: 'cat-head' }, [
-            el('div', {}, [
-              el('h3', { text: cat.label }),
-              el('p', { class: 'cat-desc', text: cat.description + ' (' + cat.count + ' tests)' })
-            ]),
-            el('div', { class: 'cat-actions' }, actions)
+        var body = el('div', { class: 'cat-tests collapsed' });
+        var head = el('button', { class: 'cat-head', type: 'button' }, [
+          el('span', { class: 'cat-caret', text: '▶' }),
+          el('span', { class: 'cat-title' }, [
+            el('h3', { text: cat.label + (/aggressive|agressif|AGRESSIF/.test(cat.label) ? '' : '') }),
+            el('p', { class: 'cat-desc', text: cat.description || '' })
           ]),
-          body
+          el('span', { class: 'cat-count', text: cat.count + ' tests' })
         ]);
+        var card = el('section', { class: 'cat-card', 'data-cat': cat.id }, [head, body]);
+        head.onclick = function () {
+          var open = card.className.indexOf('open') === -1;
+          if (open) buildCatBody(cat, body);
+          card.className = 'cat-card' + (open ? ' open' : '');
+          body.className = 'cat-tests' + (open ? '' : ' collapsed');
+        };
         container.appendChild(card);
       })(cats[i]);
+    }
+  }
+  function setAllCategoriesOpen(open) {
+    var cards = document.querySelectorAll('#categories .cat-card');
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i], body = card.querySelector('.cat-tests');
+      if (open) { var catId = card.getAttribute('data-cat'); buildCatBody({ id: catId, label: catId }, body); }
+      card.className = 'cat-card' + (open ? ' open' : '');
+      if (body) body.className = 'cat-tests' + (open ? '' : ' collapsed');
     }
   }
 
@@ -191,7 +212,7 @@
     for (var i = 0; i < all.length; i++) { var cb = $('cb-' + all[i].id); if (cb) cb.checked = value; }
   }
 
-  // --- Liste des tests agressifs/destructifs (page d'accueil) ---
+  // --- Aggressive/destructive test list (dashboard) ---
   function destructiveTests() {
     return R.listTests().filter(function (t) { return t.destructive; });
   }
@@ -201,10 +222,10 @@
     var tests = destructiveTests();
     clear(box);
     box.appendChild(el('p', { class: 'muted small', text:
-      '⚠ Ces tests peuvent figer ou planter le navigateur (la PS5 redemarre). Coche seulement ceux que tu veux lancer — decoche par defaut.' }));
+      '⚠ These tests may freeze or crash the browser (the console then restarts). Tick only the ones you want to run — all unchecked by default.' }));
     var tools = el('div', { class: 'aggr-tools' }, [
-      mkMini('Tout cocher', function () { setAggrChecks(true); }),
-      mkMini('Tout decocher', function () { setAggrChecks(false); })
+      mkMini('Check all', function () { setAggrChecks(true); }),
+      mkMini('Uncheck all', function () { setAggrChecks(false); })
     ]);
     box.appendChild(tools);
     for (var i = 0; i < tests.length; i++) {
@@ -267,16 +288,16 @@
   function resetResults() {
     if ($('results')) clear($('results'));
     if ($('summary')) clear($('summary'));
-    setProgress(0, 1, 'pret');
+    setProgress(0, 1, 'ready');
   }
 
   function statusLabel(status) {
-    var map = { pass: 'REUSSI', fail: 'ECHEC', skip: 'IGNORE', error: 'ERREUR', aborted: 'ARRETE' };
+    var map = { pass: 'PASS', fail: 'FAIL', skip: 'SKIP', error: 'ERROR', aborted: 'ABORTED' };
     return map[status] || status;
   }
 
   // Barre d'annotation par resultat : etiquette rapide + note libre, incluse dans l'export.
-  var ANNOT_TAGS = ['OK', 'Lent', 'Fige', 'Recharge', 'Autre'];
+  var ANNOT_TAGS = ['OK', 'Slow', 'Froze', 'Reloaded', 'Other'];
   function buildAnnotationBar(testId, testName) {
     var current = PSWKT.annotations[testId] || { tag: '', note: '' };
     var bar = el('div', { class: 'annot' });
@@ -299,7 +320,7 @@
       })(ANNOT_TAGS[i]);
     }
     var note = el('input', { type: 'text', class: 'annot-note' });
-    note.setAttribute('placeholder', 'annotation libre (ex : a fait recharger le navigateur)...');
+    note.setAttribute('placeholder', 'free note (e.g. reloaded the browser)...');
     note.value = current.note || '';
     note.oninput = function () {
       var a = PSWKT.annotations[testId] || { tag: '', note: '' };
@@ -332,7 +353,9 @@
     row.setAttribute('data-text', (record.name + ' ' + record.id + ' ' + (record.detail || '') + ' ' + record.category).toLowerCase());
     applyFilterToRow(row);
     $('results').appendChild(row);
-    updateFilterCount();
+    // NOTE: updateFilterCount() is intentionally NOT called here (it scans every
+    // row, which would be O(n^2) across a run). It is refreshed once when the run
+    // finishes and whenever the filter changes.
   }
 
   // --- Recherche / filtre des resultats ---
@@ -367,7 +390,7 @@
     var el2 = $('filter-count'); if (!el2 || !$('results')) return;
     var rows = $('results').childNodes, shown = 0, total = 0;
     for (var i = 0; i < rows.length; i++) { if (rows[i].nodeType === 1) { total++; if (rows[i].style.display !== 'none') shown++; } }
-    el2.textContent = shown + ' / ' + total + ' affiches';
+    el2.textContent = shown + ' / ' + total + ' shown';
   }
 
   function setProgress(done, total, label) {
@@ -383,11 +406,11 @@
     var c = summary.counts;
     var items = [
       ['total', summary.total, 'neutral'],
-      ['reussis', c.pass, 'pass'],
-      ['echecs', c.fail, 'fail'],
-      ['erreurs', c.error, 'error'],
-      ['ignores', c.skip, 'skip'],
-      ['arretes', c.aborted, 'aborted']
+      ['passed', c.pass, 'pass'],
+      ['failed', c.fail, 'fail'],
+      ['errors', c.error, 'error'],
+      ['skipped', c.skip, 'skip'],
+      ['aborted', c.aborted, 'aborted']
     ];
     for (var i = 0; i < items.length; i++) {
       sum.appendChild(el('span', { class: 'chip chip-' + items[i][2] }, [
@@ -396,7 +419,7 @@
       ]));
     }
     sum.appendChild(el('span', { class: 'chip chip-neutral', text: summary.totalDurationMs + ' ms total' }));
-    if (summary.suiteAborted) sum.appendChild(el('span', { class: 'chip chip-aborted', text: 'SUITE INTERROMPUE' }));
+    if (summary.suiteAborted) sum.appendChild(el('span', { class: 'chip chip-aborted', text: 'SUITE INTERRUPTED' }));
 
     // Repartition par CLASSIFICATION (distingue incompatible / exception / incorrect / plantage...)
     if (state.lastRun && state.lastRun.records && state.lastRun.records.length) {
@@ -419,20 +442,21 @@
   function runTests(tests, label) {
     if (state.running) return;
     if (!tests || !tests.length) {
-      logLine('warn', 'Aucun test selectionne.');
+      logLine('warn', 'No test selected.');
       return;
     }
+    switchTab('dashboard'); // surface progress, results and console
     state.running = true;
     state.control = { aborted: false, currentBudget: null };
     resetResults();
     setRunningUI(true);
 
     var opts = readOptions();
-    // NOUVEAU LANCEMENT = NOUVEAU JOURNAL : on repart d'un journal propre (le
-    // precedent est deja persiste dans l'historique IndexedDB) et d'une session neuve.
+    // A NEW RUN = A FRESH LOG: start from a clean log (the previous one is already
+    // persisted in the IndexedDB history) and a brand new session.
     PSWKT.logger.reset();
     if ($('stream-hint')) $('stream-hint').textContent = '';
-    PSWKT.logger.info('app', 'Lancement : ' + label + ' (' + tests.length + ' tests)', opts);
+    PSWKT.logger.info('app', 'Launch: ' + label + ' (' + tests.length + ' tests)', opts);
 
     // Nouvelle session locale (IndexedDB) : creee AVANT de lancer (voir plus bas),
     // pour que meme un run tres rapide soit enregistre et que le marqueur "en cours"
@@ -450,10 +474,10 @@
       streaming = true;
       var sh = $('stream-hint');
       if (sh) {
-        if (ok) sh.textContent = 'Enregistrement continu actif -> logs/pswkt-live-' + session + '.txt (ecrit au fur et a mesure).';
-        else sh.textContent = 'Enregistrement continu : serveur injoignable (' + (PSWKT.serverLog.lastError || '?') + '). Lancez « python3 server.py ».';
+        if (ok) sh.textContent = 'Continuous logging active -> logs/pswkt-live-' + session + '.txt (written as it goes).';
+        else sh.textContent = 'Continuous logging: server unreachable (' + (PSWKT.serverLog.lastError || '?') + '). Run "python3 server.py".';
       }
-      PSWKT.logger.info('app', 'Enregistrement continu : session ' + session + (ok ? ' (OK)' : ' (SERVEUR INJOIGNABLE)'));
+      PSWKT.logger.info('app', 'Continuous logging: session ' + session + (ok ? ' (OK)' : ' (SERVER UNREACHABLE)'));
     }
 
     var runOptions = {
@@ -484,7 +508,7 @@
       onFlush: streaming ? function () { return PSWKT.serverLog.flush(true); } : undefined,
       onProgress: function (done, total, record) {
         appendResultRow(record);
-        setProgress(done, total, 'execution');
+        setProgress(done, total, 'running');
         // Persistance locale du resultat complet (efface le marqueur "en cours").
         if (state.session && PSWKT.store) {
           try { PSWKT.store.saveRecord(state.session.id, record); } catch (e) {}
@@ -496,16 +520,15 @@
       }
     };
 
-    setProgress(0, tests.length, 'demarrage');
+    setProgress(0, tests.length, 'starting');
 
-    // Lance la suite UNE FOIS la session locale creee (sinon un run tres rapide
-    // se terminerait avant l'enregistrement). Si la persistance echoue, on lance
-    // quand meme (l'outil reste utilisable sans stockage).
+    // Launch the suite ONCE the local session exists (otherwise a very fast run
+    // would finish before it is recorded). If storage fails, run anyway.
     function launch() { R.runSuite(tests, runOptions).then(onDone, onFail); }
     if (PSWKT.store) {
       PSWKT.store.createSession({ label: label, mode: mode }).then(function (sess) {
         state.session = sess;
-        PSWKT.logger.info('app', 'Session locale ' + sess.id + ' (' + PSWKT.store.kind + ')');
+        PSWKT.logger.info('app', 'Local session ' + sess.id + ' (' + PSWKT.store.kind + ')');
         launch();
       }, function () { launch(); });
     } else { launch(); }
@@ -513,19 +536,20 @@
     function onDone(result) {
       state.lastRun = result;
       renderSummary(result.summary);
-      setProgress(result.records.length, tests.length, result.summary.suiteAborted ? 'interrompu' : 'termine');
-      PSWKT.logger.info('app', 'Termine : ' + label, result.summary);
-      // Clot la session locale et rafraichit l'historique.
+      updateFilterCount();
+      setProgress(result.records.length, tests.length, result.summary.suiteAborted ? 'interrupted' : 'done');
+      PSWKT.logger.info('app', 'Done: ' + label, result.summary);
+      // Close the local session and refresh the history.
       if (state.session && PSWKT.store) {
         PSWKT.store.finishSession(state.session.id, result.summary, result.summary.suiteAborted).then(function () { renderHistory(); });
       }
       if (streaming) {
-        PSWKT.serverLog.marker('════════ SUITE TERMINEE : ' + result.summary.counts.pass + ' reussis, ' +
-          result.summary.counts.fail + ' echecs, ' + result.summary.counts.error + ' erreurs, ' +
-          result.summary.counts.aborted + ' arretes, ' + result.summary.counts.skip + ' ignores ════════', true);
+        PSWKT.serverLog.marker('======== SUITE DONE: ' + result.summary.counts.pass + ' passed, ' +
+          result.summary.counts.fail + ' failed, ' + result.summary.counts.error + ' errors, ' +
+          result.summary.counts.aborted + ' aborted, ' + result.summary.counts.skip + ' skipped ========', true);
         PSWKT.serverLog.disable();
         var sh2 = $('stream-hint');
-        if (sh2 && !PSWKT.serverLog.lastError) sh2.textContent += '  [termine, ' + PSWKT.serverLog.bytesSent + ' octets ecrits]';
+        if (sh2 && !PSWKT.serverLog.lastError) sh2.textContent += '  [done, ' + PSWKT.serverLog.bytesSent + ' bytes written]';
       }
       state.running = false;
       setRunningUI(false);
@@ -533,7 +557,7 @@
     function onFail(err) {
       PSWKT.logger.captureGlobalError(err);
       if (state.session && PSWKT.store) { try { PSWKT.store.finishSession(state.session.id, state.lastRun && state.lastRun.summary, true).then(renderHistory); } catch (e) {} }
-      if (streaming) { try { PSWKT.serverLog.marker('✖ SUITE INTERROMPUE PAR UNE ERREUR : ' + (err && err.message), true); PSWKT.serverLog.disable(); } catch (e) {} }
+      if (streaming) { try { PSWKT.serverLog.marker('x SUITE INTERRUPTED BY AN ERROR: ' + (err && err.message), true); PSWKT.serverLog.disable(); } catch (e) {} }
       state.running = false;
       setRunningUI(false);
     }
@@ -543,17 +567,19 @@
     if (!state.running || !state.control) return;
     state.control.aborted = true;
     if (state.control.currentBudget) {
-      state.control.currentBudget.requestAbort('bouton Stop');
+      state.control.currentBudget.requestAbort('Stop button');
     }
-    logLine('warn', 'Arret demande par l utilisateur.');
-    $('progress-text').textContent = 'arret en cours...';
+    logLine('warn', 'Stop requested by the user.');
+    if ($('progress-text')) $('progress-text').textContent = 'stopping...';
   }
 
   function setRunningUI(running) {
-    if ($('btn-run-all')) $('btn-run-all').disabled = running;
-    if ($('btn-run-selected')) $('btn-run-selected').disabled = running;
+    var ids = ['btn-run-all', 'btn-run-selected'];
+    for (var k = 0; k < ids.length; k++) { if ($(ids[k])) $(ids[k]).disabled = running; }
     if ($('btn-stop')) $('btn-stop').disabled = !running;
-    var cards = document.querySelectorAll('.cat-card button');
+    if ($('btn-stop-2')) $('btn-stop-2').disabled = !running;
+    try { document.body.className = running ? 'running' : ''; } catch (e) {}
+    var cards = document.querySelectorAll('.cat-head, .cat-actions button');
     for (var i = 0; i < cards.length; i++) cards[i].disabled = running;
   }
 
@@ -593,18 +619,18 @@
     area.value = text;
     area.style.display = 'block';
     var n = PSWKT.logger.events.length;
-    var base = 'Journal : ' + n + ' lignes, ' + text.length + ' octets. ';
+    var base = 'Log: ' + n + ' lines, ' + text.length + ' bytes. ';
     // 1) voie la plus compatible (geste du clic) : execCommand sur la zone selectionnee.
     var copied = copyViaArea(area);
     if (copied) {
-      $('log-copy-hint').textContent = base + 'Copie dans le presse-papiers.';
+      $('log-copy-hint').textContent = base + 'Copied to clipboard.';
       return;
     }
     // 2) repli : API clipboard asynchrone (contexte securise uniquement).
-    $('log-copy-hint').textContent = base + 'copie en cours...';
+    $('log-copy-hint').textContent = base + 'copying...';
     PSWKT.exporter.copyToClipboard(text).then(function (ok2) {
-      $('log-copy-hint').textContent = base + (ok2 ? 'Copie dans le presse-papiers.' :
-        'Selectionnez le texte ci-dessous et copiez (le texte est deja surligne).');
+      $('log-copy-hint').textContent = base + (ok2 ? 'Copied to clipboard.' :
+        'Select the text below and copy it (already highlighted).');
       if (!ok2) copyViaArea(area);
     });
   }
@@ -616,8 +642,8 @@
     var area = $('log-copy-area');
     area.value = text;
     area.style.display = 'block';
-    $('log-copy-hint').textContent = ok ? ('Telechargement declenche (' + name + ').') :
-      'Telechargement indisponible : selectionnez la zone ci-dessous pour copier le journal.';
+    $('log-copy-hint').textContent = ok ? ('Download started (' + name + ').') :
+      'Download unavailable: select the area below to copy the log.';
   }
 
   function wireLogger() {
@@ -648,27 +674,27 @@
     var area = $('export-area');
     area.value = content;
     area.style.display = 'block';
-    $('export-hint').textContent = 'Rapport pret (' + content.length + ' octets). ' +
-      'Selectionnez tout le texte ci-dessous pour le copier, ou utilisez les boutons.';
+    $('export-hint').textContent = 'Report ready (' + content.length + ' bytes). ' +
+      'Select all the text below to copy it, or use the buttons.';
     // 2) tentative de telechargement
     var dl = PSWKT.exporter.downloadText(content, name, mime);
     // 3) copie : execCommand d'abord (compatible PS5), repli clipboard ensuite
     var copied = copyViaArea(area);
     var parts = [];
-    if (dl) parts.push('telechargement declenche (' + name + ')');
-    if (copied) parts.push('copie dans le presse-papiers');
+    if (dl) parts.push('download started (' + name + ')');
+    if (copied) parts.push('copied to clipboard');
     if (parts.length) $('export-hint').textContent += '  [' + parts.join(' ; ') + ']';
     if (!copied) {
       PSWKT.exporter.copyToClipboard(content).then(function (ok2) {
-        if (ok2) $('export-hint').textContent += '  [copie dans le presse-papiers]';
+        if (ok2) $('export-hint').textContent += '  [copied to clipboard]';
       });
     }
-    PSWKT.logger.info('app', 'Export ' + kind + ' genere (' + content.length + ' octets)');
+    PSWKT.logger.info('app', 'Export ' + kind + ' generated (' + content.length + ' bytes)');
   }
 
   // Enregistre un contenu sur le serveur local (dossier logs/), via POST.
   function saveToServer(content, format, name, hintEl) {
-    hintEl.textContent = 'Enregistrement sur le serveur...';
+    hintEl.textContent = 'Saving to server...';
     try {
       var xhr = new XMLHttpRequest();
       var url = '/api/save-log?format=' + encodeURIComponent(format) + '&name=' + encodeURIComponent(name);
@@ -679,18 +705,18 @@
         if (xhr.status >= 200 && xhr.status < 300) {
           var path = '';
           try { path = JSON.parse(xhr.responseText).path; } catch (e) {}
-          hintEl.textContent = 'Enregistre sur le serveur : ' + (path || 'logs/') + ' (' + content.length + ' octets).';
-          PSWKT.logger.info('app', 'Rapport enregistre sur le serveur : ' + path);
+          hintEl.textContent = 'Saved on server: ' + (path || 'logs/') + ' (' + content.length + ' bytes).';
+          PSWKT.logger.info('app', 'Report saved on server: ' + path);
         } else {
-          hintEl.textContent = 'Echec serveur (statut ' + xhr.status + '). Lancez le projet avec « python3 server.py » (et non http.server) pour activer l enregistrement.';
+          hintEl.textContent = 'Server error (status ' + xhr.status + '). Run the project with "python3 server.py" (not http.server) to enable saving.';
         }
       };
       xhr.onerror = function () {
-        hintEl.textContent = 'Serveur injoignable. Lancez « python3 server.py » pour activer l enregistrement dans logs/.';
+        hintEl.textContent = 'Server unreachable. Run "python3 server.py" to enable saving into logs/.';
       };
       xhr.send(content);
     } catch (e) {
-      hintEl.textContent = 'Erreur d enregistrement : ' + e.message;
+      hintEl.textContent = 'Save error: ' + e.message;
     }
   }
 
@@ -708,8 +734,8 @@
   function summaryChips(sm) {
     if (!sm || !sm.counts) return '';
     var c = sm.counts;
-    return 'total ' + sm.total + ' · reussis ' + c.pass + ' · echecs ' + c.fail +
-      ' · erreurs ' + c.error + ' · arretes ' + c.aborted + ' · ignores ' + c.skip;
+    return 'total ' + sm.total + ' \u00b7 passed ' + c.pass + ' \u00b7 failed ' + c.fail +
+      ' \u00b7 errors ' + c.error + ' \u00b7 aborted ' + c.aborted + ' \u00b7 skipped ' + c.skip;
   }
 
   // Reconstruit un objet "report" exportable a partir d'une session stockee.
@@ -738,7 +764,7 @@
       var mime = (kind === 'json') ? 'application/json;charset=utf-8' : 'text/plain;charset=utf-8';
       var area = $('export-area'); area.value = content; area.style.display = 'block';
       var dl = PSWKT.exporter.downloadText(content, name, mime);
-      $('history-hint').textContent = 'Session exportee (' + content.length + ' octets)' + (dl ? ' — telechargement declenche (' + name + ')' : ' — selectionnez la zone « Export » pour copier') + '.';
+      $('history-hint').textContent = 'Session exported (' + content.length + ' bytes)' + (dl ? ' \u2014 download started (' + name + ')' : ' \u2014 select the Export area to copy') + '.';
       if (!dl) { try { area.focus(); area.select(); } catch (e) {} }
     });
   }
@@ -746,29 +772,29 @@
   function renderHistory() {
     if (!PSWKT.store || !$('history-list')) return;
     var kindEl = $('store-kind');
-    if (kindEl) kindEl.textContent = '(stockage : ' + PSWKT.store.kind + ')';
+    if (kindEl) kindEl.textContent = '(storage: ' + PSWKT.store.kind + ')';
     PSWKT.store.listSessions().then(function (list) {
       var box = $('history-list'); clear(box);
-      if (!list.length) { box.appendChild(el('p', { class: 'muted', text: 'Aucune session enregistree pour le moment.' })); return; }
+      if (!list.length) { box.appendChild(el('p', { class: 'muted', text: 'No session recorded yet.' })); return; }
       for (var i = 0; i < list.length; i++) {
         (function (s) {
           var statusCls = s.status === 'done' ? 'pass' : (s.status === 'interrupted' || s.status === 'running' ? 'aborted' : 'neutral');
-          var statusTxt = s.status === 'done' ? 'terminee' : (s.status === 'running' ? 'INTERROMPUE (crash ?)' : (s.status === 'interrupted' ? 'interrompue' : s.status));
+          var statusTxt = s.status === 'done' ? 'done' : (s.status === 'running' ? 'INTERRUPTED (crash?)' : (s.status === 'interrupted' ? 'interrupted' : s.status));
           var cb = el('input', { type: 'checkbox' }); cb.setAttribute('data-sid', s.id);
           cb.checked = !!state.compareSel[s.id];
           cb.onchange = function () { if (cb.checked) state.compareSel[s.id] = true; else delete state.compareSel[s.id]; };
           var head = el('div', { class: 'hist-head' }, [
             cb,
             el('span', { class: 'chip chip-' + statusCls, text: statusTxt }),
-            el('span', { class: 'hist-label', text: (s.label || '(sans nom)') + '  ·  ' + (s.mode || '') }),
+            el('span', { class: 'hist-label', text: (s.label || '(unnamed)') + '  \u00b7  ' + (s.mode || '') }),
             el('span', { class: 'hist-when muted', text: fmtWhen(s.startedAt) })
           ]);
           var sum = el('div', { class: 'hist-sum muted', text: summaryChips(s.summary) });
           var btns = el('div', { class: 'hist-btns' }, [
             mkMini('Export JSON', function () { exportSession(s, 'json'); }),
-            mkMini('Export TXT detaille', function () { exportSession(s, 'text'); }),
-            mkMini('Charger dans Resultats', function () { loadSessionIntoResults(s); }),
-            mkMini('Supprimer', function () { if (confirmDel(s)) PSWKT.store.deleteSession(s.id).then(renderHistory); }, 'danger')
+            mkMini('Export detailed TXT', function () { exportSession(s, 'text'); }),
+            mkMini('Load into Results', function () { loadSessionIntoResults(s); }),
+            mkMini('Delete', function () { if (confirmDel(s)) PSWKT.store.deleteSession(s.id).then(renderHistory); }, 'danger')
           ]);
           box.appendChild(el('div', { class: 'hist-row' }, [head, sum, btns]));
         })(list[i]);
@@ -779,15 +805,16 @@
     var b = el('button', { class: 'mini ' + (cls || 'ghost'), type: 'button', text: label });
     b.onclick = fn; return b;
   }
-  function confirmDel(s) { return global.confirm ? global.confirm('Supprimer la session « ' + (s.label || s.id) + ' » ?') : true; }
+  function confirmDel(s) { return global.confirm ? global.confirm('Delete session "' + (s.label || s.id) + '"?') : true; }
 
   function loadSessionIntoResults(s) {
     PSWKT.store.getRecords(s.id).then(function (records) {
-      clear($('results'));
+      if ($('results')) clear($('results'));
       for (var i = 0; i < records.length; i++) appendResultRow(records[i]);
       renderSummary(s.summary || { total: records.length, counts: tallyRecords(records), totalDurationMs: 0, suiteAborted: s.status !== 'done' });
       state.lastRun = { records: records, summary: s.summary || { total: records.length, counts: tallyRecords(records), totalDurationMs: 0, suiteAborted: false } };
-      $('history-hint').textContent = 'Session « ' + (s.label || s.id) + ' » chargee dans la section Resultats (' + records.length + ' tests).';
+      if ($('history-hint')) $('history-hint').textContent = 'Session "' + (s.label || s.id) + '" loaded into Results (' + records.length + ' tests).';
+      switchTab('dashboard');
     });
   }
 
@@ -795,12 +822,12 @@
   function compareSessions() {
     var ids = []; for (var id in state.compareSel) if (state.compareSel.hasOwnProperty(id)) ids.push(id);
     var box = $('history-compare'); clear(box);
-    if (ids.length < 2) { $('history-hint').textContent = 'Cochez au moins 2 sessions pour les comparer.'; return; }
+    if (ids.length < 2) { $('history-hint').textContent = 'Select at least 2 sessions to compare.'; return; }
     Promise.all(ids.map(function (id) { return PSWKT.store.getSession(id); })).then(function (sessions) {
       var keys = ['pass', 'fail', 'error', 'aborted', 'skip'];
-      var labelsFr = { pass: 'reussis', fail: 'echecs', error: 'erreurs', aborted: 'arretes', skip: 'ignores' };
+      var labelsFr = { pass: 'passed', fail: 'failed', error: 'errors', aborted: 'aborted', skip: 'skipped' };
       var table = el('table', { class: 'cmp-table' });
-      var thead = el('tr', {}, [el('th', { text: 'metrique' })]);
+      var thead = el('tr', {}, [el('th', { text: 'metric' })]);
       for (var i = 0; i < sessions.length; i++) thead.appendChild(el('th', { text: (sessions[i].label || sessions[i].id).slice(0, 18) + ' (' + fmtWhen(sessions[i].startedAt).slice(0, 16) + ')' }));
       table.appendChild(thead);
       table.appendChild(cmpRow('total', sessions, function (s) { return s.summary ? s.summary.total : '?'; }));
@@ -809,9 +836,9 @@
           table.appendChild(cmpRow(labelsFr[key], sessions, function (s) { return s.summary && s.summary.counts ? s.summary.counts[key] : '?'; }));
         })(keys[k]);
       }
-      table.appendChild(cmpRow('duree (ms)', sessions, function (s) { return s.summary ? s.summary.totalDurationMs : '?'; }));
-      table.appendChild(cmpRow('etat', sessions, function (s) { return s.status; }));
-      box.appendChild(el('h4', { text: 'Comparaison de ' + sessions.length + ' sessions' }));
+      table.appendChild(cmpRow('duration (ms)', sessions, function (s) { return s.summary ? s.summary.totalDurationMs : '?'; }));
+      table.appendChild(cmpRow('state', sessions, function (s) { return s.status; }));
+      box.appendChild(el('h4', { text: 'Comparison of ' + sessions.length + ' sessions' }));
       box.appendChild(table);
       $('history-hint').textContent = '';
     });
@@ -830,14 +857,15 @@
       var s = list[0];
       PSWKT.store.getRunning(s.id).then(function (run) {
         var banner = $('crash-banner');
-        var who = run && run.test ? (run.test.name + ' (' + run.test.id + ')') : 'un test inconnu';
+        if (!banner) return;
+        var who = run && run.test ? (run.test.name + ' (' + run.test.id + ')') : 'an unknown test';
         banner.style.display = 'block';
         clear(banner);
-        banner.appendChild(el('strong', { text: '⚠ Session precedente interrompue. ' }));
-        banner.appendChild(document.createTextNode('Le dernier test lance etait : ' + who + '. '));
-        banner.appendChild(document.createTextNode('C\'est tres probablement lui qui a fait planter/geler le navigateur. '));
-        var view = mkMini('Voir cette session', function () { loadSessionIntoResults(s); });
-        var ok = mkMini('OK, marquer comme vue', function () {
+        banner.appendChild(el('strong', { text: '⚠ Previous session interrupted. ' }));
+        banner.appendChild(document.createTextNode('The last test launched was: ' + who + '. '));
+        banner.appendChild(document.createTextNode('It most likely froze or crashed the browser (this may simply be the browser hitting a normal resource limit). '));
+        var view = mkMini('View this session', function () { loadSessionIntoResults(s); });
+        var ok = mkMini('OK, mark as seen', function () {
           PSWKT.store.finishSession(s.id, s.summary, true).then(function () { banner.style.display = 'none'; renderHistory(); });
         }, 'danger');
         banner.appendChild(view); banner.appendChild(ok);
@@ -845,29 +873,42 @@
     });
   }
 
-  // --- Initialisation ---
+  // --- Init ---
   function init() {
     PSWKT.annotations = PSWKT.annotations || {};
-    renderEnvironment();
-    renderCatalog();
-    wireLogger();
+    // Each wiring step is isolated so a single failure never kills the whole UI.
+    function safe(label, fn) { try { fn(); } catch (e) { try { PSWKT.logger.warn('app', 'init step failed: ' + label, { message: e && e.message }); } catch (x) {} } }
+
+    safe('environment', renderEnvironment);
+    safe('catalog', renderCatalog);
+    safe('logger', wireLogger);
 
     function on(id, fn) { var e = $(id); if (e) e.onclick = fn; }
 
+    // Tab navigation
+    var tabs = document.querySelectorAll('.tab');
+    for (var ti = 0; ti < tabs.length; ti++) {
+      (function (t) { t.onclick = function () { switchTab(t.getAttribute('data-tab')); }; })(tabs[ti]);
+    }
+    // Deep link: index.html#categories
+    try { var h = (global.location && global.location.hash || '').replace('#', ''); if (/^(dashboard|categories|history|about)$/.test(h)) switchTab(h); } catch (e) {}
+
     on('btn-run-all', function () {
-      // Accueil : non destructifs + agressifs coches. Page catalogue : tout (les
-      // destructifs sont ignores si Mode agressif decoche, cf. harnais).
+      // Non-destructive tests + individually checked aggressive ones (if aggressive mode is on).
       var tests = $('aggressive-list') ? collectHomeRunTests() : R.listTests();
-      runTests(tests, 'tous les tests');
+      runTests(tests, 'all tests');
     });
     on('btn-run-selected', function () { runTests(getSelectedTests(), 'selection'); });
 
-    // Mode agressif : affiche/masque la liste des tests agressifs (accueil).
+    // Aggressive mode: reveal/hide the aggressive test list.
     if ($('opt-aggressive')) $('opt-aggressive').onchange = updateAggressiveListVisibility;
     updateAggressiveListVisibility();
     on('btn-check-all', function () { setAllChecks(true); });
     on('btn-uncheck-all', function () { setAllChecks(false); });
+    on('btn-expand-all', function () { setAllCategoriesOpen(true); });
+    on('btn-collapse-all', function () { setAllCategoriesOpen(false); });
     on('btn-stop', stopRun);
+    on('btn-stop-2', stopRun);
     on('btn-options-toggle', function () {
       var p = $('options-panel'); if (p) p.style.display = (p.style.display === 'none' ? '' : 'none');
     });
@@ -896,17 +937,17 @@
     if ($('btn-history-refresh')) $('btn-history-refresh').onclick = renderHistory;
     if ($('btn-history-compare')) $('btn-history-compare').onclick = compareSessions;
     if ($('btn-history-clear')) $('btn-history-clear').onclick = function () {
-      if (!global.confirm || global.confirm('Supprimer TOUTES les sessions enregistrees localement ?')) {
+      if (!global.confirm || global.confirm('Delete ALL locally stored sessions?')) {
         PSWKT.store.listSessions().then(function (list) {
           var ps = list.map(function (s) { return PSWKT.store.deleteSession(s.id); });
-          Promise.all(ps).then(function () { state.compareSel = {}; clear($('history-compare')); renderHistory(); });
+          Promise.all(ps).then(function () { state.compareSel = {}; if ($('history-compare')) clear($('history-compare')); renderHistory(); });
         });
       }
     };
-    if (PSWKT.store) { renderHistory(); checkInterrupted(); }
+    if (PSWKT.store) { safe('history', renderHistory); safe('crash-check', checkInterrupted); }
 
     setRunningUI(false);
-    PSWKT.logger.info('app', 'Interface prete. ' + R.listTests().length + ' tests dans ' +
+    PSWKT.logger.info('app', 'UI ready. ' + R.listTests().length + ' tests in ' +
       R.listCategories().length + ' categories.');
   }
 

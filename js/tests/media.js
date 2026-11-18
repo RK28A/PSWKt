@@ -8,7 +8,7 @@
   var R = PSWKT.runner;
   var F = PSWKT.factory;
 
-  R.defineCategory('media', 'Media & codecs', 'Support des codecs audio/video via canPlayType, et API media.');
+  R.defineCategory('media', 'Media & codecs', 'Audio/video codec support via canPlayType, and media APIs.');
 
   var VIDEO = [
     'video/mp4', 'video/mp4; codecs="avc1.42E01E"', 'video/mp4; codecs="avc1.640028"',

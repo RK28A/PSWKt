@@ -9,8 +9,8 @@
   var F = PSWKT.factory;
   var R = PSWKT.runner;
 
-  R.defineCategory('webapis', 'API Web (presence)',
-    'Presence d un large eventail d API navigateur : reseau, media, stockage, capteurs, crypto, observers, i18n...');
+  R.defineCategory('webapis', 'Web APIs (presence)',
+    'Presence of a wide range of browser APIs: network, media, storage, sensors, crypto, observers, i18n...');
 
   // Constructeurs / objets globaux (chemins simples depuis window).
   var NAMES = [

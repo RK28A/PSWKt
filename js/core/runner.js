@@ -41,14 +41,14 @@
     return test;
   }
 
-  // Classification lisible d'un resultat : distingue vraiment les cas.
+  // Human-readable classification of a result: tells the real cases apart.
   function classify(status, detail) {
     detail = detail || '';
-    if (status === 'pass') return { code: 'conforme', label: 'Conforme' };
-    if (status === 'fail') return { code: 'incorrect', label: 'Comportement incorrect (invariant viole)' };
-    if (status === 'error') return { code: 'exception', label: 'Exception JavaScript non prevue' };
-    if (status === 'aborted') return /echeance|delai/i.test(detail) ? { code: 'timeout', label: 'Delai depasse' } : { code: 'interrompu', label: 'Interrompu (Stop / arret)' };
-    if (status === 'skip') return /destructif/i.test(detail) ? { code: 'non_execute', label: 'Non execute (mode agressif desactive)' } : { code: 'incompatible', label: 'Fonctionnalite indisponible' };
+    if (status === 'pass') return { code: 'conforme', label: 'Conformant' };
+    if (status === 'fail') return { code: 'incorrect', label: 'Incorrect behaviour (invariant violated)' };
+    if (status === 'error') return { code: 'exception', label: 'Unexpected JavaScript exception' };
+    if (status === 'aborted') return /echeance|deadline|delai|timeout/i.test(detail) ? { code: 'timeout', label: 'Deadline exceeded' } : { code: 'interrompu', label: 'Interrupted (Stop / abort)' };
+    if (status === 'skip') return /destructif|destructive/i.test(detail) ? { code: 'non_execute', label: 'Not run (aggressive mode off)' } : { code: 'incompatible', label: 'Feature unavailable' };
     return { code: status, label: status };
   }
 
@@ -134,8 +134,8 @@
       return Promise.resolve({
         id: test.id, name: test.name, category: test.category,
         description: test.description || '', destructive: true,
-        status: 'skip', classification: classify('skip', 'test destructif non autorise'),
-        durationMs: 0, detail: 'test destructif non autorise (Mode agressif desactive)',
+        status: 'skip', classification: classify('skip', 'destructive test not allowed'),
+        durationMs: 0, detail: 'destructive test not allowed (aggressive mode off)',
         measurements: null, error: null
       });
     }
@@ -147,8 +147,8 @@
       return Promise.resolve({
         id: test.id, name: test.name, category: test.category,
         description: test.description || '', destructive: !!test.destructive,
-        status: 'skip', classification: classify('skip', 'fonctionnalites absentes'),
-        durationMs: 0, detail: 'fonctionnalites absentes : ' + missing.join(', '),
+        status: 'skip', classification: classify('skip', 'missing features'),
+        durationMs: 0, detail: 'missing features: ' + missing.join(', '),
         measurements: null, error: null
       });
     }
@@ -212,7 +212,7 @@
         var durationMs = Math.round((PSWKT.now() - started) * 1000) / 1000;
         var heapAfter = PSWKT.guard.readHeap();
         var aborted = PSWKT.guard.isAbort(err);
-        var abDetail = aborted ? ('arrete : ' + err.message) : 'exception non geree pendant le test';
+        var abDetail = aborted ? ('aborted: ' + err.message) : 'unhandled exception during the test';
         var record = {
           id: test.id, name: test.name, category: test.category,
           description: test.description || '', destructive: !!test.destructive,

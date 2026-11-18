@@ -22,8 +22,8 @@
   var R = PSWKT.runner;
   var G = PSWKT.guard;
 
-  R.defineCategory('fuzz_robustness', 'Fuzz · robustesse / crash',
-    'Etats d API fragiles (buffer detache, mutation pendant iteration, DOM/canvas/WebGL degeneres, recursion). Documente les plantages.');
+  R.defineCategory('fuzz_robustness', 'Fuzz \u00b7 robustness / crash',
+    'Fragile API states (detached buffer, mutation during iteration, degenerate DOM/canvas/WebGL, recursion). Documents crashes.');
 
   var CAT = 'fuzz_robustness';
   function mb(b) { return Math.round(b / 1048576 * 100) / 100; }

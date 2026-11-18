@@ -1,19 +1,24 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="no-referrer">
-  <title>PSWKT &mdash; tests WebKit</title>
+  <title>PSWKT &mdash; WebKit Test Lab</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
   <header class="app-header">
-    <div class="wrap header-row">
-      <h1>PSWKT <span class="sub">tests WebKit PS5</span></h1>
-      <nav class="topnav">
-        <a class="navlink active" href="index.html">Accueil</a>
-        <a class="navlink" href="tests.html">Categories &amp; test perso</a>
+    <div class="wrap">
+      <div class="brand-row">
+        <h1 class="brand">PSWKT <span class="sub">WebKit Test Lab</span></h1>
+        <span id="brand-stats" class="brand-stats"></span>
+      </div>
+      <nav class="tabbar" role="tablist" aria-label="Sections">
+        <button class="tab is-active" type="button" role="tab" data-tab="dashboard" id="tab-dashboard">Dashboard</button>
+        <button class="tab" type="button" role="tab" data-tab="categories" id="tab-categories">Categories</button>
+        <button class="tab" type="button" role="tab" data-tab="history" id="tab-history">History</button>
+        <button class="tab" type="button" role="tab" data-tab="about" id="tab-about">About</button>
       </nav>
     </div>
   </header>
@@ -21,62 +26,126 @@
   <main class="wrap">
     <div id="crash-banner" class="crash-banner" style="display:none"></div>
 
-    <section class="panel hero">
-      <div id="ps-hint" class="ps-line"></div>
-      <div class="run-bar big">
-        <button id="btn-run-all" class="primary big" type="button">&#9654; Tout lancer</button>
-        <button id="btn-stop" class="danger" type="button" disabled>Stop</button>
-        <button id="btn-options-toggle" class="ghost" type="button">&#9881; Options</button>
-      </div>
-      <label class="mini-toggle aggr-main"><input id="opt-aggressive" type="checkbox"> <b>Mode agressif</b> &mdash; afficher et choisir les tests qui peuvent figer/planter</label>
-      <div id="aggressive-list" class="aggressive-list" style="display:none"></div>
-      <div id="options-panel" class="options-panel" style="display:none">
-        <div class="options">
-          <label>Echeance/test (ms)<input id="opt-timeout" type="number" value="4000" min="100" step="100"></label>
-          <label>Memoire (Mo)<input id="opt-memory" type="number" value="64" min="1" step="1"></label>
-          <label>Plafond iterations<input id="opt-maxiter" type="number" value="5000000" min="1000" step="1000"></label>
+    <!-- ===================== DASHBOARD ===================== -->
+    <section class="tabpanel is-active" id="panel-dashboard" role="tabpanel" aria-labelledby="tab-dashboard">
+      <section class="panel hero">
+        <div id="ps-hint" class="ps-line"></div>
+        <div class="run-bar big">
+          <button id="btn-run-all" class="btn primary big" type="button">&#9654;&nbsp; Run all tests</button>
+          <button id="btn-stop" class="btn danger" type="button" disabled>&#9632; Stop</button>
+          <button id="btn-options-toggle" class="btn ghost" type="button">&#9881; Options</button>
         </div>
-        <label class="mini-toggle"><input id="opt-stream" type="checkbox"> Enregistrement serveur continu (local, optionnel)</label>
-      </div>
-      <div class="progress">
-        <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
-        <div id="progress-text" class="progress-text">pret</div>
-      </div>
-      <div id="summary" class="summary"></div>
+
+        <label class="toggle-card aggr-main" for="opt-aggressive">
+          <input id="opt-aggressive" type="checkbox">
+          <span><b>Aggressive mode</b> &mdash; reveal and pick stress tests that may freeze or crash the browser</span>
+        </label>
+        <div id="aggressive-list" class="aggressive-list" style="display:none"></div>
+
+        <div id="options-panel" class="options-panel" style="display:none">
+          <div class="options">
+            <label>Deadline / test (ms)<input id="opt-timeout" type="number" value="4000" min="100" step="100"></label>
+            <label>Memory budget (MB)<input id="opt-memory" type="number" value="64" min="1" step="1"></label>
+            <label>Iteration cap<input id="opt-maxiter" type="number" value="5000000" min="1000" step="1000"></label>
+          </div>
+          <label class="toggle-card"><input id="opt-stream" type="checkbox"> Continuous server logging (local server only, optional)</label>
+        </div>
+
+        <div class="progress">
+          <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
+          <div id="progress-text" class="progress-text">ready</div>
+        </div>
+        <div id="summary" class="summary"></div>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel-h">Results</h2>
+        <div class="results-filter">
+          <input id="result-search" type="text" placeholder="Search results&hellip;" spellcheck="false">
+          <label><input id="filter-pass" type="checkbox" checked> passed</label>
+          <label><input id="filter-fail" type="checkbox" checked> failed</label>
+          <label><input id="filter-error" type="checkbox" checked> errors</label>
+          <label><input id="filter-aborted" type="checkbox" checked> aborted</label>
+          <label><input id="filter-skip" type="checkbox"> skipped</label>
+          <span id="filter-count" class="muted"></span>
+        </div>
+        <div id="results" class="results"></div>
+      </section>
+
+      <section class="panel">
+        <div class="log-toolbar">
+          <strong class="panel-tag">Console</strong>
+          <button id="btn-export-json" class="btn mini primary" type="button">Export JSON</button>
+          <button id="btn-export-text" class="btn mini ghost" type="button">Export TXT</button>
+          <button id="btn-copy-log" class="btn mini ghost" type="button">Copy</button>
+          <button id="btn-download-log" class="btn mini ghost" type="button">Download .txt</button>
+          <button id="btn-clear-log" class="btn mini ghost" type="button">Clear</button>
+          <label class="log-autoscroll"><input id="opt-autoscroll" type="checkbox" checked> auto-scroll</label>
+        </div>
+        <div id="log-console" class="log-console"></div>
+        <p id="log-copy-hint" class="muted"></p>
+        <textarea id="log-copy-area" class="export-area" readonly spellcheck="false" style="display:none"></textarea>
+        <textarea id="export-area" class="export-area" readonly spellcheck="false" style="display:none"></textarea>
+        <p id="export-hint" class="muted"></p>
+      </section>
     </section>
 
-    <section class="panel">
-      <div class="results-filter">
-        <input id="result-search" type="text" placeholder="Rechercher un resultat..." spellcheck="false">
-        <label><input id="filter-pass" type="checkbox" checked> reussis</label>
-        <label><input id="filter-fail" type="checkbox" checked> echecs</label>
-        <label><input id="filter-error" type="checkbox" checked> erreurs</label>
-        <label><input id="filter-aborted" type="checkbox" checked> arretes</label>
-        <label><input id="filter-skip" type="checkbox"> ignores</label>
-        <span id="filter-count" class="muted"></span>
-      </div>
-      <div id="results" class="results"></div>
+    <!-- ===================== CATEGORIES ===================== -->
+    <section class="tabpanel" id="panel-categories" role="tabpanel" aria-labelledby="tab-categories" hidden>
+      <section class="panel">
+        <h2 class="panel-h">Categories &amp; custom run</h2>
+        <p class="muted small">Tick only what you want, then <b>Run selection</b>. Each category and test can also run on its own.</p>
+        <div class="run-bar">
+          <button id="btn-run-selected" class="btn primary" type="button">&#9654;&nbsp; Run selection</button>
+          <button id="btn-stop-2" class="btn danger" type="button" disabled>&#9632; Stop</button>
+          <button id="btn-check-all" class="btn mini ghost" type="button">Check all</button>
+          <button id="btn-uncheck-all" class="btn mini ghost" type="button">Uncheck all</button>
+          <button id="btn-expand-all" class="btn mini ghost" type="button">Expand all</button>
+          <button id="btn-collapse-all" class="btn mini ghost" type="button">Collapse all</button>
+        </div>
+        <div id="categories" class="categories"></div>
+      </section>
     </section>
 
-    <section class="panel">
-      <div class="log-toolbar">
-        <strong class="panel-tag">Console</strong>
-        <button id="btn-export-json" class="mini primary" type="button">Export JSON</button>
-        <button id="btn-export-text" class="mini ghost" type="button">Export TXT</button>
-        <button id="btn-copy-log" class="mini ghost" type="button">Copier</button>
-        <button id="btn-download-log" class="mini ghost" type="button">Telecharger .txt</button>
-        <button id="btn-clear-log" class="mini ghost" type="button">Vider</button>
-        <label class="log-autoscroll"><input id="opt-autoscroll" type="checkbox" checked> defilement auto</label>
-      </div>
-      <div id="log-console" class="log-console"></div>
-      <p id="log-copy-hint" class="muted"></p>
-      <textarea id="log-copy-area" class="export-area" readonly spellcheck="false" style="display:none"></textarea>
-      <textarea id="export-area" class="export-area" readonly spellcheck="false" style="display:none"></textarea>
-      <p id="export-hint" class="muted"></p>
+    <!-- ===================== HISTORY ===================== -->
+    <section class="tabpanel" id="panel-history" role="tabpanel" aria-labelledby="tab-history" hidden>
+      <section class="panel">
+        <h2 class="panel-h">Session history <span id="store-kind" class="muted small"></span></h2>
+        <p class="muted small">Every run creates a new session stored locally in the browser (IndexedDB) &mdash; no server required.</p>
+        <div class="run-bar">
+          <button id="btn-history-refresh" class="btn mini ghost" type="button">Refresh</button>
+          <button id="btn-history-compare" class="btn mini primary" type="button">Compare selected</button>
+          <button id="btn-history-clear" class="btn mini danger" type="button">Delete all</button>
+        </div>
+        <div id="history-list" class="history-list"></div>
+        <div id="history-compare" class="history-compare"></div>
+        <p id="history-hint" class="muted"></p>
+      </section>
+    </section>
+
+    <!-- ===================== ABOUT ===================== -->
+    <section class="tabpanel" id="panel-about" role="tabpanel" aria-labelledby="tab-about" hidden>
+      <section class="panel">
+        <h2 class="panel-h">Environment &amp; features</h2>
+        <div id="env-info" class="env-info"></div>
+        <div id="feature-grid" class="feature-grid"></div>
+      </section>
+      <section class="panel">
+        <h2 class="panel-h">About this tool</h2>
+        <p class="muted">PSWKT is a non-persistent JavaScript / WebKit diagnostic and robustness lab. It maps which
+          APIs are really available, checks behaviours, and &mdash; in aggressive mode &mdash; stress-tests the engine
+          to its limits. A JavaScript error observed here is a <b>behaviour to document</b>, not a finding.</p>
+        <p class="muted">Aggressive tests can freeze or crash the browser tab. Many such crashes are simply the browser
+          hitting its normal resource limits. A sandboxed browser strongly limits risk, but no guarantee of
+          &laquo;&nbsp;no possible consequence&nbsp;&raquo; can be made &mdash; in practice the worst case is the tab
+          dying and the console restarting. Local saving (IndexedDB) is best-effort: the per-test start marker is
+          written before each test, but each result is saved asynchronously, so a brutal crash can still lose the
+          last result(s).</p>
+      </section>
     </section>
   </main>
 
-  <!-- Coeur (ordre important) -->
+  <!-- Core (order matters) -->
   <script src="js/core/log.js"></script>
   <script src="js/core/features.js"></script>
   <script src="js/core/guard.js"></script>
@@ -115,7 +184,6 @@
   <script src="js/tests/fuzz_aggressive.js"></script>
   <script src="js/tests/fuzz_aggressive2.js"></script>
   <script src="js/tests/fuzz_aggressive3.js"></script>
-  <!-- Sondes et comportements supplementaires -->
   <script src="js/tests/webapis.js"></script>
   <script src="js/tests/natives_more.js"></script>
   <script src="js/tests/css_more.js"></script>

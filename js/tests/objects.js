@@ -8,7 +8,7 @@
   var PSWKT = global.PSWKT;
   var R = PSWKT.runner;
 
-  R.defineCategory('objects', 'Objets & structures', 'Semantique des objets : Proxy, Map/Set, freeze, JSON, clonage.');
+  R.defineCategory('objects', 'Objects & structures', 'Object semantics: Proxy, Map/Set, freeze, JSON, cloning.');
 
   // 1) Proprietes, descripteurs et Object.freeze.
   R.register({

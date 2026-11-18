@@ -8,7 +8,7 @@
   var R = PSWKT.runner;
   var F = PSWKT.factory;
 
-  R.defineCategory('input', 'Entrees & manette', 'Gamepad, pointeur, clavier, plein ecran, vibration.');
+  R.defineCategory('input', 'Input & game-pad', 'Gamepad, pointer, keyboard, fullscreen, vibration.');
 
   var PATHS = [
     'Gamepad', 'GamepadButton', 'GamepadEvent', 'GamepadHapticActuator',

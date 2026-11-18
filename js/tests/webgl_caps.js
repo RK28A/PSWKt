@@ -8,7 +8,7 @@
   var R = PSWKT.runner;
   var F = PSWKT.factory;
 
-  R.defineCategory('webglcaps', 'WebGL (capacites)', 'Extensions et parametres materiels exposes par WebGL.');
+  R.defineCategory('webglcaps', 'WebGL (capabilities)', 'Extensions and hardware parameters exposed by WebGL.');
 
   var EXTENSIONS = [
     'ANGLE_instanced_arrays', 'EXT_blend_minmax', 'EXT_color_buffer_float', 'EXT_color_buffer_half_float',

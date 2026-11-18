@@ -7,7 +7,7 @@
   var PSWKT = global.PSWKT;
   var R = PSWKT.runner;
 
-  R.defineCategory('ps5', 'Profil PS5 / WebKit', 'Version WebKit, GPU, ecran/HDR, resolution temporelle, quirks.');
+  R.defineCategory('ps5', 'PS5 / WebKit profile', 'WebKit version, GPU, screen/HDR, time resolution, quirks.');
 
   // 1) Decodage du User-Agent et extraction de la version WebKit.
   R.register({

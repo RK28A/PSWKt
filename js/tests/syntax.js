@@ -9,7 +9,7 @@
   var R = PSWKT.runner;
   var F = PSWKT.factory;
 
-  R.defineCategory('syntax', 'Syntaxe ECMAScript', 'Support des constructions du langage (ES2015 -> recent).');
+  R.defineCategory('syntax', 'ECMAScript syntax', 'Support for language constructs (ES2015 -> recent).');
 
   // [nom, code]
   var CASES = [

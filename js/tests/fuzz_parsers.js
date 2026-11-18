@@ -10,8 +10,8 @@
   var F = PSWKT.fuzz;
   var R = PSWKT.runner;
 
-  R.defineCategory('fuzz_parsers', 'Fuzz · parseurs',
-    'JSON.parse, Number/parseInt/parseFloat, Date, URI, RegExp : entrees malformees + invariants.');
+  R.defineCategory('fuzz_parsers', 'Fuzz \u00b7 parsers',
+    'JSON.parse, Number/parseInt/parseFloat, Date, URI, RegExp: malformed inputs + invariants.');
 
   var CAT = 'fuzz_parsers';
 

@@ -11,8 +11,8 @@
   var F = PSWKT.fuzz;
   var R = PSWKT.runner;
 
-  R.defineCategory('fuzz_typedarrays', 'Fuzz · tableaux types',
-    'ArrayBuffer/TypedArray/DataView : tailles, offsets et indices hors bornes (securise).');
+  R.defineCategory('fuzz_typedarrays', 'Fuzz \u00b7 typed arrays',
+    'ArrayBuffer/TypedArray/DataView: out-of-bounds sizes, offsets and indices (safe).');
 
   var CAT = 'fuzz_typedarrays';
 

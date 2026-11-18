@@ -8,7 +8,7 @@
   var R = PSWKT.runner;
   var F = PSWKT.factory;
 
-  R.defineCategory('css', 'CSS (CSS.supports)', 'Support des proprietes et valeurs CSS modernes.');
+  R.defineCategory('css', 'CSS (CSS.supports)', 'Support for modern CSS properties and values.');
 
   // [propriete, valeur, libelle?]
   var PAIRS = [

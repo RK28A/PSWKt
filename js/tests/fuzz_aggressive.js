@@ -28,8 +28,8 @@
   var R = PSWKT.runner;
   var G = PSWKT.guard;
 
-  R.defineCategory('fuzz_aggressive', 'Fuzz · AGRESSIF (destructif)',
-    'Pousse les API jusqu a la rupture : memoire, pile, regex, chaines/tableaux geants. Peut figer ou planter le navigateur (sans danger pour la console).');
+  R.defineCategory('fuzz_aggressive', 'Fuzz \u00b7 AGGRESSIVE (destructive)',
+    'Pushes APIs to the breaking point: memory, stack, regex, giant strings/arrays. May freeze or crash the browser (recoverable; worst case the console restarts).');
 
   var CAT = 'fuzz_aggressive';
 
