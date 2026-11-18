@@ -10,9 +10,10 @@ HTML/CSS/JS statiques.
 - **Détection d'environnement et de fonctionnalités** : vérifie ce qui est *réellement*
   disponible (tableaux typés, Canvas/WebGL, Proxy/Map/Set, WeakRef, `performance.memory`,
   WebAssembly…). Les tests dont un prérequis manque sont automatiquement **ignorés**.
-- **860+ tests indépendants** répartis en **19 catégories**, avec des *techniques variées*
+- **890+ tests indépendants** répartis en **23 catégories**, avec des *techniques variées*
   (synchrone, asynchrone/Promise, Web Worker, microtâches, `requestAnimationFrame`,
-  sondage par `try/catch`, timing haute résolution, génération pilotée par données).
+  sondage par `try/catch`, timing haute résolution, génération pilotée par données,
+  **fuzzing d'entrées malformées**).
 
   Catégories comportementales (exercent réellement l'API) :
   - `Tableaux typés` — aller-retour par type, DataView/endianness, vues partagées,
@@ -48,6 +49,30 @@ HTML/CSS/JS statiques.
   - `Média & codecs` — matrice `canPlayType` audio/vidéo (AVC, HEVC, AV1, VP9, Opus…).
   - `Entrées & manette` — Gamepad/DualSense, pointeur, clavier, plein écran, vibration.
   - `Syntaxe ECMAScript` — ~45 constructions du langage (classes, `?.`, `??=`, champs privés…).
+
+  Catégories de **fuzzing** (entrées *mal formées* / adversariales, pour pousser les API
+  à leurs limites — **non destructif, borné, et reproductible par *seed***) :
+  - `Fuzz · parseurs` — `JSON.parse`, `Number`/`parseInt`/`parseFloat`, `Date`, URI
+    (`decodeURIComponent`…), `RegExp` : JSON tronqué, surrogates isolées, séquences `%XX`
+    illégales, motifs invalides, et **backtracking (ReDoS) borné** sur entrées très courtes.
+    Inclut des **invariants d'aller-retour** (`parse(stringify(x)) == x`,
+    `decode(encode(x)) == x`) qui détectent les vrais écarts.
+  - `Fuzz · natifs JS` — `String`/`Array`/`Object`/`Math` nourris d'index absurdes
+    (négatifs, `NaN`, `Infinity`, `2^32`) et d'**objets-pièges** dont `valueOf`/`toString`/
+    `@@toPrimitive` lèvent ou mentent, pour éprouver la coercition d'arguments.
+  - `Fuzz · tableaux typés` — `ArrayBuffer`/`TypedArray`/`DataView` avec tailles, offsets
+    et indices **hors bornes** ; vérifie que l'accès hors limites reste *inoffensif*
+    (jamais de corruption mémoire) et que `Uint8ClampedArray` borne correctement.
+  - `Fuzz · structures & pièges` — imbrication profonde, **cycles**, **Proxy à trappes
+    hostiles** (qui lèvent ou violent les invariants), itérateurs piégés, `structuredClone`,
+    `Map`/`Set` à clés limites (`NaN`, `±0`).
+
+  > *Philosophie du fuzzing ici* : chaque entrée est encadrée par `try/catch` (rien ne
+  > remonte en erreur globale), chaque taille/profondeur est **plafonnée** (pas d'allocation
+  > sans fin, respect du budget mémoire), chaque boucle appelle `ctx.tick()` (échéance +
+  > bouton Stop), et l'aléatoire est **semé** → mêmes entrées d'une exécution à l'autre.
+  > Un test *réussit* quand le moteur **survit** (il renvoie ou lève une erreur rattrapable) ;
+  > il *échoue* seulement quand un **invariant** est violé — une anomalie à consigner.
 - **Annotations** : sur chaque résultat, une étiquette rapide (OK / Lent / Figé /
   Rechargé / Autre) et une note libre. Pratique pour consigner un comportement observé
   sur la console (ex. « a fait recharger le navigateur »). Les annotations sont reprises
@@ -112,6 +137,8 @@ js/core/runner.js     harnais : enregistrement, exécution non bloquante
 js/core/export.js     construction et export du rapport (JSON/texte)
 js/tests/typedarrays.js  canvas.js  objects.js  memory.js
 js/tests/strings.js      numbers.js errors.js  async.js  platform.js  dom.js
+js/tests/_fuzz.js        infrastructure de fuzzing (PRNG semé, corpus malformés, fabriques)
+js/tests/fuzz_parsers.js fuzz_builtins.js fuzz_typedarrays.js fuzz_structural.js
 js/app.js             orchestration et rendu de l'interface
 ```
 
@@ -135,5 +162,8 @@ PSWKT.runner.register({
 ## Portée et prudence
 
 Tests **reproductibles et non destructifs** uniquement. Une erreur JavaScript observée
-ici est un **comportement à documenter**, pas une vulnérabilité. Pour des diagnostics
-mémoire approfondis, utilisez un WebKit **instrumenté** sur PC.
+ici est un **comportement à documenter**, pas une vulnérabilité. Le **fuzzing** envoie des
+entrées *mal formées* pour cartographier la robustesse des API (coercition, hors-bornes,
+cycles…) : il reste borné et capturé — il ne cherche *pas* à provoquer de plantage, il
+documente la façon dont le moteur réagit. Pour des diagnostics mémoire approfondis,
+utilisez un WebKit **instrumenté** sur PC.
