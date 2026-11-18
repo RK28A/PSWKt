@@ -166,6 +166,7 @@
 
     // Verdict en clair : comment la machine a reagi.
     line('▸ REACTION DU MOTEUR : ' + (VERDICT[r.status] || (r.status || '?').toUpperCase()));
+    if (r.classification) line('▸ CLASSE : ' + r.classification.label);
     if (r.detail) line('    resume   : ' + r.detail);
 
     if (r.measurements) {

@@ -191,6 +191,59 @@
     for (var i = 0; i < all.length; i++) { var cb = $('cb-' + all[i].id); if (cb) cb.checked = value; }
   }
 
+  // --- Liste des tests agressifs/destructifs (page d'accueil) ---
+  function destructiveTests() {
+    return R.listTests().filter(function (t) { return t.destructive; });
+  }
+  function renderAggressiveList() {
+    var box = $('aggressive-list');
+    if (!box || box.getAttribute('data-filled')) return;
+    var tests = destructiveTests();
+    clear(box);
+    box.appendChild(el('p', { class: 'muted small', text:
+      '⚠ Ces tests peuvent figer ou planter le navigateur (la PS5 redemarre). Coche seulement ceux que tu veux lancer — decoche par defaut.' }));
+    var tools = el('div', { class: 'aggr-tools' }, [
+      mkMini('Tout cocher', function () { setAggrChecks(true); }),
+      mkMini('Tout decocher', function () { setAggrChecks(false); })
+    ]);
+    box.appendChild(tools);
+    for (var i = 0; i < tests.length; i++) {
+      (function (t) {
+        var cb = el('input', { type: 'checkbox', id: 'aggr-cb-' + t.id });
+        var row = el('label', { class: 'aggr-row', 'for': 'aggr-cb-' + t.id }, [
+          cb,
+          el('span', { class: 'aggr-name', text: t.name }),
+          el('span', { class: 'aggr-cat', text: t.category })
+        ]);
+        box.appendChild(row);
+      })(tests[i]);
+    }
+    box.setAttribute('data-filled', '1');
+  }
+  function setAggrChecks(value) {
+    var tests = destructiveTests();
+    for (var i = 0; i < tests.length; i++) { var cb = $('aggr-cb-' + tests[i].id); if (cb) cb.checked = value; }
+  }
+  function updateAggressiveListVisibility() {
+    var box = $('aggressive-list');
+    if (!box) return;
+    var on = $('opt-aggressive') && $('opt-aggressive').checked;
+    if (on) { renderAggressiveList(); box.style.display = ''; } else { box.style.display = 'none'; }
+  }
+  // Tests a lancer depuis l'accueil : tous les NON destructifs, plus les agressifs
+  // individuellement coches (uniquement si le Mode agressif est actif).
+  function collectHomeRunTests() {
+    var all = R.listTests();
+    var on = $('opt-aggressive') && $('opt-aggressive').checked;
+    var out = [];
+    for (var i = 0; i < all.length; i++) {
+      var t = all[i];
+      if (!t.destructive) out.push(t);
+      else if (on) { var cb = $('aggr-cb-' + t.id); if (cb && cb.checked) out.push(t); }
+    }
+    return out;
+  }
+
   // --- Lecture des reglages (garde-fous) ---
   function readOptions() {
     var timeout = parseInt($('opt-timeout').value, 10);
@@ -258,12 +311,17 @@
     return bar;
   }
 
+  function classifOf(record) {
+    return record.classification || (PSWKT.runner.classify ? PSWKT.runner.classify(record.status, record.detail) : { code: record.status, label: record.status });
+  }
   function appendResultRow(record) {
     var meas = record.measurements ? JSON.stringify(record.measurements) : '';
+    var cl = classifOf(record);
     var row = el('div', { class: 'result-row status-' + record.status }, [
       el('span', { class: 'result-status', text: statusLabel(record.status) }),
       el('div', { class: 'result-main' }, [
         el('div', { class: 'result-name', text: record.name + '  (' + record.durationMs + ' ms)' }),
+        el('div', { class: 'result-class class-' + cl.code, text: '→ ' + cl.label }),
         el('div', { class: 'result-detail', text: record.detail || '' }),
         meas ? el('div', { class: 'result-meas', text: meas }) : null,
         record.error ? el('div', { class: 'result-error', text: 'ERREUR ' + record.error.name + ': ' + record.error.message }) : null,
@@ -339,6 +397,22 @@
     }
     sum.appendChild(el('span', { class: 'chip chip-neutral', text: summary.totalDurationMs + ' ms total' }));
     if (summary.suiteAborted) sum.appendChild(el('span', { class: 'chip chip-aborted', text: 'SUITE INTERROMPUE' }));
+
+    // Repartition par CLASSIFICATION (distingue incompatible / exception / incorrect / plantage...)
+    if (state.lastRun && state.lastRun.records && state.lastRun.records.length) {
+      var byCl = {};
+      for (var i = 0; i < state.lastRun.records.length; i++) {
+        var c = classifOf(state.lastRun.records[i]);
+        if (!byCl[c.code]) byCl[c.code] = { label: c.label, n: 0 };
+        byCl[c.code].n++;
+      }
+      var line = el('div', { class: 'classif-line' });
+      for (var code in byCl) {
+        if (!byCl.hasOwnProperty(code)) continue;
+        line.appendChild(el('span', { class: 'classif-chip class-' + code, text: byCl[code].label + ' : ' + byCl[code].n }));
+      }
+      sum.appendChild(line);
+    }
   }
 
   // --- Execution ---
@@ -392,13 +466,19 @@
       // cours -> si WebKit plante, au rechargement la session reste "running" et ce
       // marqueur nomme le test fautif. (2) Serveur (si actif) : ligne persistee sur disque.
       onTestStart: function (test, idx, total) {
+        var p = null;
         if (state.session && PSWKT.store) {
-          PSWKT.store.markRunning(state.session.id, { id: test.id, name: test.name, idx: idx + 1, total: total, destructive: !!test.destructive });
+          var mark = { id: test.id, name: test.name, idx: idx + 1, total: total, destructive: !!test.destructive };
+          p = PSWKT.store.markRunning(state.session.id, mark);
         }
         if (streaming) {
           PSWKT.serverLog.marker('▶ DEBUT  [' + (idx + 1) + '/' + total + ']  ' + test.id + '  —  ' + test.name +
             (test.destructive ? '   ⚠ DESTRUCTIF' : ''), true);
         }
+        // Pour un test DESTRUCTIF (risque de plantage), on renvoie la Promise :
+        // le runner attend que l'ecriture IndexedDB soit confirmee avant de lancer
+        // le test, pour que la trace du test fautif survive au crash.
+        return test.destructive ? p : null;
       },
       // ctx.flush() des tests agressifs : persiste les jalons avant l'etape risquee.
       onFlush: streaming ? function () { return PSWKT.serverLog.flush(true); } : undefined,
@@ -774,8 +854,17 @@
 
     function on(id, fn) { var e = $(id); if (e) e.onclick = fn; }
 
-    on('btn-run-all', function () { runTests(R.listTests(), 'tous les tests'); });
+    on('btn-run-all', function () {
+      // Accueil : non destructifs + agressifs coches. Page catalogue : tout (les
+      // destructifs sont ignores si Mode agressif decoche, cf. harnais).
+      var tests = $('aggressive-list') ? collectHomeRunTests() : R.listTests();
+      runTests(tests, 'tous les tests');
+    });
     on('btn-run-selected', function () { runTests(getSelectedTests(), 'selection'); });
+
+    // Mode agressif : affiche/masque la liste des tests agressifs (accueil).
+    if ($('opt-aggressive')) $('opt-aggressive').onchange = updateAggressiveListVisibility;
+    updateAggressiveListVisibility();
     on('btn-check-all', function () { setAllChecks(true); });
     on('btn-uncheck-all', function () { setAllChecks(false); });
     on('btn-stop', stopRun);

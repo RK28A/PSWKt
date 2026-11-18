@@ -144,6 +144,29 @@ button.big { font-size: 20px; padding: 14px 28px; border-radius: 10px; }
 .panel-h { font-size: 16px; margin: 0 0 8px; }
 .muted.small, .small { font-size: 12.5px; }
 
+/* Mode agressif visible + liste des tests agressifs (accueil) */
+.mini-toggle.aggr-main { justify-content: center; margin: 4px auto 8px; }
+.mini-toggle.aggr-main b { color: var(--aborted); }
+.aggressive-list {
+  max-width: 680px; margin: 0 auto 12px; text-align: left;
+  background: rgba(219,109,40,0.10); border: 1px solid var(--aborted); border-radius: 8px; padding: 10px 12px;
+}
+.aggr-tools { display: flex; gap: 6px; margin-bottom: 8px; }
+.aggr-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; cursor: pointer; border-bottom: 1px dashed var(--border); }
+.aggr-row:last-child { border-bottom: none; }
+.aggr-name { flex: 1; }
+.aggr-cat { color: var(--muted); font-size: 11px; }
+
+/* Classification des resultats */
+.result-class { font-size: 12px; margin: 2px 0; font-weight: 600; }
+.class-conforme { color: var(--pass); }
+.class-incorrect { color: var(--fail); }
+.class-exception { color: var(--error); }
+.class-timeout, .class-interrompu { color: var(--aborted); }
+.class-incompatible, .class-non_execute { color: var(--muted); }
+.classif-line { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; width: 100%; }
+.classif-chip { font-size: 11px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel2); }
+
 /* Boutons */
 button {
   cursor: pointer; border-radius: 6px; border: 1px solid var(--border);

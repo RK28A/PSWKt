@@ -41,6 +41,17 @@
     return test;
   }
 
+  // Classification lisible d'un resultat : distingue vraiment les cas.
+  function classify(status, detail) {
+    detail = detail || '';
+    if (status === 'pass') return { code: 'conforme', label: 'Conforme' };
+    if (status === 'fail') return { code: 'incorrect', label: 'Comportement incorrect (invariant viole)' };
+    if (status === 'error') return { code: 'exception', label: 'Exception JavaScript non prevue' };
+    if (status === 'aborted') return /echeance|delai/i.test(detail) ? { code: 'timeout', label: 'Delai depasse' } : { code: 'interrompu', label: 'Interrompu (Stop / arret)' };
+    if (status === 'skip') return /destructif/i.test(detail) ? { code: 'non_execute', label: 'Non execute (mode agressif desactive)' } : { code: 'incompatible', label: 'Fonctionnalite indisponible' };
+    return { code: status, label: status };
+  }
+
   function listCategories() {
     var out = [];
     for (var key in categories) {
@@ -123,7 +134,8 @@
       return Promise.resolve({
         id: test.id, name: test.name, category: test.category,
         description: test.description || '', destructive: true,
-        status: 'skip', durationMs: 0, detail: 'test destructif non autorise (Mode agressif desactive)',
+        status: 'skip', classification: classify('skip', 'test destructif non autorise'),
+        durationMs: 0, detail: 'test destructif non autorise (Mode agressif desactive)',
         measurements: null, error: null
       });
     }
@@ -135,7 +147,8 @@
       return Promise.resolve({
         id: test.id, name: test.name, category: test.category,
         description: test.description || '', destructive: !!test.destructive,
-        status: 'skip', durationMs: 0, detail: 'fonctionnalites absentes : ' + missing.join(', '),
+        status: 'skip', classification: classify('skip', 'fonctionnalites absentes'),
+        durationMs: 0, detail: 'fonctionnalites absentes : ' + missing.join(', '),
         measurements: null, error: null
       });
     }
@@ -174,6 +187,7 @@
           id: test.id, name: test.name, category: test.category,
           description: test.description || '', destructive: !!test.destructive,
           status: status,
+          classification: classify(status, result.detail || ''),
           durationMs: durationMs,
           detail: result.detail || '',
           measurements: result.measurements || null,
@@ -198,12 +212,14 @@
         var durationMs = Math.round((PSWKT.now() - started) * 1000) / 1000;
         var heapAfter = PSWKT.guard.readHeap();
         var aborted = PSWKT.guard.isAbort(err);
+        var abDetail = aborted ? ('arrete : ' + err.message) : 'exception non geree pendant le test';
         var record = {
           id: test.id, name: test.name, category: test.category,
           description: test.description || '', destructive: !!test.destructive,
           status: aborted ? 'aborted' : 'error',
+          classification: classify(aborted ? 'aborted' : 'error', abDetail),
           durationMs: durationMs,
-          detail: aborted ? ('arrete : ' + err.message) : 'exception non geree pendant le test',
+          detail: abDetail,
           measurements: null,
           budget: budget.summary(),
           heap: { before: heapBefore, after: heapAfter },
@@ -243,12 +259,17 @@
         return Promise.resolve();
       }
       var test = tests[i];
-      // Hook pre-test : permet d'ecrire un marqueur "DEBUT <id>" sur le serveur
-      // AVANT d'executer le test (identification du test fautif en cas de crash).
+      // Hook pre-test : ecrit un marqueur "test en cours" AVANT d'executer le test
+      // (identification du test fautif en cas de crash). On ATTEND ce que le hook
+      // renvoie : pour un test destructif, l'app renvoie la Promise d'ecriture
+      // IndexedDB, donc la trace est persistee avant de lancer le test risque.
+      var startP = null;
       if (typeof options.onTestStart === 'function') {
-        try { options.onTestStart(test, i, tests.length); } catch (e) { /* ne doit pas casser la suite */ }
+        try { startP = options.onTestStart(test, i, tests.length); } catch (e) { startP = null; }
       }
-      return runOne(test, options, featuresReport).then(function (record) {
+      return Promise.resolve(startP).then(function () {
+        return runOne(test, options, featuresReport);
+      }).then(function (record) {
         records.push(record);
         i++;
         if (typeof options.onProgress === 'function') {
@@ -294,6 +315,7 @@
     listTests: listTests,
     runOne: runOne,
     runSuite: runSuite,
+    classify: classify,
     _registry: registry
   };
 

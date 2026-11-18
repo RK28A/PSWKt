@@ -28,13 +28,14 @@
         <button id="btn-stop" class="danger" type="button" disabled>Stop</button>
         <button id="btn-options-toggle" class="ghost" type="button">&#9881; Options</button>
       </div>
+      <label class="mini-toggle aggr-main"><input id="opt-aggressive" type="checkbox"> <b>Mode agressif</b> &mdash; afficher et choisir les tests qui peuvent figer/planter</label>
+      <div id="aggressive-list" class="aggressive-list" style="display:none"></div>
       <div id="options-panel" class="options-panel" style="display:none">
         <div class="options">
           <label>Echeance/test (ms)<input id="opt-timeout" type="number" value="4000" min="100" step="100"></label>
           <label>Memoire (Mo)<input id="opt-memory" type="number" value="64" min="1" step="1"></label>
           <label>Plafond iterations<input id="opt-maxiter" type="number" value="5000000" min="1000" step="1000"></label>
         </div>
-        <label class="mini-toggle"><input id="opt-aggressive" type="checkbox" checked> Mode agressif &mdash; peut figer/planter (la PS5 redemarre)</label>
         <label class="mini-toggle"><input id="opt-stream" type="checkbox"> Enregistrement serveur continu (local, optionnel)</label>
       </div>
       <div class="progress">

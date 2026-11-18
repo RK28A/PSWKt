@@ -130,9 +130,14 @@ Aucune dépendance, aucun build : des fichiers HTML/CSS/JS statiques.
   agressif », opt-in, peut figer/planter). Le mode est enregistré avec chaque session.
 - **Garde-fous de ressources** : échéance par test, budget mémoire (Mo), plafond
   d'itérations, délai maximal pour les tests asynchrones, et un bouton **Stop** coopératif.
-  Ils cadrent les tests *ordinaires*. La case **« Mode agressif »** (cochée par défaut)
-  autorise les tests **destructifs** qui ignorent ces plafonds pour pousser jusqu'à la
-  rupture ; décochez-la pour un diagnostic doux et toujours interruptible.
+  Ils cadrent les tests *ordinaires*. La case **« Mode agressif »** (**décochée par défaut**,
+  par sécurité) autorise les tests **destructifs** qui ignorent ces plafonds pour pousser
+  jusqu'à la rupture. Sur l'**accueil**, cocher « Mode agressif » **affiche la liste des tests
+  agressifs** (toutes cases décochées) : tu choisis individuellement ceux à lancer — « Tout
+  lancer » exécute alors le diagnostic + uniquement les agressifs cochés.
+- **Classification des résultats** : chaque résultat est classé (Conforme / Comportement
+  incorrect / Exception JavaScript / Délai dépassé / Interrompu / Fonctionnalité indisponible /
+  Non exécuté), affiché par ligne et en répartition dans le résumé, et repris dans l'export.
 - **Export** : rapport **JSON** complet + version **texte** lisible, avec trois voies de
   récupération (téléchargement, presse-papiers, zone de texte sélectionnable).
 
