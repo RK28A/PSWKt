@@ -65,28 +65,44 @@ HTML/CSS/JS statiques.
 
 ## Lancer sur PC
 
-Servez le dossier en HTTP (les `file://` fonctionnent aussi, mais HTTP est plus fiable
-pour le presse-papiers) :
+Deux options :
+
+**Option A — avec enregistrement serveur des logs (recommandé).**
+Lance le petit serveur fourni : il sert la page *et* enregistre les rapports/journaux
+envoyés par le bouton « Enregistrer sur le serveur » dans un dossier `logs/`, créé
+automatiquement au démarrage (réutilisé s'il existe déjà).
+
+```bash
+cd PSWKt
+python3 server.py        # port 8080 par défaut, ou : python3 server.py 9000
+```
+
+**Option B — simple fichier statique (pas d'enregistrement serveur).**
 
 ```bash
 cd PSWKt
 python3 -m http.server 8080
 ```
 
-Puis ouvrez `http://localhost:8080/`.
+Puis ouvre `http://localhost:8080/`.
 
 ## Lancer sur la PS5
 
-1. Sur le PC, lancez le serveur ci-dessus et notez l'adresse IP locale du PC
+1. Sur le PC, lance `python3 server.py` (option A) et note l'adresse IP locale du PC
    (ex. `192.168.1.20`).
-2. Sur la PS5, ouvrez le navigateur et allez sur `http://192.168.1.20:8080/`.
-3. Choisissez une catégorie (ou « Tout lancer »), observez les résultats en direct.
-4. Section **6. Export** : générez le rapport, puis sélectionnez la zone de texte et
-   copiez-la (ou utilisez le téléchargement s'il fonctionne) pour l'analyser sur PC.
+2. Sur la PS5, ouvre le navigateur et va sur `http://192.168.1.20:8080/`.
+3. Choisis une catégorie (ou « Tout lancer »), observe les résultats en direct, annote
+   ce que tu veux consigner.
+4. **Pour garder les logs sans galère** : clique « Enregistrer sur le serveur » (section
+   Journal) ou « Enregistrer sur le serveur (logs/) » (section Export). Le fichier est
+   écrit directement dans `PSWKt/logs/` **sur le PC** — rien à copier-coller depuis la PS5.
+5. Alternativement : « Copier le journal » (presse-papiers), « Télécharger (.txt) », ou la
+   zone de texte sélectionnable.
 
 ## Structure
 
 ```
+server.py             serveur local optionnel : statique + enregistrement dans logs/
 index.html            page principale + interface
 css/styles.css        styles
 js/core/log.js        journal : événements, erreurs, durées

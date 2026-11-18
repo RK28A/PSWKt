@@ -361,19 +361,41 @@
     if (!auto || auto.checked) cons.scrollTop = cons.scrollHeight;
   }
 
-  // Construit le journal complet en texte, l'affiche dans la zone et tente la copie.
+  // Copie robuste : selectionne la zone puis tente execCommand('copy') (compatible
+  // WebKit ancien / HTTP), le plus fiable sur la PS5. Renvoie true si la copie a eu lieu.
+  function copyViaArea(area) {
+    var ok = false;
+    try {
+      area.style.display = 'block';
+      area.focus();
+      area.select();
+      try { area.setSelectionRange(0, (area.value || '').length); } catch (e) {}
+      ok = !!(document.execCommand && document.execCommand('copy'));
+    } catch (e) { ok = false; }
+    return ok;
+  }
+
+  // Construit le journal complet en texte, l'affiche dans la zone et le copie.
   function copyLog() {
     var text = PSWKT.logger.toText();
     var area = $('log-copy-area');
     area.value = text;
     area.style.display = 'block';
     var n = PSWKT.logger.events.length;
-    $('log-copy-hint').textContent = 'Journal : ' + n + ' lignes, ' + text.length + ' octets.';
-    PSWKT.exporter.copyToClipboard(text).then(function (copied) {
-      $('log-copy-hint').textContent = 'Journal : ' + n + ' lignes, ' + text.length + ' octets. ' +
-        (copied ? 'Copie dans le presse-papiers.' : 'Selectionnez le texte ci-dessous pour le copier (Ctrl/Cmd+A puis Ctrl/Cmd+C).');
+    var base = 'Journal : ' + n + ' lignes, ' + text.length + ' octets. ';
+    // 1) voie la plus compatible (geste du clic) : execCommand sur la zone selectionnee.
+    var copied = copyViaArea(area);
+    if (copied) {
+      $('log-copy-hint').textContent = base + 'Copie dans le presse-papiers.';
+      return;
+    }
+    // 2) repli : API clipboard asynchrone (contexte securise uniquement).
+    $('log-copy-hint').textContent = base + 'copie en cours...';
+    PSWKT.exporter.copyToClipboard(text).then(function (ok2) {
+      $('log-copy-hint').textContent = base + (ok2 ? 'Copie dans le presse-papiers.' :
+        'Selectionnez le texte ci-dessous et copiez (le texte est deja surligne).');
+      if (!ok2) copyViaArea(area);
     });
-    try { area.focus(); area.select(); } catch (e) {}
   }
 
   function downloadLog() {
@@ -419,14 +441,46 @@
       'Selectionnez tout le texte ci-dessous pour le copier, ou utilisez les boutons.';
     // 2) tentative de telechargement
     var dl = PSWKT.exporter.downloadText(content, name, mime);
-    // 3) tentative de copie presse-papiers
-    PSWKT.exporter.copyToClipboard(content).then(function (copied) {
-      var parts = [];
-      if (dl) parts.push('telechargement declenche (' + name + ')');
-      if (copied) parts.push('copie dans le presse-papiers');
-      if (parts.length) $('export-hint').textContent += '  [' + parts.join(' ; ') + ']';
-    });
+    // 3) copie : execCommand d'abord (compatible PS5), repli clipboard ensuite
+    var copied = copyViaArea(area);
+    var parts = [];
+    if (dl) parts.push('telechargement declenche (' + name + ')');
+    if (copied) parts.push('copie dans le presse-papiers');
+    if (parts.length) $('export-hint').textContent += '  [' + parts.join(' ; ') + ']';
+    if (!copied) {
+      PSWKT.exporter.copyToClipboard(content).then(function (ok2) {
+        if (ok2) $('export-hint').textContent += '  [copie dans le presse-papiers]';
+      });
+    }
     PSWKT.logger.info('app', 'Export ' + kind + ' genere (' + content.length + ' octets)');
+  }
+
+  // Enregistre un contenu sur le serveur local (dossier logs/), via POST.
+  function saveToServer(content, format, name, hintEl) {
+    hintEl.textContent = 'Enregistrement sur le serveur...';
+    try {
+      var xhr = new XMLHttpRequest();
+      var url = '/api/save-log?format=' + encodeURIComponent(format) + '&name=' + encodeURIComponent(name);
+      xhr.open('POST', url, true);
+      xhr.setRequestHeader('Content-Type', format === 'json' ? 'application/json;charset=utf-8' : 'text/plain;charset=utf-8');
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState !== 4) return;
+        if (xhr.status >= 200 && xhr.status < 300) {
+          var path = '';
+          try { path = JSON.parse(xhr.responseText).path; } catch (e) {}
+          hintEl.textContent = 'Enregistre sur le serveur : ' + (path || 'logs/') + ' (' + content.length + ' octets).';
+          PSWKT.logger.info('app', 'Rapport enregistre sur le serveur : ' + path);
+        } else {
+          hintEl.textContent = 'Echec serveur (statut ' + xhr.status + '). Lancez le projet avec « python3 server.py » (et non http.server) pour activer l enregistrement.';
+        }
+      };
+      xhr.onerror = function () {
+        hintEl.textContent = 'Serveur injoignable. Lancez « python3 server.py » pour activer l enregistrement dans logs/.';
+      };
+      xhr.send(content);
+    } catch (e) {
+      hintEl.textContent = 'Erreur d enregistrement : ' + e.message;
+    }
   }
 
   function selectExportArea() {
@@ -456,6 +510,13 @@
     $('btn-clear-log').onclick = function () { clear($('log-console')); };
     $('btn-copy-log').onclick = copyLog;
     $('btn-download-log').onclick = downloadLog;
+    $('btn-save-log-server').onclick = function () {
+      saveToServer(PSWKT.logger.toText(), 'txt', 'journal', $('log-copy-hint'));
+    };
+    $('btn-save-server').onclick = function () {
+      var report = PSWKT.exporter.buildReport(state.lastRun);
+      saveToServer(PSWKT.exporter.toJSON(report), 'json', 'rapport', $('export-hint'));
+    };
 
     setRunningUI(false);
     PSWKT.logger.info('app', 'Interface prete. ' + R.listTests().length + ' tests dans ' +
