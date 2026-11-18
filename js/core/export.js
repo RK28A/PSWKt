@@ -125,6 +125,105 @@
     return L.join('\n');
   }
 
+  // Bloc texte ULTRA-DETAILLE pour un seul resultat : tout y passe (mesures
+  // completes, pile d'erreur, tas avant/apres, budget, annotation).
+  function recordBlock(r, annotation) {
+    var L = [];
+    function line(s) { L.push(s == null ? '' : String(s)); }
+    line('──────────────────────────────────────────────────────────────');
+    line('[' + (r.status || '?').toUpperCase() + '] ' + r.name + '   (' + r.durationMs + ' ms)');
+    line('  id        : ' + r.id);
+    line('  categorie : ' + r.category);
+    if (r.detail) line('  detail    : ' + r.detail);
+    if (r.measurements) {
+      var mj;
+      try { mj = JSON.stringify(r.measurements, null, 2); } catch (e) { mj = '[mesures illisibles]'; }
+      line('  mesures   :');
+      var ml = mj.split('\n');
+      for (var a = 0; a < ml.length; a++) line('      ' + ml[a]);
+    }
+    if (r.error) {
+      line('  ERREUR    : ' + r.error.name + ': ' + r.error.message);
+      if (r.error.stack) {
+        line('  pile      :');
+        var sl = String(r.error.stack).split('\n');
+        for (var b = 0; b < sl.length; b++) line('      ' + sl[b]);
+      }
+    }
+    if (r.heap && (r.heap.before || r.heap.after)) {
+      var hb = r.heap.before ? Math.round(r.heap.before.usedJSHeapSize / 1048576 * 100) / 100 : '?';
+      var ha = r.heap.after ? Math.round(r.heap.after.usedJSHeapSize / 1048576 * 100) / 100 : '?';
+      line('  tas (Mo)  : avant ' + hb + ' -> apres ' + ha);
+    }
+    if (r.budget) {
+      line('  budget    : ' + r.budget.iterations + ' iterations, ' +
+        Math.round((r.budget.allocatedBytes || 0) / 1048576 * 100) / 100 + ' Mo charges, echeance ' +
+        r.budget.timeoutMs + ' ms' + (r.budget.aborted ? (' [ARRETE: ' + r.budget.abortReason + ']') : ''));
+    }
+    if (annotation && (annotation.tag || annotation.note)) {
+      line('  >> ANNOTATION : ' + (annotation.tag ? ('[' + annotation.tag + '] ') : '') + (annotation.note || ''));
+    }
+    return L.join('\n');
+  }
+
+  // Rapport texte ULTRA-DETAILLE complet (environnement + resume + chaque test + journal).
+  function toDetailedText(report) {
+    var L = [];
+    function line(s) { L.push(s == null ? '' : String(s)); }
+    line('================================================================');
+    line('   PSWKT - RAPPORT ULTRA-DETAILLE');
+    line('================================================================');
+    line('Genere : ' + report.meta.generatedAt);
+    line('URL    : ' + report.meta.href);
+    line('UA     : ' + report.environment.userAgent);
+    line('Plateforme : ' + report.environment.platform + '  |  coeurs : ' + report.environment.hardwareConcurrency +
+      '  |  memoire GB : ' + report.environment.deviceMemoryGB);
+    line('Ecran  : ' + report.environment.screen.width + 'x' + report.environment.screen.height +
+      ' @' + report.environment.screen.pixelRatio);
+    line('PlayStation probable : ' + report.playstation.likelyPlaystation +
+      (report.playstation.hints.length ? (' (' + report.playstation.hints.join('; ') + ')') : ''));
+    line('');
+
+    if (report.run && report.run.summary) {
+      var s = report.run.summary;
+      line('--- RESUME ---');
+      line('Total ' + s.total + '  |  reussis ' + s.counts.pass + '  echecs ' + s.counts.fail +
+        '  erreurs ' + s.counts.error + '  ignores ' + s.counts.skip + '  arretes ' + s.counts.aborted);
+      line('Duree totale : ' + s.totalDurationMs + ' ms' + (s.suiteAborted ? '  (SUITE INTERROMPUE)' : ''));
+      line('');
+      line('--- DETAIL COMPLET PAR TEST ---');
+      for (var i = 0; i < report.run.records.length; i++) {
+        var r = report.run.records[i];
+        line(recordBlock(r, report.annotations.items[r.id]));
+      }
+      line('');
+    }
+
+    if (report.log.globalErrors.length) {
+      line('--- ERREURS JS GLOBALES (' + report.log.globalErrors.length + ') ---');
+      for (var k = 0; k < report.log.globalErrors.length; k++) {
+        var ge = report.log.globalErrors[k];
+        line('(' + ge.t + ' ms) ' + ge.name + ': ' + ge.message + (ge.source ? ('  @' + ge.source) : ''));
+        if (ge.stack) {
+          var gsl = String(ge.stack).split('\n');
+          for (var g = 0; g < gsl.length; g++) line('      ' + gsl[g]);
+        }
+      }
+      line('');
+    }
+
+    line('--- JOURNAL COMPLET (' + report.log.events.length + ' evenements) ---');
+    for (var j = 0; j < report.log.events.length; j++) {
+      var e = report.log.events[j];
+      var t = ('            ' + (e.t != null ? e.t.toFixed(3) : '?')).slice(-12);
+      var lvl = ((e.level || '').toUpperCase() + '       ').slice(0, 7);
+      var el = '[' + t + 'ms] ' + lvl + ' [' + e.source + '] ' + e.msg;
+      if (e.data !== undefined) { try { el += ' | ' + JSON.stringify(e.data); } catch (x) {} }
+      line(el);
+    }
+    return L.join('\n');
+  }
+
   function filename(ext) {
     var d = new Date();
     function p(n) { return (n < 10 ? '0' : '') + n; }
@@ -171,6 +270,8 @@
     buildReport: buildReport,
     toJSON: toJSON,
     toText: toText,
+    toDetailedText: toDetailedText,
+    recordBlock: recordBlock,
     filename: filename,
     downloadText: downloadText,
     copyToClipboard: copyToClipboard

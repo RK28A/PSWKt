@@ -85,7 +85,7 @@
   }
 
   // Construit le contexte passe a un test.
-  function makeContext(test, budget, featuresReport) {
+  function makeContext(test, budget, featuresReport, options) {
     var logger = PSWKT.logger;
     return {
       budget: budget,
@@ -95,7 +95,16 @@
       charge: function (bytes) { return budget.charge(bytes); },
       log: function (level, msg, data) { return logger.log(level, test.id, msg, data); },
       info: function (msg, data) { return logger.log('info', test.id, msg, data); },
-      metric: function (msg, data) { return logger.log('metric', test.id, msg, data); }
+      metric: function (msg, data) { return logger.log('metric', test.id, msg, data); },
+      // flush() : force l'ecriture sur le serveur des logs accumules (enregistrement
+      // continu). A appeler par les tests agressifs AVANT une etape qui peut tout
+      // figer, pour que le jalon soit persiste sur disque meme en cas de crash.
+      flush: function () {
+        if (options && typeof options.onFlush === 'function') {
+          try { return options.onFlush(); } catch (e) { /* le flush ne doit jamais casser un test */ }
+        }
+        return false;
+      }
     };
   }
 
@@ -143,7 +152,7 @@
     });
     if (options.registerBudget) options.registerBudget(budget);
 
-    var ctx = makeContext(test, budget, featuresReport);
+    var ctx = makeContext(test, budget, featuresReport, options);
     var heapBefore = PSWKT.guard.readHeap();
     var started = PSWKT.now();
 
@@ -230,6 +239,11 @@
         return Promise.resolve();
       }
       var test = tests[i];
+      // Hook pre-test : permet d'ecrire un marqueur "DEBUT <id>" sur le serveur
+      // AVANT d'executer le test (identification du test fautif en cas de crash).
+      if (typeof options.onTestStart === 'function') {
+        try { options.onTestStart(test, i, tests.length); } catch (e) { /* ne doit pas casser la suite */ }
+      }
       return runOne(test, options, featuresReport).then(function (record) {
         records.push(record);
         i++;

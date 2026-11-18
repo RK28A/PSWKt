@@ -80,6 +80,15 @@ body {
 }
 .aggressive-toggle input { width: auto; margin-top: 2px; flex: none; }
 .aggressive-toggle b { color: var(--aborted); }
+.stream-toggle {
+  display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--text);
+  background: rgba(59,130,246,0.1); border: 1px solid var(--accent);
+  border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; line-height: 1.4;
+}
+.stream-toggle input { width: auto; margin-top: 2px; flex: none; }
+.stream-toggle b { color: var(--accent); }
+.stream-toggle code { background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+.stream-hint { font-size: 12px; margin: 0 0 12px; word-break: break-all; }
 
 /* Boutons */
 button {

@@ -42,6 +42,17 @@ def safe_filename(name, fmt):
     return 'pswkt-%s-%s.%s' % (base, stamp, ext)
 
 
+def safe_session_filename(session):
+    """Nom de fichier stable pour l'enregistrement continu d'une session (append)."""
+    base = SAFE.sub('_', (session or 'session')).strip('_') or 'session'
+    base = base[:80]
+    return 'pswkt-live-%s.txt' % base
+
+
+def within_logs(fpath):
+    return os.path.abspath(fpath).startswith(LOGS_DIR + os.sep)
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=ROOT, **kwargs)
@@ -55,18 +66,29 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(data)
 
     def do_POST(self):
-        if urlparse(self.path).path != '/api/save-log':
+        path = urlparse(self.path).path
+        if path == '/api/save-log':
+            self._handle_save()
+        elif path == '/api/log-stream':
+            self._handle_stream()
+        else:
             self._json(404, {'ok': False, 'error': 'route inconnue'})
-            return
+
+    def _read_body(self):
         try:
             length = int(self.headers.get('Content-Length', 0))
         except ValueError:
             length = 0
         if length <= 0 or length > MAX_BODY:
+            return None
+        return self.rfile.read(length)
+
+    # Enregistrement d'un rapport complet (un fichier horodate par appel).
+    def _handle_save(self):
+        body = self._read_body()
+        if body is None:
             self._json(413, {'ok': False, 'error': 'taille de corps invalide'})
             return
-
-        body = self.rfile.read(length)
         q = parse_qs(urlparse(self.path).query)
         fmt = (q.get('format', ['txt'])[0] or 'txt').lower()
         name = q.get('name', ['log'])[0]
@@ -74,15 +96,14 @@ class Handler(SimpleHTTPRequestHandler):
         ensure_logs_dir()
         fname = safe_filename(name, fmt)
         fpath = os.path.join(LOGS_DIR, fname)
-
-        # Securite : on n'ecrit QUE dans LOGS_DIR.
-        if not os.path.abspath(fpath).startswith(LOGS_DIR + os.sep):
+        if not within_logs(fpath):
             self._json(400, {'ok': False, 'error': 'nom de fichier invalide'})
             return
-
         try:
             with open(fpath, 'wb') as f:
                 f.write(body)
+                f.flush()
+                os.fsync(f.fileno())
         except OSError as exc:
             self._json(500, {'ok': False, 'error': 'ecriture impossible : %s' % exc})
             return
@@ -91,6 +112,42 @@ class Handler(SimpleHTTPRequestHandler):
         sys.stdout.write('[PSWKT] enregistre : %s (%d octets)\n' % (rel, len(body)))
         sys.stdout.flush()
         self._json(200, {'ok': True, 'path': rel, 'bytes': len(body)})
+
+    # Enregistrement CONTINU : ajoute le corps a la fin du fichier de session, et
+    # force l'ecriture sur le disque (fsync) a chaque appel. Ainsi, si le navigateur
+    # PS5 plante en plein test, le fichier contient deja TOUT jusqu'au test fautif,
+    # dont la ligne "DEBUT <id>" ecrite juste avant son execution.
+    def _handle_stream(self):
+        body = self._read_body()
+        if body is None:
+            self._json(413, {'ok': False, 'error': 'taille de corps invalide'})
+            return
+        q = parse_qs(urlparse(self.path).query)
+        session = q.get('session', ['session'])[0]
+        truncate = q.get('init', ['0'])[0] in ('1', 'true', 'yes')
+
+        ensure_logs_dir()
+        fname = safe_session_filename(session)
+        fpath = os.path.join(LOGS_DIR, fname)
+        if not within_logs(fpath):
+            self._json(400, {'ok': False, 'error': 'session invalide'})
+            return
+        try:
+            mode = 'wb' if truncate else 'ab'
+            with open(fpath, mode) as f:
+                f.write(body)
+                f.flush()
+                os.fsync(f.fileno())      # garantit la persistance avant un eventuel crash
+            size = os.path.getsize(fpath)
+        except OSError as exc:
+            self._json(500, {'ok': False, 'error': 'ajout impossible : %s' % exc})
+            return
+
+        rel = os.path.join('logs', fname)
+        if truncate:
+            sys.stdout.write('[PSWKT] session continue : %s\n' % rel)
+            sys.stdout.flush()
+        self._json(200, {'ok': True, 'path': rel, 'bytes': len(body), 'total': size})
 
     def log_message(self, fmt, *args):
         # Silencieux pour le service statique (on ne log que les enregistrements).

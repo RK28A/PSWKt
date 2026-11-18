@@ -47,7 +47,7 @@
     this.events = [];
     this.globalErrors = [];
     this.listeners = [];
-    this._maxEvents = 5000; // garde-fou memoire : plafonne le nombre d'evenements.
+    this._maxEvents = 50000; // garde-fou memoire eleve (logs ultra-detailles). Le flux serveur continu n'est jamais tronque, lui.
   }
 
   Logger.prototype.reset = function () {

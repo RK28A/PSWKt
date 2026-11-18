@@ -188,11 +188,13 @@
     if (isNaN(memMB) || memMB < 1) memMB = 64;
     if (isNaN(maxIter) || maxIter < 1000) maxIter = PSWKT.guard.DEFAULTS.maxIterations;
     var aggressive = $('opt-aggressive') ? $('opt-aggressive').checked : true;
+    var streaming = $('opt-stream') ? $('opt-stream').checked : false;
     return {
       timeoutMs: timeout,
       memoryBudgetBytes: memMB * 1024 * 1024,
       maxIterations: maxIter,
-      allowDestructive: aggressive
+      allowDestructive: aggressive,
+      streaming: streaming
     };
   }
 
@@ -303,15 +305,44 @@
     var opts = readOptions();
     PSWKT.logger.info('app', 'Lancement : ' + label + ' (' + tests.length + ' tests)', opts);
 
+    // Enregistrement continu : ouvre une session serveur (fichier dedie, tronque).
+    var streaming = false;
+    if (opts.streaming && PSWKT.serverLog) {
+      var slug = String(label).replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30);
+      var stamp = PSWKT.exporter.filename('txt').replace(/^pswkt-rapport-/, '').replace(/\.txt$/, '');
+      var session = stamp + (slug ? ('-' + slug) : '');
+      var ok = PSWKT.serverLog.enable(session);
+      streaming = true;
+      var sh = $('stream-hint');
+      if (sh) {
+        if (ok) sh.textContent = 'Enregistrement continu actif -> logs/pswkt-live-' + session + '.txt (ecrit au fur et a mesure).';
+        else sh.textContent = 'Enregistrement continu : serveur injoignable (' + (PSWKT.serverLog.lastError || '?') + '). Lancez « python3 server.py ».';
+      }
+      PSWKT.logger.info('app', 'Enregistrement continu : session ' + session + (ok ? ' (OK)' : ' (SERVEUR INJOIGNABLE)'));
+    }
+
     var runOptions = {
       timeoutMs: opts.timeoutMs,
       memoryBudgetBytes: opts.memoryBudgetBytes,
       maxIterations: opts.maxIterations,
       allowDestructive: opts.allowDestructive,
       control: state.control,
+      // Marqueur SYNCHRONE ecrit sur disque AVANT l'execution du test : si le test
+      // fait planter WebKit, c'est la derniere ligne du fichier -> test fautif identifie.
+      onTestStart: streaming ? function (test, idx, total) {
+        PSWKT.serverLog.marker('▶ DEBUT  [' + (idx + 1) + '/' + total + ']  ' + test.id + '  —  ' + test.name +
+          (test.destructive ? '   ⚠ DESTRUCTIF' : ''), true);
+      } : undefined,
+      // ctx.flush() des tests agressifs : persiste les jalons avant l'etape risquee.
+      onFlush: streaming ? function () { return PSWKT.serverLog.flush(true); } : undefined,
       onProgress: function (done, total, record) {
         appendResultRow(record);
         setProgress(done, total, 'execution');
+        if (streaming) {
+          // Bloc ultra-detaille du resultat + marqueur de fin, envoyes en continu.
+          try { PSWKT.serverLog.raw(PSWKT.exporter.recordBlock(record, (PSWKT.annotations || {})[record.id]), false); } catch (e) {}
+          PSWKT.serverLog.marker('■ FIN    [' + done + '/' + total + ']  ' + record.id + '  ->  ' + String(record.status).toUpperCase(), false);
+        }
       }
     };
 
@@ -322,10 +353,19 @@
       renderSummary(result.summary);
       setProgress(result.records.length, tests.length, result.summary.suiteAborted ? 'interrompu' : 'termine');
       PSWKT.logger.info('app', 'Termine : ' + label, result.summary);
+      if (streaming) {
+        PSWKT.serverLog.marker('════════ SUITE TERMINEE : ' + result.summary.counts.pass + ' reussis, ' +
+          result.summary.counts.fail + ' echecs, ' + result.summary.counts.error + ' erreurs, ' +
+          result.summary.counts.aborted + ' arretes, ' + result.summary.counts.skip + ' ignores ════════', true);
+        PSWKT.serverLog.disable();
+        var sh2 = $('stream-hint');
+        if (sh2 && !PSWKT.serverLog.lastError) sh2.textContent += '  [termine, ' + PSWKT.serverLog.bytesSent + ' octets ecrits]';
+      }
       state.running = false;
       setRunningUI(false);
     }, function (err) {
       PSWKT.logger.captureGlobalError(err);
+      if (streaming) { try { PSWKT.serverLog.marker('✖ SUITE INTERROMPUE PAR UNE ERREUR : ' + (err && err.message), true); PSWKT.serverLog.disable(); } catch (e) {} }
       state.running = false;
       setRunningUI(false);
     });
@@ -514,6 +554,11 @@
     $('btn-download-log').onclick = downloadLog;
     $('btn-save-log-server').onclick = function () {
       saveToServer(PSWKT.logger.toText(), 'txt', 'journal', $('log-copy-hint'));
+    };
+    $('btn-save-detailed-server').onclick = function () {
+      var report = PSWKT.exporter.buildReport(state.lastRun);
+      var text = PSWKT.exporter.toDetailedText(report);
+      saveToServer(text, 'txt', 'detaille', $('log-copy-hint'));
     };
     $('btn-save-server').onclick = function () {
       var report = PSWKT.exporter.buildReport(state.lastRun);
