@@ -187,10 +187,12 @@
     if (isNaN(timeout) || timeout < 100) timeout = PSWKT.guard.DEFAULTS.timeoutMs;
     if (isNaN(memMB) || memMB < 1) memMB = 64;
     if (isNaN(maxIter) || maxIter < 1000) maxIter = PSWKT.guard.DEFAULTS.maxIterations;
+    var aggressive = $('opt-aggressive') ? $('opt-aggressive').checked : true;
     return {
       timeoutMs: timeout,
       memoryBudgetBytes: memMB * 1024 * 1024,
-      maxIterations: maxIter
+      maxIterations: maxIter,
+      allowDestructive: aggressive
     };
   }
 
@@ -305,7 +307,7 @@
       timeoutMs: opts.timeoutMs,
       memoryBudgetBytes: opts.memoryBudgetBytes,
       maxIterations: opts.maxIterations,
-      allowDestructive: false,
+      allowDestructive: opts.allowDestructive,
       control: state.control,
       onProgress: function (done, total, record) {
         appendResultRow(record);

@@ -129,10 +129,17 @@
       });
     }
 
+    // Les tests destructifs (mode agressif) ignorent volontairement les garde-fous
+    // ordinaires : ils doivent pouvoir pousser les API jusqu'a la rupture (figer /
+    // planter le navigateur). Le bouton Stop reste operant via budget.requestAbort,
+    // tant que le test appelle ctx.tick() (impossible pour une operation synchrone
+    // unique comme un backtracking regex). Une echeance large sert de filet si le
+    // test est seulement lent plutot que fatal.
+    var destructive = !!test.destructive;
     var budget = new PSWKT.guard.Budget({
-      timeoutMs: options.timeoutMs,
-      memoryBudgetBytes: options.memoryBudgetBytes,
-      maxIterations: options.maxIterations
+      timeoutMs: destructive ? Math.max(options.timeoutMs || 0, 30000) : options.timeoutMs,
+      memoryBudgetBytes: destructive ? Number.MAX_SAFE_INTEGER : options.memoryBudgetBytes,
+      maxIterations: destructive ? Number.MAX_SAFE_INTEGER : options.maxIterations
     });
     if (options.registerBudget) options.registerBudget(budget);
 

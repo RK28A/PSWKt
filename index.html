@@ -11,7 +11,7 @@
   <header class="app-header">
     <div class="wrap">
       <h1>PSWKT <span class="sub">Laboratoire de tests WebKit</span></h1>
-      <p class="tagline">Diagnostic d'API JavaScript non destructif et reproductible &mdash; pense pour le navigateur WebKit de la PS5 (13.60) et tout WebKit.</p>
+      <p class="tagline">Diagnostic d'API JavaScript &mdash; du sondage doux et reproductible au <b>stress test agressif</b> qui pousse le moteur jusqu'a la rupture. Pense pour le navigateur WebKit de la PS5 (13.60) et tout WebKit.</p>
     </div>
   </header>
 
@@ -30,7 +30,7 @@
     <!-- Reglages des garde-fous -->
     <section class="panel">
       <h2>2. Garde-fous de ressources</h2>
-      <p class="muted">Ces limites evitent de bloquer le navigateur. Les tests redonnent la main regulierement et respectent ces plafonds.</p>
+      <p class="muted">Ces limites cadrent les tests <b>ordinaires</b>. Les tests <b>agressifs</b> (destructifs) les ignorent volontairement : ils poussent les API jusqu'a la rupture.</p>
       <div class="options">
         <label>Echeance par test (ms)
           <input id="opt-timeout" type="number" value="4000" min="100" step="100">
@@ -42,6 +42,10 @@
           <input id="opt-maxiter" type="number" value="5000000" min="1000" step="1000">
         </label>
       </div>
+      <label class="aggressive-toggle"><input id="opt-aggressive" type="checkbox" checked>
+        <b>Mode agressif</b> &mdash; active les tests destructifs qui peuvent <b>figer ou planter le navigateur</b>
+        (sans danger pour la console : au pire la PS5 redemarre). Decoche pour un diagnostic doux.
+      </label>
       <div class="run-bar">
         <button id="btn-run-all" class="primary" type="button">Tout lancer</button>
         <button id="btn-run-selected" class="primary" type="button">Lancer la selection</button>
@@ -136,6 +140,7 @@
   <script src="js/tests/fuzz_builtins.js"></script>
   <script src="js/tests/fuzz_typedarrays.js"></script>
   <script src="js/tests/fuzz_structural.js"></script>
+  <script src="js/tests/fuzz_aggressive.js"></script>
   <!-- Application -->
   <script src="js/app.js"></script>
 </body>

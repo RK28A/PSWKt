@@ -73,6 +73,13 @@ body {
   background: var(--panel2); color: var(--text); border: 1px solid var(--border);
   border-radius: 6px; padding: 8px 10px; font-size: 15px; width: 180px;
 }
+.aggressive-toggle {
+  display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--text);
+  background: rgba(219,109,40,0.12); border: 1px solid var(--aborted);
+  border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; line-height: 1.4;
+}
+.aggressive-toggle input { width: auto; margin-top: 2px; flex: none; }
+.aggressive-toggle b { color: var(--aborted); }
 
 /* Boutons */
 button {

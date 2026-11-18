@@ -1,19 +1,20 @@
 # PSWKT — Laboratoire de tests WebKit (PS5 13.60)
 
-Application web de **diagnostic d'API JavaScript**, non destructive et reproductible,
-conçue pour tourner dans un navigateur WebKit — notamment celui de la PS5 (13.60) — comme
-dans n'importe quel navigateur moderne. Aucune dépendance, aucun build : des fichiers
-HTML/CSS/JS statiques.
+Application web de **diagnostic d'API JavaScript**, conçue pour tourner dans un navigateur
+WebKit — notamment celui de la PS5 (13.60) — comme dans n'importe quel navigateur moderne.
+Du **sondage doux et reproductible** (ce qui est réellement disponible, comment les API se
+comportent) jusqu'au **stress test agressif** qui pousse le moteur **jusqu'à la rupture**.
+Aucune dépendance, aucun build : des fichiers HTML/CSS/JS statiques.
 
 ## Ce que ça fait
 
 - **Détection d'environnement et de fonctionnalités** : vérifie ce qui est *réellement*
   disponible (tableaux typés, Canvas/WebGL, Proxy/Map/Set, WeakRef, `performance.memory`,
   WebAssembly…). Les tests dont un prérequis manque sont automatiquement **ignorés**.
-- **890+ tests indépendants** répartis en **23 catégories**, avec des *techniques variées*
+- **900 tests indépendants** répartis en **24 catégories**, avec des *techniques variées*
   (synchrone, asynchrone/Promise, Web Worker, microtâches, `requestAnimationFrame`,
   sondage par `try/catch`, timing haute résolution, génération pilotée par données,
-  **fuzzing d'entrées malformées**).
+  **fuzzing d'entrées malformées** et **stress test agressif/destructif**).
 
   Catégories comportementales (exercent réellement l'API) :
   - `Tableaux typés` — aller-retour par type, DataView/endianness, vues partagées,
@@ -67,12 +68,25 @@ HTML/CSS/JS statiques.
     hostiles** (qui lèvent ou violent les invariants), itérateurs piégés, `structuredClone`,
     `Map`/`Set` à clés limites (`NaN`, `±0`).
 
-  > *Philosophie du fuzzing ici* : chaque entrée est encadrée par `try/catch` (rien ne
-  > remonte en erreur globale), chaque taille/profondeur est **plafonnée** (pas d'allocation
-  > sans fin, respect du budget mémoire), chaque boucle appelle `ctx.tick()` (échéance +
-  > bouton Stop), et l'aléatoire est **semé** → mêmes entrées d'une exécution à l'autre.
-  > Un test *réussit* quand le moteur **survit** (il renvoie ou lève une erreur rattrapable) ;
-  > il *échoue* seulement quand un **invariant** est violé — une anomalie à consigner.
+  Catégorie de **stress test agressif** (⚠ *destructif* — pousse jusqu'à la **rupture**) :
+  - `Fuzz · AGRESSIF (destructif)` — bombe mémoire (allocation retenue jusqu'à l'OOM),
+    chaîne et tableau typé géants, débordement de pile par récursion, imbrication JSON
+    jusqu'au débordement, **backtracking regex catastrophique** (peut *figer l'onglet*),
+    et churn GC. Ces tests **peuvent figer ou faire planter le navigateur** — c'est le but :
+    on observe si le WebKit de la PS5 tient, rame, se recharge seul ou plante, et chaque
+    test **journalise sa progression avant de pousser plus loin** (pour qu'un log sauvegardé
+    montre jusqu'où le moteur a tenu, même s'il plante juste après).
+
+  > **Deux régimes.** Le fuzzing *ordinaire* (4 catégories ci-dessus) reste **borné et
+  > reproductible** : chaque entrée est encadrée par `try/catch`, chaque taille est
+  > **plafonnée**, chaque boucle appelle `ctx.tick()` (échéance + Stop), l'aléatoire est
+  > **semé**. Un test y *réussit* quand le moteur **survit** ; il *échoue* si un **invariant**
+  > est violé. Le stress *agressif* (catégorie `AGRESSIF`) **ignore volontairement** ces
+  > garde-fous pour atteindre le point de rupture.
+  >
+  > **Aucun danger pour la console.** Le navigateur de la PS5 est en bac-à-sable : aucun
+  > code JavaScript ne peut abîmer le matériel ni le firmware. Au pire l'onglet meurt et la
+  > **PS5 redémarre normalement**. Rien de persistant n'est écrit.
 - **Annotations** : sur chaque résultat, une étiquette rapide (OK / Lent / Figé /
   Rechargé / Autre) et une note libre. Pratique pour consigner un comportement observé
   sur la console (ex. « a fait recharger le navigateur »). Les annotations sont reprises
@@ -83,8 +97,10 @@ HTML/CSS/JS statiques.
   Boutons **Copier le journal** (presse-papiers + zone sélectionnable) et
   **Télécharger (.txt)** — pensés pour la console où le téléchargement peut échouer.
 - **Garde-fous de ressources** : échéance par test, budget mémoire (Mo), plafond
-  d'itérations, délai maximal pour les tests asynchrones, et un bouton **Stop** coopératif
-  pour ne jamais bloquer le navigateur.
+  d'itérations, délai maximal pour les tests asynchrones, et un bouton **Stop** coopératif.
+  Ils cadrent les tests *ordinaires*. La case **« Mode agressif »** (cochée par défaut)
+  autorise les tests **destructifs** qui ignorent ces plafonds pour pousser jusqu'à la
+  rupture ; décochez-la pour un diagnostic doux et toujours interruptible.
 - **Export** : rapport **JSON** complet + version **texte** lisible, avec trois voies de
   récupération (téléchargement, presse-papiers, zone de texte sélectionnable).
 
@@ -139,6 +155,7 @@ js/tests/typedarrays.js  canvas.js  objects.js  memory.js
 js/tests/strings.js      numbers.js errors.js  async.js  platform.js  dom.js
 js/tests/_fuzz.js        infrastructure de fuzzing (PRNG semé, corpus malformés, fabriques)
 js/tests/fuzz_parsers.js fuzz_builtins.js fuzz_typedarrays.js fuzz_structural.js
+js/tests/fuzz_aggressive.js  stress test AGRESSIF/destructif (bombe mémoire, regex, pile…)
 js/app.js             orchestration et rendu de l'interface
 ```
 
@@ -161,9 +178,12 @@ PSWKT.runner.register({
 
 ## Portée et prudence
 
-Tests **reproductibles et non destructifs** uniquement. Une erreur JavaScript observée
-ici est un **comportement à documenter**, pas une vulnérabilité. Le **fuzzing** envoie des
-entrées *mal formées* pour cartographier la robustesse des API (coercition, hors-bornes,
-cycles…) : il reste borné et capturé — il ne cherche *pas* à provoquer de plantage, il
-documente la façon dont le moteur réagit. Pour des diagnostics mémoire approfondis,
-utilisez un WebKit **instrumenté** sur PC.
+Une erreur JavaScript observée ici est un **comportement à documenter**, pas une
+vulnérabilité. Le **fuzzing ordinaire** envoie des entrées *mal formées* pour cartographier
+la robustesse des API (coercition, hors-bornes, cycles…) en restant borné et capturé.
+Le **stress test agressif** (`Mode agressif`) va plus loin : il cherche *délibérément* le
+point de rupture et **peut figer ou faire planter le navigateur**. C'est assumé et sans
+risque pour la console — le navigateur PS5 est en **bac-à-sable** : au pire l'onglet meurt
+et la **PS5 redémarre** (rien de persistant n'est écrit, le matériel et le firmware sont hors
+d'atteinte du JavaScript). Pour des diagnostics mémoire approfondis, utilisez un WebKit
+**instrumenté** sur PC.
