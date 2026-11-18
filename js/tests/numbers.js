@@ -50,7 +50,7 @@
       var ok = collide && isSafe;
       return {
         status: ok ? 'pass' : 'fail',
-        detail: 'max=' + max + ', (max+1)===(max+2) : ' + collide + ', isSafe coherent : ' + isSafe,
+        detail: 'max=' + max + ', (max+1)===(max+2) : ' + collide + ', isSafe consistent: ' + isSafe,
         measurements: { max: max, collisionAbove: collide, isSafeCoherent: isSafe }
       };
     }

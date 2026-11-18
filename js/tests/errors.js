@@ -83,9 +83,9 @@
       if (stack) {
         lines = String(stack).split('\n').length;
         ctx.info('pile presente, ' + lines + ' lignes');
-        ctx.metric('extrait pile', String(stack).split('\n').slice(0, 4));
+        ctx.metric('stack excerpt', String(stack).split('\n').slice(0, 4));
       } else {
-        ctx.info('error.stack absent sur ce moteur');
+        ctx.info('error.stack unavailable on this engine');
       }
       return {
         status: 'pass',

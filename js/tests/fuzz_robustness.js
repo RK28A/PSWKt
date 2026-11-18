@@ -164,7 +164,7 @@
           ctx.info('DEEP tree of ' + dep + ' levels (heap ~' + heapMB() + ' Mo)...'); ctx.flush();
           var root = document.createElement('div'), cur = root;
           for (var i = 0; i < dep; i++) { var c = document.createElement('div'); cur.appendChild(c); cur = c; if ((i & 1023) === 0) ctx.tick(); }
-          steps.push({ kind: 'profond', n: dep, tasMo: heapMB() }); ctx.metric('deep ' + dep, { tasMo: heapMB() });
+          steps.push({ kind: 'deep', n: dep, tasMo: heapMB() }); ctx.metric('deep ' + dep, { tasMo: heapMB() });
           root = cur = null;
         }
         for (var wi = 0; wi < widths.length; wi++) {
@@ -201,7 +201,7 @@
       }
       tryHTML('div imbriques x20000', new Array(20001).join('<div>') + 'x' + new Array(20001).join('</div>'));
       tryHTML('balises non fermees x50000', new Array(50001).join('<div>'));
-      tryHTML('attribut geant', '<div data-x="' + new Array(500001).join('a') + '">x</div>');
+      tryHTML('giant attribute', '<div data-x="' + new Array(500001).join('a') + '">x</div>');
       tryHTML('table enorme', '<table>' + new Array(20001).join('<tr><td>x</td></tr>') + '</table>');
       tryHTML('entites malformees', new Array(10001).join('&amp;&#x;&#;&nosuch;&'));
       tryHTML('commentaire non termine', '<!--' + new Array(100001).join('a'));
@@ -274,7 +274,7 @@
         for (var c = 0; c < 64; c++) { var cc = document.createElement('canvas'); var gc = cc.getContext('webgl'); if (gc) { ctxs.push(gc); r.contexts++; } ctx.tick(); }
       } catch (e) {
         if (G.isAbort(e)) return { status: 'aborted', detail: 'stopped', measurements: r };
-        return { status: 'pass', detail: 'WebGL a cede : ' + e.name, measurements: { partial: r, error: e.name } };
+        return { status: 'pass', detail: 'WebGL gave out: ' + e.name, measurements: { partial: r, error: e.name } };
       }
       return { status: 'pass', detail: 'ressources WebGL : ' + r.buffers + ' buffers, ' + r.textures + ' textures, ' + r.contexts + ' contextes, perte=' + r.lost, measurements: r };
     }
@@ -343,7 +343,7 @@
       var src = 'self.onmessage=function(e){self.postMessage(e.data);};';
       try {
         var url = URL.createObjectURL(new Blob([src], { type: 'application/javascript' }));
-        ctx.info('creation de workers jusqu a echec...'); ctx.flush();
+        ctx.info('creating workers until failure...'); ctx.flush();
         for (var i = 0; i < 2000; i++) {
           var w = new Worker(url); workers.push(w); made++;
           w.postMessage(i);

@@ -66,10 +66,10 @@
         try {
           var re = new RegExp(pattern, flags);
           var got = re.test(testStr);
-          ctx.info('regex ' + label + ' : supporte, test=' + got);
+          ctx.info('regex ' + label + ' : supported, test=' + got);
           return { supported: true, ok: got === expect };
         } catch (e) {
-          ctx.info('regex ' + label + ' : NON supporte (' + e.name + ')');
+          ctx.info('regex ' + label + ' : NOT supported (' + e.name + ')');
           return { supported: false, ok: false };
         }
       }

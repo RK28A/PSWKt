@@ -159,7 +159,7 @@
           var added = 0;
           for (var i = 0; i < mutations.length; i++) added += mutations[i].addedNodes.length;
           obs.disconnect();
-          ctx.info('mutation detectee : ' + added + ' noeud(s) ajoute(s)');
+          ctx.info('mutation detectee : ' + added + ' node(s) added');
           resolve(added);
         });
         obs.observe(host, { childList: true });

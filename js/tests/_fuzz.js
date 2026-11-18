@@ -157,7 +157,7 @@
                toString: function () { return 'muta-' + n; }, label: 'shifting valueOf' };
     }
     if (kind === 'poisonLength') {
-      return { length: { valueOf: function () { throw new Error('piege length'); } }, 0: 'x', label: 'length.valueOf throws' };
+      return { length: { valueOf: function () { throw new Error('length trap'); } }, 0: 'x', label: 'length.valueOf throws' };
     }
     if (kind === 'negLength') { return { length: -1, 0: 'x', label: 'length = -1' }; }
     if (kind === 'hugeLength') { return { length: 4294967296, label: 'length = 2^32' }; }
@@ -303,8 +303,8 @@
             samples.push({ input: inp.label, outcome: oc.kind, err: oc.name || null });
         }
         var status = violations.length ? 'fail' : 'pass';
-        var detail = inputs.length + ' entrees : ' + returned + ' renvois, ' + threw + ' erreurs rattrapees' +
-          (violations.length ? (' ; ' + violations.length + ' INVARIANT(S) VIOLE(S)') : ' ; aucun plantage') +
+        var detail = inputs.length + ' inputs: ' + returned + ' renvois, ' + threw + ' erreurs rattrapees' +
+          (violations.length ? (' ; ' + violations.length + ' INVARIANT(S) VIOLE(S)') : ' ; no crash') +
           ' ; max ' + (Math.round(maxMs * 1000) / 1000) + ' ms';
         ctx.info(detail);
         return {
@@ -348,7 +348,7 @@
           else { broke++; if (violations.length < 12) violations.push({ input: inp.label, reason: String(res) }); }
         }
         var status = broke ? 'fail' : 'pass';
-        var detail = inputs.length + ' entrees : ' + held + ' conforme(s), ' + broke + ' violation(s)';
+        var detail = inputs.length + ' inputs: ' + held + ' conforme(s), ' + broke + ' violation(s)';
         ctx.info(detail);
         return {
           status: status, detail: detail,

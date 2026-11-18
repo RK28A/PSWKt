@@ -136,7 +136,7 @@
     id: 'plat.storage.roundtrip',
     name: 'localStorage (round-trip)',
     category: 'platform',
-    description: 'Ecrit puis relit une cle dediee, puis la supprime (non destructif).',
+    description: 'Writes then reads back a dedicated key, then deletes it (non-destructive).',
     requires: ['platform.localStorage'],
     run: function (ctx) {
       var key = '__pswkt_probe__';
@@ -146,7 +146,7 @@
         global.localStorage.setItem(key, payload);
         readback = global.localStorage.getItem(key);
         ok = (readback === payload);
-        ctx.info('ecriture/lecture localStorage : ' + ok);
+        ctx.info('localStorage write/read: ' + ok);
       } catch (e) {
         ctx.info('localStorage inaccessible : ' + e.message);
         return { status: 'skip', detail: 'localStorage inaccessible : ' + e.message, measurements: null };
@@ -155,7 +155,7 @@
       }
       return {
         status: ok ? 'pass' : 'fail',
-        detail: 'round-trip=' + ok + ', cle nettoyee',
+        detail: 'round-trip=' + ok + ', key cleaned',
         measurements: { roundTrip: ok, bytes: payload.length }
       };
     }

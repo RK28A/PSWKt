@@ -41,7 +41,7 @@
   T('string.normalize', 'NFC/NFD normalization', [], function () {
     if (!''.normalize) return { status: 'skip', detail: 'normalize unavailable' };
     var nfc = 'é'; var nfd = 'é';
-    return ok(nfc.normalize('NFD') === nfd && nfd.normalize('NFC') === nfc, 'NFC<->NFD coherent');
+    return ok(nfc.normalize('NFD') === nfd && nfd.normalize('NFC') === nfc, 'NFC<->NFD consistent');
   });
   T('string.replaceAll', 'String.replaceAll', [], function () {
     if (!''.replaceAll) return { status: 'skip', detail: 'replaceAll unavailable' };

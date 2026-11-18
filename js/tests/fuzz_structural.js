@@ -209,7 +209,7 @@
   // 6) Map/Set avec cles pieges (NaN, -0, objets a hashCode-like) : invariants d identite.
   F.invariant({
     id: 'fuzz.struct.mapset.keys', name: 'Map/Set · boundary keys (invariant)', category: CAT,
-    description: 'SameValueZero : NaN est une cle unique egale a elle-meme, +0 et -0 coincident.',
+    description: 'SameValueZero: NaN is a single key equal to itself, +0 and -0 coincide.',
     requires: ['objects.Map'],
     build: function (ctx) {
       var keys = [NaN, 0, -0, '', '0', 0.0, false, null, undefined, Infinity, -Infinity];
@@ -220,10 +220,10 @@
     check: function (k) {
       var m = new Map();
       m.set(k, 'a'); m.set(k, 'b');         // meme cle -> ecrase
-      if (m.size !== 1) return 'cle dupliquee non fusionnee (size=' + m.size + ')';
+      if (m.size !== 1) return 'duplicate key not merged (size=' + m.size + ')';
       if (m.get(k) !== 'b') return 'valeur non mise a jour';
       // NaN doit etre retrouvable malgre NaN !== NaN
-      if (typeof k === 'number' && isNaN(k) && !m.has(k)) return 'NaN non retrouve comme cle';
+      if (typeof k === 'number' && isNaN(k) && !m.has(k)) return 'NaN not found as a key';
       // +0 / -0 : SameValueZero -> une seule entree
       var m2 = new Map(); m2.set(0, 1); m2.set(-0, 2);
       if (m2.size !== 1) return '+0 et -0 traites comme distincts';
@@ -255,7 +255,7 @@
     },
     invariant: function (inp, oc) {
       if (oc.kind !== 'returned') return 'construction large a leve (' + oc.name + ')';
-      if (oc.value.keys !== inp.v) return 'nombre de cles incoherent (' + oc.value.keys + ' != ' + inp.v + ')';
+      if (oc.value.keys !== inp.v) return 'key count inconsistent (' + oc.value.keys + ' != ' + inp.v + ')';
       return true;
     }
   });

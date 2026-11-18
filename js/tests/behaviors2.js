@@ -49,7 +49,7 @@
     return ok(n === 2, 'correspondances = ' + n);
   });
   T('string.localecompare', 'localeCompare', [], function () {
-    return ok('a'.localeCompare('b') < 0 && 'b'.localeCompare('a') > 0 && 'a'.localeCompare('a') === 0, 'ordre coherent');
+    return ok('a'.localeCompare('b') < 0 && 'b'.localeCompare('a') > 0 && 'a'.localeCompare('a') === 0, 'consistent order');
   });
   T('number.radix', 'toString(radix)', [], function () {
     return ok((255).toString(16) === 'ff' && (8).toString(2) === '1000' && (35).toString(36) === 'z', 'bases OK');

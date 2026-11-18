@@ -75,7 +75,7 @@
       var idx = inp.v;
       if (typeof idx === 'number' && idx >= 0 && idx < 8 && Math.floor(idx) === idx) return true;
       // Hors borne (negatif, >=8, fractionnaire, non numerique) : aucune case valide ne doit changer.
-      return oc.value && oc.value.intact === true ? true : 'ecriture hors borne a corrompu une case valide';
+      return oc.value && oc.value.intact === true ? true : 'out-of-bounds write corrupted a valid slot';
     }
   });
 
@@ -166,7 +166,7 @@
         // index hors [0,16) : negatifs, >=16, fractionnaires, enormes
         var choices = [-1 - F.randInt(rng, 1000), 16 + F.randInt(rng, 1000), 2.5, -0.5, NaN,
           4294967296, F.randInt(rng, 100000) + 16];
-        inputs.push({ v: F.pick(rng, choices), label: 'idx hors borne' });
+        inputs.push({ v: F.pick(rng, choices), label: 'idx out of bounds' });
       }
       return { inputs: inputs };
     },
@@ -176,7 +176,7 @@
       ta[idx] = 999999; // doit etre ignore si idx hors [0,16)
       var within = (typeof idx === 'number' && idx >= 0 && idx < 16 && Math.floor(idx) === idx);
       if (within) return true; // index legitime : non concerne
-      for (var m = 0; m < 16; m++) if (ta[m] !== (m + 1) * 1.5) return 'case ' + m + ' corrompue par un index hors borne (' + idx + ')';
+      for (var m = 0; m < 16; m++) if (ta[m] !== (m + 1) * 1.5) return 'case ' + m + ' corrupted by an out-of-bounds index (' + idx + ')';
       return true;
     }
   });

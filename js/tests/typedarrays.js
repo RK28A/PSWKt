@@ -45,7 +45,7 @@
         } else {
           ok = (arr[0] === def.min && arr[1] === def.max && arr[2] === 0);
         }
-        results[def.name] = ok ? 'ok' : ('incoherent: [' + arr[0] + ',' + arr[1] + ',' + arr[2] + ']');
+        results[def.name] = ok ? 'ok' : ('inconsistent: [' + arr[0] + ',' + arr[1] + ',' + arr[2] + ']');
         if (!ok) failures.push(def.name);
       }
       return {
@@ -129,7 +129,7 @@
       var ok = okBeyond && okNeg && writeIgnored;
       return {
         status: ok ? 'pass' : 'fail',
-        detail: 'read>len=' + beyond + ', lecture[-1]=' + negative + ', out-of-bounds write ignored=' + writeIgnored,
+        detail: 'read>len=' + beyond + ', read[-1]=' + negative + ', out-of-bounds write ignored=' + writeIgnored,
         measurements: { okBeyond: okBeyond, okNeg: okNeg, writeIgnored: writeIgnored }
       };
     }
@@ -203,7 +203,7 @@
       var ok = Math.abs(sum - expected) < 1; // tolerance flottante
       return {
         status: ok ? 'pass' : 'fail',
-        detail: 'write ' + Math.round(tWrite) + ' ms, lecture ' + Math.round(tRead) +
+        detail: 'write ' + Math.round(tWrite) + ' ms, read ' + Math.round(tRead) +
           ' ms, somme ' + (ok ? 'correcte' : 'incorrecte'),
         measurements: {
           elements: n,

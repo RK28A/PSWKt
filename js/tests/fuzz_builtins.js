@@ -203,13 +203,13 @@
     },
     check: function (n) {
       var abs = Math.abs(n);
-      if (!(abs >= 0) && !isNaN(abs)) return 'abs negatif pour ' + n;
+      if (!(abs >= 0) && !isNaN(abs)) return 'abs negative for ' + n;
       var sign = (typeof Math.sign === 'function') ? Math.sign(n) : (n > 0 ? 1 : n < 0 ? -1 : n);
-      if (n > 0 && sign !== 1) return 'sign incoherent (+) pour ' + n;
-      if (n < 0 && sign !== -1) return 'sign incoherent (-) pour ' + n;
+      if (n > 0 && sign !== 1) return 'sign inconsistent (+) for ' + n;
+      if (n < 0 && sign !== -1) return 'sign inconsistent (-) for ' + n;
       var mx = Math.max(n, 0), mn = Math.min(n, 0);
-      if (!isNaN(n) && mx < mn) return 'max<min pour ' + n;
-      if (typeof Math.trunc === 'function') { var t = Math.trunc(n); if (isFinite(n) && Math.abs(t) > Math.abs(n) + 1) return 'trunc incoherent pour ' + n; }
+      if (!isNaN(n) && mx < mn) return 'max<min for ' + n;
+      if (typeof Math.trunc === 'function') { var t = Math.trunc(n); if (isFinite(n) && Math.abs(t) > Math.abs(n) + 1) return 'trunc inconsistent for ' + n; }
       return true;
     }
   });

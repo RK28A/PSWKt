@@ -172,7 +172,7 @@
       } catch (e) {
         // Attendu uniquement si la chaine contient une surrogate isolee.
         if (/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/.test(v)) return true;
-        return 'encode/decode a leve sur une chaine pourtant bien formee (' + e.name + ')';
+        return 'encode/decode threw on a well-formed string (' + e.name + ')';
       }
     }
   });

@@ -56,7 +56,7 @@
       t('repeat 2^31', function () { return 'ab'.repeat(2147483648) ? 'ok' : 'ok'; });
       t('repeat -1', function () { return 'a'.repeat(-1); });
       if (''.padStart) { t('padStart 2^31', function () { return 'a'.padStart(2147483648, '.').length; }); }
-      t('repeat 1e9 (borne)', function () { try { return 'a'.repeat(1e9).length; } catch (e) { return 'throw:' + e.name; } });
+      t('repeat 1e9 (bounded)', function () { try { return 'a'.repeat(1e9).length; } catch (e) { return 'throw:' + e.name; } });
       ctx.metric('string huge', out);
       return { status: 'pass', detail: 'huge counts documented', measurements: out };
     }
