@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>PSWKT - Laboratoire de tests WebKit PS5</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="wrap">
+      <h1>PSWKT <span class="sub">Laboratoire de tests WebKit</span></h1>
+      <p class="tagline">Diagnostic d'API JavaScript non destructif et reproductible &mdash; pense pour le navigateur WebKit de la PS5 (13.60) et tout WebKit.</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- Panneau environnement + fonctionnalites -->
+    <section class="panel">
+      <h2>1. Environnement detecte</h2>
+      <p id="ps-hint" class="ps-hint"></p>
+      <div id="env-info" class="env-grid"></div>
+      <h3>Fonctionnalites reellement disponibles</h3>
+      <p class="muted">Vert = presente, gris = absente. Les tests dependant d'une API absente seront automatiquement ignores.</p>
+      <div id="feature-grid" class="feature-grid"></div>
+    </section>
+
+    <!-- Reglages des garde-fous -->
+    <section class="panel">
+      <h2>2. Garde-fous de ressources</h2>
+      <p class="muted">Ces limites evitent de bloquer le navigateur. Les tests redonnent la main regulierement et respectent ces plafonds.</p>
+      <div class="options">
+        <label>Echeance par test (ms)
+          <input id="opt-timeout" type="number" value="4000" min="100" step="100">
+        </label>
+        <label>Budget memoire par test (Mo)
+          <input id="opt-memory" type="number" value="64" min="1" step="1">
+        </label>
+        <label>Plafond d'iterations
+          <input id="opt-maxiter" type="number" value="5000000" min="1000" step="1000">
+        </label>
+      </div>
+      <div class="run-bar">
+        <button id="btn-run-all" class="primary" type="button">Tout lancer</button>
+        <button id="btn-run-selected" class="primary" type="button">Lancer la selection</button>
+        <button id="btn-stop" class="danger" type="button" disabled>Stop</button>
+      </div>
+      <div class="progress">
+        <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
+        <div id="progress-text" class="progress-text">pret</div>
+      </div>
+      <div id="summary" class="summary"></div>
+    </section>
+
+    <!-- Catalogue de tests -->
+    <section class="panel">
+      <h2>3. Categories de tests</h2>
+      <p class="muted">Cochez les tests a executer, lancez une categorie entiere, ou un test isole.</p>
+      <div id="categories" class="categories"></div>
+    </section>
+
+    <!-- Resultats en direct -->
+    <section class="panel">
+      <h2>4. Resultats en direct</h2>
+      <div id="results" class="results"></div>
+    </section>
+
+    <!-- Journal -->
+    <section class="panel">
+      <h2>5. Journal d'execution</h2>
+      <div class="log-toolbar">
+        <button id="btn-clear-log" class="mini ghost" type="button">Vider le journal</button>
+      </div>
+      <div id="log-console" class="log-console"></div>
+    </section>
+
+    <!-- Export -->
+    <section class="panel">
+      <h2>6. Export du rapport</h2>
+      <p class="muted">Le rapport inclut l'environnement, les fonctionnalites, tous les resultats, les durees et les erreurs JS. Sur console, utilisez la zone de texte si le telechargement echoue.</p>
+      <div class="run-bar">
+        <button id="btn-export-json" class="primary" type="button">Generer JSON</button>
+        <button id="btn-export-text" class="primary" type="button">Generer texte lisible</button>
+        <button id="btn-select-export" class="mini ghost" type="button">Selectionner la zone</button>
+      </div>
+      <p id="export-hint" class="muted"></p>
+      <textarea id="export-area" class="export-area" readonly spellcheck="false" style="display:none"></textarea>
+    </section>
+
+    <footer class="app-footer">
+      <p>PSWKT &mdash; tests reproductibles et non destructifs. Une erreur JavaScript observee ici est un comportement a documenter, <strong>pas</strong> une vulnerabilite. Pour des diagnostics memoire approfondis, utilisez un WebKit instrumente sur PC.</p>
+    </footer>
+  </main>
+
+  <!-- Coeur (ordre important) -->
+  <script src="js/core/log.js"></script>
+  <script src="js/core/features.js"></script>
+  <script src="js/core/guard.js"></script>
+  <script src="js/core/runner.js"></script>
+  <script src="js/core/export.js"></script>
+  <!-- Tests -->
+  <script src="js/tests/typedarrays.js"></script>
+  <script src="js/tests/canvas.js"></script>
+  <script src="js/tests/objects.js"></script>
+  <script src="js/tests/memory.js"></script>
+  <!-- Application -->
+  <script src="js/app.js"></script>
+</body>
+</html>
