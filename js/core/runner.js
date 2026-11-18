@@ -122,7 +122,8 @@
       logger.warn(test.id, 'Test destructif ignore (autorisation requise)');
       return Promise.resolve({
         id: test.id, name: test.name, category: test.category,
-        status: 'skip', durationMs: 0, detail: 'test destructif non autorise',
+        description: test.description || '', destructive: true,
+        status: 'skip', durationMs: 0, detail: 'test destructif non autorise (Mode agressif desactive)',
         measurements: null, error: null
       });
     }
@@ -133,6 +134,7 @@
       logger.log('skip', test.id, 'Ignore : fonctionnalites absentes', { missing: missing });
       return Promise.resolve({
         id: test.id, name: test.name, category: test.category,
+        description: test.description || '', destructive: !!test.destructive,
         status: 'skip', durationMs: 0, detail: 'fonctionnalites absentes : ' + missing.join(', '),
         measurements: null, error: null
       });
@@ -170,6 +172,7 @@
         var status = result.status || 'pass';
         var record = {
           id: test.id, name: test.name, category: test.category,
+          description: test.description || '', destructive: !!test.destructive,
           status: status,
           durationMs: durationMs,
           detail: result.detail || '',
@@ -197,6 +200,7 @@
         var aborted = PSWKT.guard.isAbort(err);
         var record = {
           id: test.id, name: test.name, category: test.category,
+          description: test.description || '', destructive: !!test.destructive,
           status: aborted ? 'aborted' : 'error',
           durationMs: durationMs,
           detail: aborted ? ('arrete : ' + err.message) : 'exception non geree pendant le test',

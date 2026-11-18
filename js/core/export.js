@@ -125,45 +125,91 @@
     return L.join('\n');
   }
 
-  // Bloc texte ULTRA-DETAILLE pour un seul resultat : tout y passe (mesures
-  // completes, pile d'erreur, tas avant/apres, budget, annotation).
-  function recordBlock(r, annotation) {
+  var VERDICT = {
+    pass: 'REUSSI   — le moteur a execute l operation et renvoye un resultat COHERENT.',
+    fail: 'ECHEC    — le moteur a renvoye un resultat INCOHERENT (un invariant est viole).',
+    error: 'ERREUR   — le moteur a leve une EXCEPTION NON PREVUE pendant le test.',
+    aborted: 'ARRETE   — interrompu par l echeance ou le bouton Stop (operation trop longue / figee).',
+    skip: 'IGNORE   — test non execute (prerequis absent ou mode agressif desactive).'
+  };
+
+  // Rend un evenement de journal en une ligne lisible, en qualifiant son role.
+  function eventLine(e) {
+    var role = e.level === 'info' ? 'ACTION ' :
+      (e.level === 'metric' ? 'REACTION' :
+      (e.level === 'error' ? 'ERREUR ' :
+      (e.level === 'warn' ? 'ALERTE ' :
+      (e.level === 'pass' ? 'FIN-OK ' : (e.level === 'fail' ? 'FIN-KO ' : (e.level || '').toUpperCase())))));
+    var t = ('        ' + (e.t != null ? e.t.toFixed(3) : '?')).slice(-9);
+    var s = '      · [' + t + 'ms] ' + role + ' ' + e.msg;
+    if (e.data !== undefined) { try { s += '  →  ' + JSON.stringify(e.data); } catch (x) {} }
+    return s;
+  }
+
+  // Bloc texte ULTRA-DETAILLE pour un seul resultat. Structure volontairement
+  // explicite : ce que le test a TENTE (action), ce qu'il a FAIT etape par etape
+  // (deroule), et COMMENT LA MACHINE A REAGI (verdict + mesures + erreur + memoire).
+  // `events` (optionnel) = les evenements de journal emis par CE test.
+  function recordBlock(r, annotation, events) {
     var L = [];
     function line(s) { L.push(s == null ? '' : String(s)); }
-    line('──────────────────────────────────────────────────────────────');
-    line('[' + (r.status || '?').toUpperCase() + '] ' + r.name + '   (' + r.durationMs + ' ms)');
-    line('  id        : ' + r.id);
-    line('  categorie : ' + r.category);
-    if (r.detail) line('  detail    : ' + r.detail);
+    line('════════════════════════════════════════════════════════════════');
+    line('TEST : ' + r.name + (r.destructive ? '   ⚠ DESTRUCTIF' : ''));
+    line('  id        : ' + r.id + '   |   categorie : ' + r.category + '   |   duree : ' + r.durationMs + ' ms');
+    if (r.description) line('▸ ACTION (but du test) : ' + r.description);
+
+    // Deroule pas-a-pas : chaque sous-etape (action) et chaque mesure (reaction).
+    if (events && events.length) {
+      line('▸ DEROULE (ce que le test a fait, et comment le moteur a repondu) :');
+      for (var i = 0; i < events.length; i++) line(eventLine(events[i]));
+    }
+
+    // Verdict en clair : comment la machine a reagi.
+    line('▸ REACTION DU MOTEUR : ' + (VERDICT[r.status] || (r.status || '?').toUpperCase()));
+    if (r.detail) line('    resume   : ' + r.detail);
+
     if (r.measurements) {
       var mj;
       try { mj = JSON.stringify(r.measurements, null, 2); } catch (e) { mj = '[mesures illisibles]'; }
-      line('  mesures   :');
+      line('    mesures detaillees :');
       var ml = mj.split('\n');
-      for (var a = 0; a < ml.length; a++) line('      ' + ml[a]);
+      for (var a = 0; a < ml.length; a++) line('        ' + ml[a]);
     }
     if (r.error) {
-      line('  ERREUR    : ' + r.error.name + ': ' + r.error.message);
+      line('    EXCEPTION : ' + r.error.name + ': ' + r.error.message);
       if (r.error.stack) {
-        line('  pile      :');
+        line('    pile d appels :');
         var sl = String(r.error.stack).split('\n');
-        for (var b = 0; b < sl.length; b++) line('      ' + sl[b]);
+        for (var b = 0; b < sl.length; b++) line('        ' + sl[b]);
       }
     }
     if (r.heap && (r.heap.before || r.heap.after)) {
-      var hb = r.heap.before ? Math.round(r.heap.before.usedJSHeapSize / 1048576 * 100) / 100 : '?';
-      var ha = r.heap.after ? Math.round(r.heap.after.usedJSHeapSize / 1048576 * 100) / 100 : '?';
-      line('  tas (Mo)  : avant ' + hb + ' -> apres ' + ha);
+      var hb = r.heap.before ? Math.round(r.heap.before.usedJSHeapSize / 1048576 * 100) / 100 : null;
+      var ha = r.heap.after ? Math.round(r.heap.after.usedJSHeapSize / 1048576 * 100) / 100 : null;
+      var delta = (hb != null && ha != null) ? (Math.round((ha - hb) * 100) / 100) : null;
+      line('    tas JS (Mo) : avant ' + (hb == null ? '?' : hb) + ' → apres ' + (ha == null ? '?' : ha) +
+        (delta != null ? ('   (Δ ' + (delta >= 0 ? '+' : '') + delta + ' Mo)') : ''));
     }
     if (r.budget) {
-      line('  budget    : ' + r.budget.iterations + ' iterations, ' +
+      line('    budget : ' + r.budget.iterations + ' iterations, ' +
         Math.round((r.budget.allocatedBytes || 0) / 1048576 * 100) / 100 + ' Mo charges, echeance ' +
         r.budget.timeoutMs + ' ms' + (r.budget.aborted ? (' [ARRETE: ' + r.budget.abortReason + ']') : ''));
     }
     if (annotation && (annotation.tag || annotation.note)) {
-      line('  >> ANNOTATION : ' + (annotation.tag ? ('[' + annotation.tag + '] ') : '') + (annotation.note || ''));
+      line('▸ ANNOTATION (toi) : ' + (annotation.tag ? ('[' + annotation.tag + '] ') : '') + (annotation.note || ''));
     }
     return L.join('\n');
+  }
+
+  // Regroupe les evenements du journal par test (source = id du test).
+  function groupEventsBySource(events) {
+    var map = {};
+    for (var i = 0; i < events.length; i++) {
+      var s = events[i].source;
+      if (!map[s]) map[s] = [];
+      map[s].push(events[i]);
+    }
+    return map;
   }
 
   // Rapport texte ULTRA-DETAILLE complet (environnement + resume + chaque test + journal).
@@ -191,10 +237,11 @@
         '  erreurs ' + s.counts.error + '  ignores ' + s.counts.skip + '  arretes ' + s.counts.aborted);
       line('Duree totale : ' + s.totalDurationMs + ' ms' + (s.suiteAborted ? '  (SUITE INTERROMPUE)' : ''));
       line('');
-      line('--- DETAIL COMPLET PAR TEST ---');
+      line('--- DETAIL ULTRA-COMPLET, TEST PAR TEST (action → deroule → reaction) ---');
+      var byTest = groupEventsBySource(report.log.events);
       for (var i = 0; i < report.run.records.length; i++) {
         var r = report.run.records[i];
-        line(recordBlock(r, report.annotations.items[r.id]));
+        line(recordBlock(r, report.annotations.items[r.id], byTest[r.id]));
       }
       line('');
     }
@@ -212,14 +259,26 @@
       line('');
     }
 
-    line('--- JOURNAL COMPLET (' + report.log.events.length + ' evenements) ---');
+    // Journal des evenements HORS test (app, systeme) : le reste est deja detaille
+    // test par test ci-dessus, inutile de tout redupliquer.
+    var recIds = {};
+    if (report.run && report.run.records) {
+      for (var ri = 0; ri < report.run.records.length; ri++) recIds[report.run.records[ri].id] = true;
+    }
+    var other = [];
     for (var j = 0; j < report.log.events.length; j++) {
-      var e = report.log.events[j];
-      var t = ('            ' + (e.t != null ? e.t.toFixed(3) : '?')).slice(-12);
-      var lvl = ((e.level || '').toUpperCase() + '       ').slice(0, 7);
-      var el = '[' + t + 'ms] ' + lvl + ' [' + e.source + '] ' + e.msg;
-      if (e.data !== undefined) { try { el += ' | ' + JSON.stringify(e.data); } catch (x) {} }
-      line(el);
+      if (!recIds[report.log.events[j].source]) other.push(report.log.events[j]);
+    }
+    if (other.length) {
+      line('--- JOURNAL GENERAL (evenements hors test : ' + other.length + ') ---');
+      for (var o = 0; o < other.length; o++) {
+        var e = other[o];
+        var t = ('            ' + (e.t != null ? e.t.toFixed(3) : '?')).slice(-12);
+        var lvl = ((e.level || '').toUpperCase() + '       ').slice(0, 7);
+        var el = '[' + t + 'ms] ' + lvl + ' [' + e.source + '] ' + e.msg;
+        if (e.data !== undefined) { try { el += ' | ' + JSON.stringify(e.data); } catch (x) {} }
+        line(el);
+      }
     }
     return L.join('\n');
   }

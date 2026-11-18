@@ -27,13 +27,23 @@
     lastError: null,
     _unsub: null,
 
+    // Qualifie le role d'un evenement : action tentee vs reaction mesuree du moteur.
+    _role: function (level) {
+      if (level === 'info') return 'ACTION ';
+      if (level === 'metric') return 'REACTION';
+      if (level === 'error') return 'ERREUR ';
+      if (level === 'warn') return 'ALERTE ';
+      if (level === 'pass') return 'FIN-OK ';
+      if (level === 'fail') return 'FIN-KO ';
+      return ((level || '').toUpperCase() + '       ').slice(0, 7);
+    },
+
     // Formate un evenement du journal en une ligne ultra-detaillee.
     format: function (e) {
       var t = ('            ' + (e.t != null ? e.t.toFixed(3) : '?')).slice(-12);
-      var lvl = ((e.level || '').toUpperCase() + '       ').slice(0, 7);
-      var line = '[' + t + 'ms][' + (e.iso || '') + '] ' + lvl + ' [' + e.source + '] ' + e.msg;
+      var line = '[' + t + 'ms][' + (e.iso || '') + '] ' + this._role(e.level) + ' [' + e.source + '] ' + e.msg;
       if (e.data !== undefined) {
-        try { line += '\n        └─ data: ' + JSON.stringify(e.data); } catch (x) { line += '\n        └─ data: [illisible]'; }
+        try { line += '\n        └─ ' + JSON.stringify(e.data); } catch (x) { line += '\n        └─ [illisible]'; }
       }
       return line;
     },
