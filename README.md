@@ -113,7 +113,21 @@ Aucune dépendance, aucun build : des fichiers HTML/CSS/JS statiques.
   un marqueur **`▶ DEBUT <id>`** est persisté *avant* son exécution : **si le navigateur
   PS5 plante en plein test, le fichier contient tout jusqu'au test fautif, et sa dernière
   ligne `▶ DEBUT` nomme le test qui a fait tomber WebKit.** Les tests agressifs persistent
-  aussi leurs paliers (`ctx.flush()`) avant chaque étape risquée. Nécessite `python3 server.py`.
+  aussi leurs paliers (`ctx.flush()`) avant chaque étape risquée. *Option serveur* : nécessite
+  `python3 server.py` (garantie la plus forte grâce à `fsync`).
+- **Historique des sessions, SANS serveur (IndexedDB)** 💾 — **chaque lancement crée une
+  nouvelle session** enregistrée **localement dans le navigateur** (IndexedDB, repli
+  mémoire/localStorage). Fonctionne sur un **hébergement statique** (InfinityFree…), sans
+  aucun serveur. On peut **consulter, exporter (JSON / TXT détaillé), comparer** plusieurs
+  sessions (compteurs côte à côte) et les supprimer. **Détection de crash sans serveur** :
+  avant chaque test, un marqueur « test en cours » est écrit dans IndexedDB ; si le navigateur
+  plante, **au rechargement une bannière nomme le dernier test lancé** (le crasheur probable).
+  *(Honnête : IndexedDB écrit de façon asynchrone — fiable dans l'immense majorité des cas,
+  mais sans garantie absolue sur un gel brutal ; le serveur `fsync` reste la voie la plus sûre.)*
+- **Recherche & filtres** dans les résultats : par nom/id/détail et par statut (réussis,
+  échecs, erreurs, arrêtés, ignorés).
+- **Deux modes** : *diagnostic* (par défaut, doux, interruptible) et *stress* (case « Mode
+  agressif », opt-in, peut figer/planter). Le mode est enregistré avec chaque session.
 - **Garde-fous de ressources** : échéance par test, budget mémoire (Mo), plafond
   d'itérations, délai maximal pour les tests asynchrones, et un bouton **Stop** coopératif.
   Ils cadrent les tests *ordinaires*. La case **« Mode agressif »** (cochée par défaut)
@@ -122,44 +136,64 @@ Aucune dépendance, aucun build : des fichiers HTML/CSS/JS statiques.
 - **Export** : rapport **JSON** complet + version **texte** lisible, avec trois voies de
   récupération (téléchargement, presse-papiers, zone de texte sélectionnable).
 
-## Lancer sur PC
+## Hébergement : 100 % statique (InfinityFree & co.)
 
-Deux options :
+**Aucun serveur n'est nécessaire.** L'application est entièrement HTML/CSS/JavaScript côté
+navigateur. Les résultats sont persistés **localement** via **IndexedDB** (repli
+mémoire/localStorage), et exportables en **JSON** et **TXT**. Elle fonctionne donc telle
+quelle sur un hébergement statique gratuit comme **InfinityFree**.
 
-**Option A — avec enregistrement serveur des logs (recommandé).**
-Lance le petit serveur fourni : il sert la page *et* enregistre les rapports/journaux
-envoyés par le bouton « Enregistrer sur le serveur » dans un dossier `logs/`, créé
-automatiquement au démarrage (réutilisé s'il existe déjà).
+**Déployer sur InfinityFree :**
+1. Téléverse tout le dépôt (le dossier `PSWKt/` : `index.html`, `css/`, `js/`) dans
+   `htdocs/` via le gestionnaire de fichiers ou en FTP.
+2. Ouvre l'URL de ton site. C'est tout — pas de PHP, pas de base de données, pas de
+   processus serveur, pas de cron.
+3. Les sessions de test sont enregistrées dans **ton navigateur** (IndexedDB) et visibles
+   dans la section « Historique des sessions ». Exporte-les en JSON/TXT pour les garder
+   hors du navigateur.
+
+> `server.py` (Python) est **optionnel** : il n'est utile qu'en local, pour l'enregistrement
+> continu avec garantie disque (`fsync`). Il **n'est pas requis** et n'a pas sa place sur
+> InfinityFree. L'appli est pleinement utilisable sans lui.
+
+## Lancer en local (PC)
+
+**Option A — simple fichier statique (suffit pour tout, y compris l'historique IndexedDB).**
+
+```bash
+cd PSWKt
+python3 -m http.server 8080      # ou n'importe quel serveur statique
+```
+
+**Option B — avec enregistrement serveur continu des logs (bonus local, `fsync`).**
+Le petit serveur fourni sert la page *et* enregistre les journaux (ponctuels et continus)
+dans un dossier `logs/`, créé au démarrage.
 
 ```bash
 cd PSWKt
 python3 server.py        # port 8080 par défaut, ou : python3 server.py 9000
 ```
 
-**Option B — simple fichier statique (pas d'enregistrement serveur).**
-
-```bash
-cd PSWKt
-python3 -m http.server 8080
-```
-
 Puis ouvre `http://localhost:8080/`.
 
 ## Lancer sur la PS5
 
-1. Sur le PC, lance `python3 server.py` (option A) et note l'adresse IP locale du PC
-   (ex. `192.168.1.20`).
-2. Sur la PS5, ouvre le navigateur et va sur `http://192.168.1.20:8080/`.
-3. Choisis une catégorie (ou « Tout lancer »), observe les résultats en direct, annote
-   ce que tu veux consigner.
-4. **Chasse aux plantages (recommandé)** : laisse **« Enregistrement continu sur le serveur »**
-   coché. Le journal s'écrit en direct dans `PSWKt/logs/pswkt-live-<session>.txt` **sur le PC**.
-   Si WebKit plante, rouvre ce fichier : la **dernière ligne `▶ DEBUT ...`** nomme le test fautif,
-   et tout le détail de ce qui précède est déjà sauvegardé. Pour isoler un crasheur, lance les
-   tests destructifs **un par un** (bouton « Lancer » de chaque test) plutôt que « Tout lancer ».
-5. **Pour garder les logs sans galère** : « ⤓ Journal DÉTAILLÉ sur le serveur (.txt) » écrit un
-   dump complet dans `PSWKt/logs/` — rien à copier-coller depuis la PS5. Le bouton « Copier le
-   journal » reste disponible (mais le presse-papiers de la PS5 est capricieux : préfère le serveur).
+Depuis un site **InfinityFree** (ou tout hébergement statique) : ouvre simplement l'URL de ton
+site dans le navigateur de la PS5. Ou, en local : lance un serveur statique sur le PC (ou
+`python3 server.py`) et va sur `http://<IP-du-PC>:8080/`.
+
+1. Choisis une catégorie (ou « Tout lancer »), observe les résultats en direct, annote.
+2. **Chasse aux plantages — chemin sans serveur (IndexedDB).** Chaque lancement crée une
+   session enregistrée dans le navigateur. Si WebKit plante, **recharge la page** : une
+   bannière en haut **nomme le dernier test lancé** (le crasheur probable), et la session est
+   consultable dans « Historique des sessions ». Pour isoler un crasheur, lance les tests
+   destructifs **un par un** plutôt que « Tout lancer ». Exporte la session en **JSON/TXT**.
+3. **Chemin serveur local (optionnel, trace la plus sûre).** Si tu passes par `python3 server.py`
+   sur le PC, laisse **« Enregistrement continu sur le serveur »** coché : le journal s'écrit en
+   direct (`fsync`) dans `PSWkt/logs/pswkt-live-<session>.txt` **sur le PC**, et sa dernière ligne
+   `▶ DEBUT ...` nomme le test fautif. Le bouton « ⤓ Journal DÉTAILLÉ sur le serveur (.txt) »
+   écrit un dump complet. (Sur InfinityFree, ce chemin serveur n'existe pas : utilise IndexedDB
+   + export.)
 
 ## Structure
 
@@ -172,7 +206,8 @@ js/core/features.js   détection environnement + fonctionnalités
 js/core/guard.js      garde-fous : échéance, budget mémoire, arrêt
 js/core/runner.js     harnais : enregistrement, exécution non bloquante
 js/core/export.js     construction et export du rapport (JSON/texte/texte ULTRA-DETAILLE)
-js/core/serverlog.js  enregistrement CONTINU sur le serveur (anti-perte sur crash, fsync)
+js/core/store.js      persistance locale des sessions (IndexedDB, sans serveur) + detection de crash
+js/core/serverlog.js  enregistrement CONTINU sur le serveur local optionnel (fsync)
 js/tests/typedarrays.js  canvas.js  objects.js  memory.js
 js/tests/strings.js      numbers.js errors.js  async.js  platform.js  dom.js
 js/tests/_fuzz.js        infrastructure de fuzzing (PRNG semé, corpus malformés, fabriques)
@@ -198,6 +233,43 @@ PSWKT.runner.register({
   }
 });
 ```
+
+## Architecture, nouveautés et limites
+
+**Architecture.** 100 % navigateur : HTML/CSS/JS, aucune dépendance, aucun build. Noyau
+(`js/core/`) = journal, détection de features, garde-fous, harnais d'exécution, export,
+**persistance IndexedDB** et enregistrement serveur optionnel. Tests (`js/tests/`) enregistrés
+par catégorie via `PSWKT.runner.register`. Les calculs se font côté client ; les données
+restent locales (IndexedDB) et s'exportent en JSON/TXT.
+
+**Nouveautés de cette version.**
+- Persistance **IndexedDB** des sessions (repli mémoire/localStorage) → fonctionne sur
+  hébergement statique (InfinityFree), **sans serveur**.
+- **Une nouvelle session + journal propre à chaque lancement** ; historique consultable,
+  exportable (JSON/TXT) et **comparable** (compteurs côte à côte).
+- **Détection de crash sans serveur** : marqueur « test en cours » en IndexedDB → bannière
+  au rechargement nommant le test fautif.
+- **Logs ultra-détaillés** par test : action → déroulé (action/réaction) → verdict en clair,
+  mesures intégrales, pile, Δ mémoire, budget.
+- **Recherche & filtres** sur les résultats ; **deux modes** (diagnostic / stress).
+- `server.py` (Python) rendu **optionnel** (bonus local `fsync`).
+
+**Limites connues (honnêteté).**
+- IndexedDB écrit de façon **asynchrone** : un gel/arrêt brutal *juste après* une écriture
+  peut la perdre. C'est du meilleur effort (fiable en pratique, sans garantie absolue). La
+  voie `fsync` du serveur local est plus sûre, mais indisponible sur InfinityFree.
+- Les tests touchant au DOM/Canvas/WebGL ne peuvent pas être isolés en **Web Worker** ;
+  l'isolation Worker n'a donc **pas** été généralisée (elle casserait ces catégories).
+- Les résultats dépendent du **navigateur réel** : aucun test n'a été exécuté sur une vraie
+  PS5 depuis cet environnement — la validation a été faite en Chromium/WebKit de bureau.
+- Reprise automatique des tests non terminés : non implémentée (l'historique conserve le
+  partiel ; on relance manuellement).
+
+**Validation effectuée.** Contrôle de syntaxe de tous les scripts ; chargement de la page
+sans erreur console ; suite complète **912 tests / 25 catégories** verte (867 réussis,
+45 ignorés, 0 échec, 0 erreur) ; persistance IndexedDB, historique, filtres, comparaison et
+**bannière de crash au rechargement** validés en navigateur headless ; fonctionnement **sans
+PHP ni serveur Python** confirmé (chemin IndexedDB pur).
 
 ## Portée et prudence
 

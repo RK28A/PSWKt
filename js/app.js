@@ -34,7 +34,9 @@
   var state = {
     control: null,
     running: false,
-    lastRun: null
+    lastRun: null,
+    session: null,
+    compareSel: {}
   };
 
   // --- Rendu : environnement et fonctionnalites ---
@@ -259,7 +261,45 @@
         buildAnnotationBar(record.id, record.name)
       ])
     ]);
+    row.setAttribute('data-status', record.status);
+    row.setAttribute('data-text', (record.name + ' ' + record.id + ' ' + (record.detail || '') + ' ' + record.category).toLowerCase());
+    applyFilterToRow(row);
     $('results').appendChild(row);
+    updateFilterCount();
+  }
+
+  // --- Recherche / filtre des resultats ---
+  function currentFilter() {
+    return {
+      q: ($('result-search') ? $('result-search').value : '').toLowerCase().trim(),
+      pass: !$('filter-pass') || $('filter-pass').checked,
+      fail: !$('filter-fail') || $('filter-fail').checked,
+      error: !$('filter-error') || $('filter-error').checked,
+      aborted: !$('filter-aborted') || $('filter-aborted').checked,
+      skip: $('filter-skip') && $('filter-skip').checked
+    };
+  }
+  function rowMatches(row, f) {
+    var st = row.getAttribute('data-status');
+    if (f[st] === false) return false;
+    if (f.q && row.getAttribute('data-text').indexOf(f.q) === -1) return false;
+    return true;
+  }
+  function applyFilterToRow(row, f) {
+    f = f || currentFilter();
+    row.style.display = rowMatches(row, f) ? '' : 'none';
+  }
+  function applyResultFilter() {
+    var f = currentFilter();
+    var rows = $('results').childNodes;
+    for (var i = 0; i < rows.length; i++) { if (rows[i].nodeType === 1) applyFilterToRow(rows[i], f); }
+    updateFilterCount();
+  }
+  function updateFilterCount() {
+    var el2 = $('filter-count'); if (!el2) return;
+    var rows = $('results').childNodes, shown = 0, total = 0;
+    for (var i = 0; i < rows.length; i++) { if (rows[i].nodeType === 1) { total++; if (rows[i].style.display !== 'none') shown++; } }
+    el2.textContent = shown + ' / ' + total + ' affiches';
   }
 
   function setProgress(done, total, label) {
@@ -303,7 +343,17 @@
     setRunningUI(true);
 
     var opts = readOptions();
+    // NOUVEAU LANCEMENT = NOUVEAU JOURNAL : on repart d'un journal propre (le
+    // precedent est deja persiste dans l'historique IndexedDB) et d'une session neuve.
+    PSWKT.logger.reset();
+    if ($('stream-hint')) $('stream-hint').textContent = '';
     PSWKT.logger.info('app', 'Lancement : ' + label + ' (' + tests.length + ' tests)', opts);
+
+    // Nouvelle session locale (IndexedDB) : creee AVANT de lancer (voir plus bas),
+    // pour que meme un run tres rapide soit enregistre et que le marqueur "en cours"
+    // du 1er test existe deja.
+    state.session = null;
+    var mode = opts.allowDestructive ? 'stress' : 'diagnostic';
 
     // Enregistrement continu : ouvre une session serveur (fichier dedie, tronque).
     var streaming = false;
@@ -327,19 +377,28 @@
       maxIterations: opts.maxIterations,
       allowDestructive: opts.allowDestructive,
       control: state.control,
-      // Marqueur SYNCHRONE ecrit sur disque AVANT l'execution du test : si le test
-      // fait planter WebKit, c'est la derniere ligne du fichier -> test fautif identifie.
-      onTestStart: streaming ? function (test, idx, total) {
-        PSWKT.serverLog.marker('▶ DEBUT  [' + (idx + 1) + '/' + total + ']  ' + test.id + '  —  ' + test.name +
-          (test.destructive ? '   ⚠ DESTRUCTIF' : ''), true);
-      } : undefined,
+      // Marqueur AVANT l'execution du test. (1) IndexedDB : trace locale du test en
+      // cours -> si WebKit plante, au rechargement la session reste "running" et ce
+      // marqueur nomme le test fautif. (2) Serveur (si actif) : ligne persistee sur disque.
+      onTestStart: function (test, idx, total) {
+        if (state.session && PSWKT.store) {
+          PSWKT.store.markRunning(state.session.id, { id: test.id, name: test.name, idx: idx + 1, total: total, destructive: !!test.destructive });
+        }
+        if (streaming) {
+          PSWKT.serverLog.marker('▶ DEBUT  [' + (idx + 1) + '/' + total + ']  ' + test.id + '  —  ' + test.name +
+            (test.destructive ? '   ⚠ DESTRUCTIF' : ''), true);
+        }
+      },
       // ctx.flush() des tests agressifs : persiste les jalons avant l'etape risquee.
       onFlush: streaming ? function () { return PSWKT.serverLog.flush(true); } : undefined,
       onProgress: function (done, total, record) {
         appendResultRow(record);
         setProgress(done, total, 'execution');
+        // Persistance locale du resultat complet (efface le marqueur "en cours").
+        if (state.session && PSWKT.store) {
+          try { PSWKT.store.saveRecord(state.session.id, record); } catch (e) {}
+        }
         if (streaming) {
-          // Bloc ultra-detaille du resultat + marqueur de fin, envoyes en continu.
           try { PSWKT.serverLog.raw(PSWKT.exporter.recordBlock(record, (PSWKT.annotations || {})[record.id]), false); } catch (e) {}
           PSWKT.serverLog.marker('■ FIN    [' + done + '/' + total + ']  ' + record.id + '  ->  ' + String(record.status).toUpperCase(), false);
         }
@@ -348,11 +407,27 @@
 
     setProgress(0, tests.length, 'demarrage');
 
-    R.runSuite(tests, runOptions).then(function (result) {
+    // Lance la suite UNE FOIS la session locale creee (sinon un run tres rapide
+    // se terminerait avant l'enregistrement). Si la persistance echoue, on lance
+    // quand meme (l'outil reste utilisable sans stockage).
+    function launch() { R.runSuite(tests, runOptions).then(onDone, onFail); }
+    if (PSWKT.store) {
+      PSWKT.store.createSession({ label: label, mode: mode }).then(function (sess) {
+        state.session = sess;
+        PSWKT.logger.info('app', 'Session locale ' + sess.id + ' (' + PSWKT.store.kind + ')');
+        launch();
+      }, function () { launch(); });
+    } else { launch(); }
+
+    function onDone(result) {
       state.lastRun = result;
       renderSummary(result.summary);
       setProgress(result.records.length, tests.length, result.summary.suiteAborted ? 'interrompu' : 'termine');
       PSWKT.logger.info('app', 'Termine : ' + label, result.summary);
+      // Clot la session locale et rafraichit l'historique.
+      if (state.session && PSWKT.store) {
+        PSWKT.store.finishSession(state.session.id, result.summary, result.summary.suiteAborted).then(function () { renderHistory(); });
+      }
       if (streaming) {
         PSWKT.serverLog.marker('════════ SUITE TERMINEE : ' + result.summary.counts.pass + ' reussis, ' +
           result.summary.counts.fail + ' echecs, ' + result.summary.counts.error + ' erreurs, ' +
@@ -363,12 +438,14 @@
       }
       state.running = false;
       setRunningUI(false);
-    }, function (err) {
+    }
+    function onFail(err) {
       PSWKT.logger.captureGlobalError(err);
+      if (state.session && PSWKT.store) { try { PSWKT.store.finishSession(state.session.id, state.lastRun && state.lastRun.summary, true).then(renderHistory); } catch (e) {} }
       if (streaming) { try { PSWKT.serverLog.marker('✖ SUITE INTERROMPUE PAR UNE ERREUR : ' + (err && err.message), true); PSWKT.serverLog.disable(); } catch (e) {} }
       state.running = false;
       setRunningUI(false);
-    });
+    }
   }
 
   function stopRun() {
@@ -532,6 +609,150 @@
     try { area.select(); } catch (e) {}
   }
 
+  // --- Historique des sessions (persistance locale IndexedDB) ---
+  function fmtWhen(iso) {
+    try { var d = new Date(iso); return d.toLocaleString(); } catch (e) { return iso || '?'; }
+  }
+  function summaryChips(sm) {
+    if (!sm || !sm.counts) return '';
+    var c = sm.counts;
+    return 'total ' + sm.total + ' · reussis ' + c.pass + ' · echecs ' + c.fail +
+      ' · erreurs ' + c.error + ' · arretes ' + c.aborted + ' · ignores ' + c.skip;
+  }
+
+  // Reconstruit un objet "report" exportable a partir d'une session stockee.
+  function sessionToReport(session, records) {
+    return {
+      annotations: { count: 0, items: {} },
+      meta: { tool: 'PSWKT', formatVersion: 1, generatedAt: session.startedAt, sessionId: session.id, mode: session.mode, href: null },
+      environment: { userAgent: session.ua, platform: '', hardwareConcurrency: '', deviceMemoryGB: '', screen: { width: '', height: '', pixelRatio: '' } },
+      playstation: { likelyPlaystation: false, hints: [] },
+      features: {},
+      run: { summary: session.summary || { total: records.length, counts: tallyRecords(records), totalDurationMs: 0, suiteAborted: session.status === 'interrupted' }, records: records },
+      log: { durationMs: 0, globalErrors: [], events: [] }
+    };
+  }
+  function tallyRecords(records) {
+    var c = { pass: 0, fail: 0, skip: 0, error: 0, aborted: 0 };
+    for (var i = 0; i < records.length; i++) { var s = records[i].status; if (c[s] === undefined) c[s] = 0; c[s]++; }
+    return c;
+  }
+
+  function exportSession(session, kind) {
+    PSWKT.store.getRecords(session.id).then(function (records) {
+      var report = sessionToReport(session, records);
+      var content = (kind === 'json') ? PSWKT.exporter.toJSON(report) : PSWKT.exporter.toDetailedText(report);
+      var name = 'pswkt-session-' + session.id + '.' + (kind === 'json' ? 'json' : 'txt');
+      var mime = (kind === 'json') ? 'application/json;charset=utf-8' : 'text/plain;charset=utf-8';
+      var area = $('export-area'); area.value = content; area.style.display = 'block';
+      var dl = PSWKT.exporter.downloadText(content, name, mime);
+      $('history-hint').textContent = 'Session exportee (' + content.length + ' octets)' + (dl ? ' — telechargement declenche (' + name + ')' : ' — selectionnez la zone « Export » pour copier') + '.';
+      if (!dl) { try { area.focus(); area.select(); } catch (e) {} }
+    });
+  }
+
+  function renderHistory() {
+    if (!PSWKT.store) return;
+    var kindEl = $('store-kind');
+    if (kindEl) kindEl.textContent = '(stockage : ' + PSWKT.store.kind + ')';
+    PSWKT.store.listSessions().then(function (list) {
+      var box = $('history-list'); clear(box);
+      if (!list.length) { box.appendChild(el('p', { class: 'muted', text: 'Aucune session enregistree pour le moment.' })); return; }
+      for (var i = 0; i < list.length; i++) {
+        (function (s) {
+          var statusCls = s.status === 'done' ? 'pass' : (s.status === 'interrupted' || s.status === 'running' ? 'aborted' : 'neutral');
+          var statusTxt = s.status === 'done' ? 'terminee' : (s.status === 'running' ? 'INTERROMPUE (crash ?)' : (s.status === 'interrupted' ? 'interrompue' : s.status));
+          var cb = el('input', { type: 'checkbox' }); cb.setAttribute('data-sid', s.id);
+          cb.checked = !!state.compareSel[s.id];
+          cb.onchange = function () { if (cb.checked) state.compareSel[s.id] = true; else delete state.compareSel[s.id]; };
+          var head = el('div', { class: 'hist-head' }, [
+            cb,
+            el('span', { class: 'chip chip-' + statusCls, text: statusTxt }),
+            el('span', { class: 'hist-label', text: (s.label || '(sans nom)') + '  ·  ' + (s.mode || '') }),
+            el('span', { class: 'hist-when muted', text: fmtWhen(s.startedAt) })
+          ]);
+          var sum = el('div', { class: 'hist-sum muted', text: summaryChips(s.summary) });
+          var btns = el('div', { class: 'hist-btns' }, [
+            mkMini('Export JSON', function () { exportSession(s, 'json'); }),
+            mkMini('Export TXT detaille', function () { exportSession(s, 'text'); }),
+            mkMini('Charger dans Resultats', function () { loadSessionIntoResults(s); }),
+            mkMini('Supprimer', function () { if (confirmDel(s)) PSWKT.store.deleteSession(s.id).then(renderHistory); }, 'danger')
+          ]);
+          box.appendChild(el('div', { class: 'hist-row' }, [head, sum, btns]));
+        })(list[i]);
+      }
+    });
+  }
+  function mkMini(label, fn, cls) {
+    var b = el('button', { class: 'mini ' + (cls || 'ghost'), type: 'button', text: label });
+    b.onclick = fn; return b;
+  }
+  function confirmDel(s) { return global.confirm ? global.confirm('Supprimer la session « ' + (s.label || s.id) + ' » ?') : true; }
+
+  function loadSessionIntoResults(s) {
+    PSWKT.store.getRecords(s.id).then(function (records) {
+      clear($('results'));
+      for (var i = 0; i < records.length; i++) appendResultRow(records[i]);
+      renderSummary(s.summary || { total: records.length, counts: tallyRecords(records), totalDurationMs: 0, suiteAborted: s.status !== 'done' });
+      state.lastRun = { records: records, summary: s.summary || { total: records.length, counts: tallyRecords(records), totalDurationMs: 0, suiteAborted: false } };
+      $('history-hint').textContent = 'Session « ' + (s.label || s.id) + ' » chargee dans la section Resultats (' + records.length + ' tests).';
+    });
+  }
+
+  // Comparaison de 2+ sessions selectionnees : tableau des compteurs cote a cote.
+  function compareSessions() {
+    var ids = []; for (var id in state.compareSel) if (state.compareSel.hasOwnProperty(id)) ids.push(id);
+    var box = $('history-compare'); clear(box);
+    if (ids.length < 2) { $('history-hint').textContent = 'Cochez au moins 2 sessions pour les comparer.'; return; }
+    Promise.all(ids.map(function (id) { return PSWKT.store.getSession(id); })).then(function (sessions) {
+      var keys = ['pass', 'fail', 'error', 'aborted', 'skip'];
+      var labelsFr = { pass: 'reussis', fail: 'echecs', error: 'erreurs', aborted: 'arretes', skip: 'ignores' };
+      var table = el('table', { class: 'cmp-table' });
+      var thead = el('tr', {}, [el('th', { text: 'metrique' })]);
+      for (var i = 0; i < sessions.length; i++) thead.appendChild(el('th', { text: (sessions[i].label || sessions[i].id).slice(0, 18) + ' (' + fmtWhen(sessions[i].startedAt).slice(0, 16) + ')' }));
+      table.appendChild(thead);
+      table.appendChild(cmpRow('total', sessions, function (s) { return s.summary ? s.summary.total : '?'; }));
+      for (var k = 0; k < keys.length; k++) {
+        (function (key) {
+          table.appendChild(cmpRow(labelsFr[key], sessions, function (s) { return s.summary && s.summary.counts ? s.summary.counts[key] : '?'; }));
+        })(keys[k]);
+      }
+      table.appendChild(cmpRow('duree (ms)', sessions, function (s) { return s.summary ? s.summary.totalDurationMs : '?'; }));
+      table.appendChild(cmpRow('etat', sessions, function (s) { return s.status; }));
+      box.appendChild(el('h4', { text: 'Comparaison de ' + sessions.length + ' sessions' }));
+      box.appendChild(table);
+      $('history-hint').textContent = '';
+    });
+  }
+  function cmpRow(label, sessions, getter) {
+    var tr = el('tr', {}, [el('td', { text: label })]);
+    for (var i = 0; i < sessions.length; i++) tr.appendChild(el('td', { text: String(getter(sessions[i])) }));
+    return tr;
+  }
+
+  // Au chargement : detecte une session restee "running" (crash probable au run precedent).
+  function checkInterrupted() {
+    if (!PSWKT.store) return;
+    PSWKT.store.findInterrupted().then(function (list) {
+      if (!list.length) return;
+      var s = list[0];
+      PSWKT.store.getRunning(s.id).then(function (run) {
+        var banner = $('crash-banner');
+        var who = run && run.test ? (run.test.name + ' (' + run.test.id + ')') : 'un test inconnu';
+        banner.style.display = 'block';
+        clear(banner);
+        banner.appendChild(el('strong', { text: '⚠ Session precedente interrompue. ' }));
+        banner.appendChild(document.createTextNode('Le dernier test lance etait : ' + who + '. '));
+        banner.appendChild(document.createTextNode('C\'est tres probablement lui qui a fait planter/geler le navigateur. '));
+        var view = mkMini('Voir cette session', function () { loadSessionIntoResults(s); });
+        var ok = mkMini('OK, marquer comme vue', function () {
+          PSWKT.store.finishSession(s.id, s.summary, true).then(function () { banner.style.display = 'none'; renderHistory(); });
+        }, 'danger');
+        banner.appendChild(view); banner.appendChild(ok);
+      });
+    });
+  }
+
   // --- Initialisation ---
   function init() {
     PSWKT.annotations = PSWKT.annotations || {};
@@ -564,6 +785,24 @@
       var report = PSWKT.exporter.buildReport(state.lastRun);
       saveToServer(PSWKT.exporter.toJSON(report), 'json', 'rapport', $('export-hint'));
     };
+
+    // Recherche / filtre des resultats
+    if ($('result-search')) $('result-search').oninput = applyResultFilter;
+    var fids = ['filter-pass', 'filter-fail', 'filter-error', 'filter-aborted', 'filter-skip'];
+    for (var fi = 0; fi < fids.length; fi++) { if ($(fids[fi])) $(fids[fi]).onchange = applyResultFilter; }
+
+    // Historique des sessions (IndexedDB)
+    if ($('btn-history-refresh')) $('btn-history-refresh').onclick = renderHistory;
+    if ($('btn-history-compare')) $('btn-history-compare').onclick = compareSessions;
+    if ($('btn-history-clear')) $('btn-history-clear').onclick = function () {
+      if (!global.confirm || global.confirm('Supprimer TOUTES les sessions enregistrees localement ?')) {
+        PSWKT.store.listSessions().then(function (list) {
+          var ps = list.map(function (s) { return PSWKT.store.deleteSession(s.id); });
+          Promise.all(ps).then(function () { state.compareSel = {}; clear($('history-compare')); renderHistory(); });
+        });
+      }
+    };
+    if (PSWKT.store) { renderHistory(); checkInterrupted(); }
 
     setRunningUI(false);
     PSWKT.logger.info('app', 'Interface prete. ' + R.listTests().length + ' tests dans ' +

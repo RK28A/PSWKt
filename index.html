@@ -17,6 +17,8 @@
 
   <main class="wrap">
 
+    <div id="crash-banner" class="crash-banner" style="display:none"></div>
+
     <!-- Panneau environnement + fonctionnalites -->
     <section class="panel">
       <h2>1. Environnement detecte</h2>
@@ -74,6 +76,15 @@
     <!-- Resultats en direct -->
     <section class="panel">
       <h2>4. Resultats en direct</h2>
+      <div class="results-filter">
+        <input id="result-search" type="text" placeholder="Rechercher par nom / id / detail..." spellcheck="false">
+        <label><input id="filter-pass" type="checkbox" checked> reussis</label>
+        <label><input id="filter-fail" type="checkbox" checked> echecs</label>
+        <label><input id="filter-error" type="checkbox" checked> erreurs</label>
+        <label><input id="filter-aborted" type="checkbox" checked> arretes</label>
+        <label><input id="filter-skip" type="checkbox"> ignores</label>
+        <span id="filter-count" class="muted"></span>
+      </div>
       <div id="results" class="results"></div>
     </section>
 
@@ -108,6 +119,22 @@
       <textarea id="export-area" class="export-area" readonly spellcheck="false" style="display:none"></textarea>
     </section>
 
+    <!-- Historique des sessions (persistance locale IndexedDB, sans serveur) -->
+    <section class="panel">
+      <h2>7. Historique des sessions</h2>
+      <p class="muted">Chaque lancement cree une <b>nouvelle session</b> enregistree <b>localement dans le navigateur</b>
+        (IndexedDB) &mdash; aucun serveur requis, compatible hebergement statique. Consultez, exportez (JSON/TXT),
+        comparez ou supprimez vos sessions. <span id="store-kind"></span></p>
+      <div class="run-bar">
+        <button id="btn-history-refresh" class="mini ghost" type="button">Rafraichir</button>
+        <button id="btn-history-compare" class="mini primary" type="button">Comparer la selection</button>
+        <button id="btn-history-clear" class="mini danger" type="button">Tout supprimer</button>
+      </div>
+      <div id="history-list" class="history-list"></div>
+      <div id="history-compare" class="history-compare"></div>
+      <p id="history-hint" class="muted"></p>
+    </section>
+
     <footer class="app-footer">
       <p>PSWKT &mdash; tests reproductibles et non destructifs. Une erreur JavaScript observee ici est un comportement a documenter, <strong>pas</strong> une vulnerabilite. Pour des diagnostics memoire approfondis, utilisez un WebKit instrumente sur PC.</p>
     </footer>
@@ -120,6 +147,7 @@
   <script src="js/core/runner.js"></script>
   <script src="js/core/export.js"></script>
   <script src="js/core/serverlog.js"></script>
+  <script src="js/core/store.js"></script>
   <!-- Tests -->
   <script src="js/tests/typedarrays.js"></script>
   <script src="js/tests/canvas.js"></script>
