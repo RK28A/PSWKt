@@ -235,6 +235,7 @@ js/tests/fuzz_robustness.js  robustesse/crash (buffer détaché, mutation/itéra
 js/tests/fuzz_robustness2.js robustesse (Intl/dates/URL/comparateurs/clone extrêmes…)
 js/tests/fuzz_aggressive.js  stress test AGRESSIF/destructif (bombe mémoire, regex, pile…)
 js/tests/fuzz_aggressive2.js stress AGRESSIF (promesses/timers/Map/events/CPU/GC…)
+js/tests/fuzz_aggressive3.js stress AGRESSIF (WebAudio/localStorage/SVG/reflow/proto/Proxy/Blob/JIT…)
 js/app.js             orchestration et rendu de l'interface
 ```
 
@@ -288,7 +289,7 @@ restent locales (IndexedDB) et s'exportent en JSON/TXT.
 
 **Validation effectuée.** Contrôle de syntaxe de tous les scripts ; chargement de la page
 sans erreur console ; suite complète **~1800 tests / 27 catégories** verte (1674 réussis,
-120 ignorés, 0 échec, 0 erreur) ; persistance IndexedDB, historique, filtres, comparaison et
+135 ignorés, 0 échec, 0 erreur) ; persistance IndexedDB, historique, filtres, comparaison et
 **bannière de crash au rechargement** validés en navigateur headless ; fonctionnement **sans
 PHP ni serveur Python** confirmé (chemin IndexedDB pur).
 
