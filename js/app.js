@@ -250,17 +250,21 @@
     if (!box) return;
     var on = $('opt-aggressive') && $('opt-aggressive').checked;
     if (on) { renderAggressiveList(); box.style.display = ''; } else { box.style.display = 'none'; }
+    // Make the main button say exactly what it will run in each mode.
+    var btn = $('btn-run-all');
+    if (btn) btn.innerHTML = on ? '▶&nbsp; Run checked aggressive' : '▶&nbsp; Run all tests';
   }
-  // Tests a lancer depuis l'accueil : tous les NON destructifs, plus les agressifs
-  // individuellement coches (uniquement si le Mode agressif est actif).
+  // What "Run all tests" runs from the Dashboard:
+  //  - aggressive mode OFF: every non-destructive test (the full diagnostic).
+  //  - aggressive mode ON : ONLY the aggressive tests you ticked (nothing else).
   function collectHomeRunTests() {
     var all = R.listTests();
     var on = $('opt-aggressive') && $('opt-aggressive').checked;
     var out = [];
     for (var i = 0; i < all.length; i++) {
       var t = all[i];
-      if (!t.destructive) out.push(t);
-      else if (on) { var cb = $('aggr-cb-' + t.id); if (cb && cb.checked) out.push(t); }
+      if (on) { if (t.destructive) { var cb = $('aggr-cb-' + t.id); if (cb && cb.checked) out.push(t); } }
+      else if (!t.destructive) out.push(t);
     }
     return out;
   }
@@ -481,7 +485,7 @@
       var sh = $('stream-hint');
       if (sh) {
         if (ok) sh.textContent = 'Continuous logging active -> logs/pswkt-live-' + session + '.txt (written as it goes).';
-        else sh.textContent = 'Continuous logging: server unreachable (' + (PSWKT.serverLog.lastError || '?') + '). Run "python3 server.py".';
+        else sh.textContent = 'Continuous logging: server endpoint unreachable (' + (PSWKT.serverLog.lastError || '?') + '). Needs api/log-stream.php on a PHP host.';
       }
       PSWKT.logger.info('app', 'Continuous logging: session ' + session + (ok ? ' (OK)' : ' (SERVER UNREACHABLE)'));
     }
@@ -714,11 +718,11 @@
           hintEl.textContent = 'Saved on server: ' + (path || 'logs/') + ' (' + content.length + ' bytes).';
           PSWKT.logger.info('app', 'Report saved on server: ' + path);
         } else {
-          hintEl.textContent = 'Server error (status ' + xhr.status + '). Run the project with "python3 server.py" (not http.server) to enable saving.';
+          hintEl.textContent = 'Server save failed (status ' + xhr.status + '). Needs api/save-log.php on a PHP host with a writable logs/ folder.';
         }
       };
       xhr.onerror = function () {
-        hintEl.textContent = 'Server unreachable. Run "python3 server.py" to enable saving into logs/.';
+        hintEl.textContent = 'Server endpoint unreachable. Needs api/save-log.php (PHP host). You can still export to JSON/TXT without any server.';
       };
       xhr.send(content);
     } catch (e) {

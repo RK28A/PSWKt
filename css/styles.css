@@ -148,7 +148,7 @@ label:focus-within, [tabindex]:focus-visible {
   transition: border-color 0.16s ease, background 0.16s ease;
 }
 .toggle-card:hover { border-color: var(--border2); }
-.toggle-card input { width: auto; margin-top: 2px; flex: none; }
+.toggle-card input[type="checkbox"] { margin-top: 2px; flex: none; }
 .aggr-main b { color: var(--aborted); }
 
 .options-panel { max-width: 640px; margin: 12px auto 0; text-align: left; animation: panel-in 0.2s ease; }
@@ -195,7 +195,7 @@ body.running .progress-bar {
 }
 .results-filter label { font-size: 13px; color: var(--muted); display: inline-flex; align-items: center; gap: 5px; }
 
-.results { display: flex; flex-direction: column; gap: 8px; }
+.results { display: flex; flex-direction: column; gap: 8px; max-height: 65vh; overflow-y: auto; padding-right: 4px; }
 .result-row {
   display: flex; gap: 12px; background: var(--panel2); border: 1px solid var(--border);
   border-left-width: 4px; border-radius: 10px; padding: 11px 13px; animation: row-in 0.2s ease;
@@ -269,17 +269,22 @@ body.running .progress-bar {
 /* ---------- Categories (collapsible) ---------- */
 .categories { display: flex; flex-direction: column; gap: 12px; }
 .cat-card { background: var(--panel2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.cat-card.open { border-color: var(--border2); }
+/* The header is a <button> but must look like a header row, not a pill button. */
 .cat-head {
-  display: flex; align-items: center; gap: 12px; padding: 12px 14px; cursor: pointer;
-  background: linear-gradient(180deg, var(--panel3), var(--panel2));
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  padding: 13px 15px; cursor: pointer; color: var(--text); font: inherit;
+  background: var(--panel2); border: none; border-radius: 0;
+  transition: background 0.15s ease;
 }
 .cat-head:hover { background: var(--panel3); }
-.cat-caret { flex: none; transition: transform 0.2s ease; color: var(--accent); font-size: 13px; }
+.cat-card.open .cat-head { background: var(--panel3); }
+.cat-caret { flex: none; transition: transform 0.2s ease; color: var(--accent); font-size: 14px; }
 .cat-card.open .cat-caret { transform: rotate(90deg); }
 .cat-title { flex: 1; min-width: 0; }
-.cat-title h3 { margin: 0; font-size: 15px; }
-.cat-desc { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
-.cat-count { flex: none; font-size: 12px; color: var(--muted); background: var(--bg2); border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; }
+.cat-title h3 { margin: 0; font-size: 15px; font-weight: 700; }
+.cat-desc { margin: 2px 0 0; font-size: 12px; color: var(--muted); white-space: normal; }
+.cat-count { flex: none; font-size: 12px; color: var(--muted); background: var(--bg2); border: 1px solid var(--border); border-radius: 999px; padding: 3px 11px; }
 .cat-actions { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 12px; }
 .cat-tests { padding: 0 14px 12px; display: block; animation: panel-in 0.18s ease; }
 .cat-tests.collapsed { display: none; }

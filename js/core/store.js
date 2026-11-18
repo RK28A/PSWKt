@@ -11,7 +11,7 @@
  * ATTENTION (honnete) : IndexedDB ecrit de maniere ASYNCHRONE. Un gel total du
  * navigateur juste apres l'ecriture peut la perdre avant qu'elle n'atteigne le
  * disque. C'est du "meilleur effort" : fiable dans l'immense majorite des cas,
- * mais sans garantie absolue sur un crash brutal (voir aussi server.py, fsync).
+ * mais sans garantie absolue sur un crash brutal (voir aussi the optional PHP log endpoints).
  *
  * API (toutes les methodes renvoient une Promise) :
  *   store.ready            -> Promise<bool> (true si IndexedDB, false si repli)
