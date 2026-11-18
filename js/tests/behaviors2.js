@@ -129,7 +129,7 @@
   });
   T('label.break', 'labeled break', [], function () {
     var hits = 0; outer: for (var i = 0; i < 3; i++) { for (var j = 0; j < 3; j++) { hits++; if (j === 1) continue outer; if (i === 2) break outer; } }
-    return ok(hits > 0, 'boucles etiquetees executees (' + hits + ')');
+    return ok(hits > 0, 'labeled loops executed (' + hits + ')');
   });
 
 })(typeof window !== 'undefined' ? window : this);

@@ -29,12 +29,12 @@
               ctx.tick();
             }
           } catch (e) {
-            if (G.isAbort(e)) return resolve({ status: 'aborted', detail: made + ' promesses', measurements: { promesses: made, tasMo: heapMB() } });
-            return resolve({ status: 'pass', detail: 'cede a ' + made + ' (' + e.name + ')', measurements: { promesses: made, error: e.name } });
+            if (G.isAbort(e)) return resolve({ status: 'aborted', detail: made + ' promises', measurements: { promesses: made, tasMo: heapMB() } });
+            return resolve({ status: 'pass', detail: 'gave out at ' + made + ' (' + e.name + ')', measurements: { promesses: made, error: e.name } });
           }
           ctx.metric('promesses', { crees: made, tasMo: heapMB() });
           if (made < target) global.setTimeout(burst, 0);
-          else resolve({ status: 'pass', detail: made + ' promesses', measurements: { promesses: made } });
+          else resolve({ status: 'pass', detail: made + ' promises', measurements: { promesses: made } });
         }
         burst();
       });
@@ -51,11 +51,11 @@
       try {
         while (true) {
           for (var i = 0; i < 100000; i++) { m.set(n, n); s.add('k' + n); n++; }
-          ctx.tick(); ctx.metric('taille', { entrees: n, tasMo: heapMB() }); ctx.flush();
+          ctx.tick(); ctx.metric('size', { entrees: n, tasMo: heapMB() }); ctx.flush();
         }
       } catch (e) {
-        if (G.isAbort(e)) return { status: 'aborted', detail: n + ' entrees', measurements: { entrees: n } };
-        return { status: 'pass', detail: 'sature a ' + n + ' entrees (' + e.name + ')', measurements: { maxEntrees: n, error: e.name } };
+        if (G.isAbort(e)) return { status: 'aborted', detail: n + ' entries', measurements: { entrees: n } };
+        return { status: 'pass', detail: 'sature a ' + n + ' entries (' + e.name + ')', measurements: { maxEntrees: n, error: e.name } };
       } finally { m = null; s = null; }
     }
   });
@@ -74,7 +74,7 @@
         return { status: 'pass', detail: 'limited to ' + n + ' timers (' + e.name + ')', measurements: { maxTimers: n, error: e.name } };
       }
       for (var j = 0; j < ids.length; j++) { try { global.clearTimeout(ids[j]); } catch (x) {} }
-      return { status: 'pass', detail: n + ' timers programmes et annules', measurements: { timers: n } };
+      return { status: 'pass', detail: n + ' timers scheduled and cancelled', measurements: { timers: n } };
     }
   });
 
@@ -93,11 +93,11 @@
           if (n >= 500000) break;
         }
       } catch (e) {
-        if (!G.isAbort(e)) { for (var k = 0; k < urls.length; k++) { try { URL.revokeObjectURL(urls[k]); } catch (x) {} } return { status: 'pass', detail: 'cede a ' + n + ' (' + e.name + ')', measurements: { urls: n, error: e.name } }; }
+        if (!G.isAbort(e)) { for (var k = 0; k < urls.length; k++) { try { URL.revokeObjectURL(urls[k]); } catch (x) {} } return { status: 'pass', detail: 'gave out at ' + n + ' (' + e.name + ')', measurements: { urls: n, error: e.name } }; }
         return { status: 'aborted', detail: n + ' urls', measurements: { urls: n } };
       }
       for (var j = 0; j < urls.length; j++) { try { URL.revokeObjectURL(urls[j]); } catch (x) {} }
-      return { status: 'pass', detail: n + ' URL d objets', measurements: { urls: n } };
+      return { status: 'pass', detail: n + ' object URLs', measurements: { urls: n } };
     }
   });
 
@@ -112,10 +112,10 @@
       try {
         for (var i = 0; i < 5000000; i++) { target.dispatchEvent(new Event('x')); n++; if ((i & 16383) === 0) { ctx.tick(); ctx.metric('events', { dispatch: n, recus: count }); } }
       } catch (e) {
-        if (G.isAbort(e)) return { status: 'aborted', detail: n + ' evenements', measurements: { dispatch: n, recus: count } };
-        return { status: 'pass', detail: 'cede a ' + n + ' (' + e.name + ')', measurements: { dispatch: n, error: e.name } };
+        if (G.isAbort(e)) return { status: 'aborted', detail: n + ' events', measurements: { dispatch: n, recus: count } };
+        return { status: 'pass', detail: 'gave out at ' + n + ' (' + e.name + ')', measurements: { dispatch: n, error: e.name } };
       }
-      return { status: 'pass', detail: n + ' evenements dispatches, ' + count + ' recus', measurements: { dispatch: n, recus: count } };
+      return { status: 'pass', detail: n + ' events dispatched, ' + count + ' received', measurements: { dispatch: n, recus: count } };
     }
   });
 
@@ -131,8 +131,8 @@
       try {
         for (var i = 0; i < 100000; i++) { var d = cv.toDataURL('image/png'); bytes += d.length; n++; if ((i & 63) === 0) { ctx.tick(); ctx.metric('dataurl', { n: n, tasMo: heapMB() }); } }
       } catch (e) {
-        if (G.isAbort(e)) return { status: 'aborted', detail: n + ' serialisations', measurements: { n: n } };
-        return { status: 'pass', detail: 'cede a ' + n + ' (' + e.name + ')', measurements: { n: n, error: e.name } };
+        if (G.isAbort(e)) return { status: 'aborted', detail: n + ' serializations', measurements: { n: n } };
+        return { status: 'pass', detail: 'gave out at ' + n + ' (' + e.name + ')', measurements: { n: n, error: e.name } };
       }
       return { status: 'pass', detail: n + ' dataURL (' + mb(bytes * 2) + ' Mo cumules)', measurements: { n: n } };
     }
@@ -153,7 +153,7 @@
         if (G.isAbort(e2)) return { status: 'aborted', detail: n + ' exceptions', measurements: { exceptions: n, stackLen: stackLen } };
         throw e2;
       }
-      return { status: 'pass', detail: n + ' exceptions levees/rattrapees', measurements: { exceptions: n, stackLen: stackLen } };
+      return { status: 'pass', detail: n + ' exceptions thrown/caught', measurements: { exceptions: n, stackLen: stackLen } };
     }
   });
 
@@ -164,7 +164,7 @@
     run: function (ctx) {
       var s = '', n = 0, chunk = 'x'.repeat(4096);
       try {
-        while (true) { s += chunk; n++; if ((n & 255) === 0) { ctx.tick(); ctx.metric('chaine', { ko: Math.round(s.length / 1024), tasMo: heapMB() }); } }
+        while (true) { s += chunk; n++; if ((n & 255) === 0) { ctx.tick(); ctx.metric('string', { ko: Math.round(s.length / 1024), tasMo: heapMB() }); } }
       } catch (e) {
         if (G.isAbort(e)) return { status: 'aborted', detail: Math.round(s.length / 1048576) + ' Mo', measurements: { chars: s.length } };
         return { status: 'pass', detail: 'limited to ~' + mb(s.length * 2) + ' Mo (' + e.name + ')', measurements: { maxChars: s.length, error: e.name } };
@@ -179,11 +179,11 @@
     run: function (ctx) {
       var root = [], cur = root, depth = 0;
       try {
-        while (depth < 10000000) { var n = []; cur.push(n); cur = n; depth++; if ((depth & 4095) === 0) { ctx.tick(); ctx.metric('profondeur', { depth: depth, tasMo: heapMB() }); } }
+        while (depth < 10000000) { var n = []; cur.push(n); cur = n; depth++; if ((depth & 4095) === 0) { ctx.tick(); ctx.metric('depth', { depth: depth, tasMo: heapMB() }); } }
         return { status: 'pass', detail: 'depth ' + depth + ' (plafond)', measurements: { depth: depth } };
       } catch (e) {
         if (G.isAbort(e)) return { status: 'aborted', detail: 'depth ' + depth, measurements: { depth: depth } };
-        return { status: 'pass', detail: 'cede a ' + depth + ' niveaux (' + e.name + ')', measurements: { maxDepth: depth, error: e.name } };
+        return { status: 'pass', detail: 'gave out at ' + depth + ' levels (' + e.name + ')', measurements: { maxDepth: depth, error: e.name } };
       } finally { root = null; }
     }
   });
@@ -198,9 +198,9 @@
         for (var i = 0; i < 5000000; i++) { void new RegExp('a' + (i % 97) + 'b{' + (i % 7 + 1) + '}c'); n++; if ((i & 16383) === 0) ctx.tick(); }
       } catch (e) {
         if (G.isAbort(e)) return { status: 'aborted', detail: n + ' regex', measurements: { regex: n } };
-        return { status: 'pass', detail: 'cede a ' + n + ' (' + e.name + ')', measurements: { regex: n, error: e.name } };
+        return { status: 'pass', detail: 'gave out at ' + n + ' (' + e.name + ')', measurements: { regex: n, error: e.name } };
       }
-      return { status: 'pass', detail: n + ' RegExp compilees', measurements: { regex: n } };
+      return { status: 'pass', detail: n + ' RegExps compiled', measurements: { regex: n } };
     }
   });
 
@@ -218,8 +218,8 @@
           if (hold.length > 3000000) hold.length = 0; // laisse le GC respirer
         }
       } catch (e) {
-        if (G.isAbort(e)) return { status: 'aborted', detail: n + ' objets', measurements: { objets: n } };
-        return { status: 'pass', detail: 'cede a ' + n + ' (' + e.name + ')', measurements: { objets: n, error: e.name } };
+        if (G.isAbort(e)) return { status: 'aborted', detail: n + ' objects', measurements: { objets: n } };
+        return { status: 'pass', detail: 'gave out at ' + n + ' (' + e.name + ')', measurements: { objets: n, error: e.name } };
       } finally { hold = null; }
     }
   });

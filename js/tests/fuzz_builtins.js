@@ -122,11 +122,11 @@
     id: 'fuzz.builtins.array.from', name: 'Array.from (trapped array-like)', category: CAT,
     description: 'Array.from on negative/giant/throwing length: bounded or caught error.',
     build: function (ctx) {
-      if (typeof Array.from !== 'function') return { target: function () { throw new Error('Array.from absent'); }, inputs: [] };
+      if (typeof Array.from !== 'function') return { target: function () { throw new Error('Array.from unavailable'); }, inputs: [] };
       var inputs = F.trapObjects();
       inputs.push({ v: { length: 3, 0: 'a', 1: 'b', 2: 'c' }, label: 'array-like valide' });
-      inputs.push({ v: { length: 1e7 }, label: 'length = 1e7 (geant, borne par budget)' });
-      inputs.push({ v: 'abc', label: 'chaine iterable' });
+      inputs.push({ v: { length: 1e7 }, label: 'length = 1e7 (giant, bounded by budget)' });
+      inputs.push({ v: 'abc', label: 'iterable string' });
       return {
         target: function (o) {
           // Garde-fou : plafonne la materialisation via mapFn qui respecte le budget.

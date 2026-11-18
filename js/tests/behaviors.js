@@ -98,7 +98,7 @@
   T('structuredclone.deep', 'structuredClone deep copy', ['objects.structuredClone'], function () {
     var o = { a: [1, 2, { b: 3 }], d: new Date(0) };
     var c = structuredClone(o);
-    return ok(c !== o && c.a[2] !== o.a[2] && c.a[2].b === 3 && c.d.getTime() === 0, 'copie profonde independante');
+    return ok(c !== o && c.a[2] !== o.a[2] && c.a[2].b === 3 && c.d.getTime() === 0, 'independent deep copy');
   });
   T('proxy.trap', 'Proxy get/set', ['objects.Proxy'], function () {
     var log = []; var p = new Proxy({}, { get: function (t, k) { log.push('g:' + String(k)); return t[k]; }, set: function (t, k, v) { log.push('s:' + String(k)); t[k] = v; return true; } });
@@ -118,7 +118,7 @@
   });
   T('typedarray.endian', 'DataView endianness', ['typedArrays.DataView'], function () {
     var dv = new DataView(new ArrayBuffer(4)); dv.setUint32(0, 0x01020304, true);
-    return ok(dv.getUint8(0) === 0x04 && dv.getUint32(0, false) === 0x04030201, 'little/big coherent');
+    return ok(dv.getUint8(0) === 0x04 && dv.getUint32(0, false) === 0x04030201, 'little/big consistent');
   });
   T('promise.order', 'Promise.all preserves order', ['timing.Promise'], function (ctx) {
     return Promise.all([Promise.resolve(1), Promise.resolve(2), Promise.resolve(3)]).then(function (r) {

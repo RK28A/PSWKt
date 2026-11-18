@@ -77,7 +77,7 @@
           run: function () {
             var ok = false;
             try { ok = !!(global.CSS && CSS.supports && CSS.supports(cond)); } catch (e) { ok = false; }
-            return { status: ok ? 'pass' : 'skip', detail: ok ? 'supporte' : 'non supporte', measurements: { condition: cond, supported: ok } };
+            return { status: ok ? 'pass' : 'skip', detail: ok ? 'supported' : 'not supported', measurements: { condition: cond, supported: ok } };
           }
         });
       })(p[0], p[2]);

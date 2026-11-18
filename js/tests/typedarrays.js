@@ -129,7 +129,7 @@
       var ok = okBeyond && okNeg && writeIgnored;
       return {
         status: ok ? 'pass' : 'fail',
-        detail: 'read>len=' + beyond + ', lecture[-1]=' + negative + ', ecriture hors-borne ignoree=' + writeIgnored,
+        detail: 'read>len=' + beyond + ', lecture[-1]=' + negative + ', out-of-bounds write ignored=' + writeIgnored,
         measurements: { okBeyond: okBeyond, okNeg: okNeg, writeIgnored: writeIgnored }
       };
     }

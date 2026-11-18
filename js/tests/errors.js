@@ -115,7 +115,7 @@
       AppError.prototype.constructor = AppError;
 
       var caught = null;
-      try { throw new AppError('echec metier', 42); } catch (e) { caught = e; }
+      try { throw new AppError('business failure', 42); } catch (e) { caught = e; }
       ctx.info('instanceof AppError : ' + (caught instanceof AppError));
       ctx.info('instanceof Error : ' + (caught instanceof Error));
       var ok = (caught instanceof AppError && caught instanceof Error && caught.code === 42);
@@ -135,12 +135,12 @@
     description: 'Rejects a promise and catches it cleanly (asynchronous test).',
     requires: ['timing.Promise'],
     run: function (ctx) {
-      ctx.info('creation d une promesse rejetee...');
+      ctx.info('creating a rejected promise...');
       return Promise.reject(new Error('rejet volontaire'))
         .then(function () {
           return { status: 'fail', detail: 'the promise should have been rejected', measurements: null };
         }, function (err) {
-          ctx.info('rejet rattrape : ' + err.message);
+          ctx.info('rejection caught: ' + err.message);
           return {
             status: 'pass',
             detail: 'rejection caught cleanly: ' + err.message,

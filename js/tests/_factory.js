@@ -74,7 +74,7 @@
           var present = (v !== undefined && v !== null);
           return {
             status: present ? 'pass' : 'skip',
-            detail: present ? ('disponible (' + typeof v + ')') : 'absent',
+            detail: present ? ('available (' + typeof v + ')') : 'absent',
             measurements: { path: path, present: present, type: present ? typeof v : null }
           };
         }
@@ -95,7 +95,7 @@
           try { ok = !!(global.CSS && CSS.supports && CSS.supports(prop, value)); } catch (e) { ok = false; }
           return {
             status: ok ? 'pass' : 'skip',
-            detail: ok ? 'supporte' : 'non supporte',
+            detail: ok ? 'supported' : 'not supported',
             measurements: { property: prop, value: value, supported: ok }
           };
         }
@@ -119,7 +119,7 @@
             supported = true;
           } catch (e) {
             if (e && e.name === 'SyntaxError') { supported = false; note = 'SyntaxError'; }
-            else { supported = true; note = 'execute (' + (e && e.name) + ')'; }
+            else { supported = true; note = 'executed (' + (e && e.name) + ')'; }
           }
           return {
             status: supported ? 'pass' : 'skip',
@@ -148,7 +148,7 @@
           var ok = (verdict === 'probably' || verdict === 'maybe');
           return {
             status: ok ? 'pass' : 'skip',
-            detail: verdict ? ('reponse : "' + verdict + '"') : 'non supporte ("")',
+            detail: verdict ? ('reponse : "' + verdict + '"') : 'not supported ("")',
             measurements: { mime: mime, verdict: verdict }
           };
         }
@@ -195,7 +195,7 @@
           var present = listed || !!obj;
           return {
             status: present ? 'pass' : 'skip',
-            detail: present ? 'disponible' : 'absente',
+            detail: present ? 'available' : 'absent',
             measurements: { ext: extName, listed: listed, obtained: !!obj }
           };
         }

@@ -139,7 +139,7 @@
       try { var d = [5, 4, 3, 2, 1]; d.sort(function (x, y) { return x - y; }); out.normal = d.join(','); } catch (e) { out.normal = e.name; }
       ctx.metric('sort comparator', out);
       var ok = out.normal === '1,2,3,4,5';
-      return { status: ok ? 'pass' : 'fail', detail: ok ? 'tri normal correct, comparateurs hostiles geres' : 'tri normal INCORRECT', measurements: out };
+      return { status: ok ? 'pass' : 'fail', detail: ok ? 'normal sort correct, hostile comparators handled' : 'normal sort INCORRECT', measurements: out };
     }
   });
 

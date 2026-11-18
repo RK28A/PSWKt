@@ -41,7 +41,7 @@
         var view = new Uint8Array(buf);
         view[0] = 123; view[4095] = 200;
         var r = { round: i, before: view[0] };
-        ctx.info('round ' + i + ' : transfert (detachement) du buffer de 4096 o...');
+        ctx.info('round ' + i + ' : transferring (detaching) the 4096 B buffer...');
         try { structuredClone(buf, { transfer: [buf] }); r.detached = true; }
         catch (e) { r.detached = false; r.detachErr = e.name; }
         try { r.readAfter = view[0]; } catch (e) { r.readAfter = 'throw:' + e.name; }
@@ -65,10 +65,10 @@
         var ab = new ArrayBuffer(1024, { maxByteLength: 4096 });
         var v = new Uint8Array(ab);
         for (var k = 0; k < 1024; k++) v[k] = k & 255;
-        ctx.info('reduction 1024 -> 16 octets sous la vue...');
+        ctx.info('shrink 1024 -> 16 bytes under the view...');
         ab.resize(16);
         out.push({ op: 'shrink', readAt500: (function () { try { return v[500]; } catch (e) { return 'throw:' + e.name; } })(), len: v.length, byteLength: ab.byteLength });
-        ctx.info('agrandissement 16 -> 4096...');
+        ctx.info('grow 16 -> 4096...');
         ab.resize(4096);
         out.push({ op: 'grow', readAt2000: (function () { try { return v[2000]; } catch (e) { return 'throw:' + e.name; } })(), len: v.length });
         ctx.metric('resize', out);
@@ -117,7 +117,7 @@
           res.domLive = { removed: removed, remaining: live.length };
         } catch (e) { res.domLive = 'throw:' + e.name; }
       }
-      ctx.metric('mutation pendant iteration', res);
+      ctx.metric('mutation during iteration', res);
       return { status: 'pass', detail: 'mutations during iteration documented (no corruption observed)', measurements: res };
     }
   });
@@ -143,8 +143,8 @@
       test('TypedArray + Date + RegExp', function () { return { ta: new Uint8Array([1, 2, 3]), d: new Date(0), re: /x/g }; });
       test('getter qui leve', function () { var o = {}; Object.defineProperty(o, 'x', { get: function () { throw new Error('getter'); }, enumerable: true }); return o; });
       test('fonction (non clonable)', function () { return { f: function () {} }; });
-      test('graphe large (5000 noeuds)', function () { var root = {}, cur = root; for (var i = 0; i < 5000; i++) { cur.n = { i: i }; cur = cur.n; ctx.tick(); } return root; });
-      return { status: 'pass', detail: 'clonage de ' + cases.length + ' graphes exotiques documente', measurements: { cases: cases } };
+      test('wide graph (5000 nodes)', function () { var root = {}, cur = root; for (var i = 0; i < 5000; i++) { cur.n = { i: i }; cur = cur.n; ctx.tick(); } return root; });
+      return { status: 'pass', detail: 'clonage de ' + cases.length + ' exotic graphs documented', measurements: { cases: cases } };
     }
   });
 
@@ -161,15 +161,15 @@
       try {
         for (var di = 0; di < depths.length; di++) {
           var dep = depths[di];
-          ctx.info('arbre PROFOND de ' + dep + ' niveaux (tas ~' + heapMB() + ' Mo)...'); ctx.flush();
+          ctx.info('DEEP tree of ' + dep + ' levels (heap ~' + heapMB() + ' Mo)...'); ctx.flush();
           var root = document.createElement('div'), cur = root;
           for (var i = 0; i < dep; i++) { var c = document.createElement('div'); cur.appendChild(c); cur = c; if ((i & 1023) === 0) ctx.tick(); }
-          steps.push({ kind: 'profond', n: dep, tasMo: heapMB() }); ctx.metric('profond ' + dep, { tasMo: heapMB() });
+          steps.push({ kind: 'profond', n: dep, tasMo: heapMB() }); ctx.metric('deep ' + dep, { tasMo: heapMB() });
           root = cur = null;
         }
         for (var wi = 0; wi < widths.length; wi++) {
           var wid = widths[wi];
-          ctx.info('arbre LARGE de ' + wid + ' enfants (tas ~' + heapMB() + ' Mo)...'); ctx.flush();
+          ctx.info('WIDE tree of ' + wid + ' enfants (tas ~' + heapMB() + ' Mo)...'); ctx.flush();
           var host = document.createElement('div');
           for (var j = 0; j < wid; j++) { host.appendChild(document.createElement('span')); if ((j & 4095) === 0) ctx.tick(); }
           steps.push({ kind: 'large', n: wid, children: host.childNodes.length, tasMo: heapMB() }); ctx.metric('large ' + wid, { tasMo: heapMB() });
@@ -177,7 +177,7 @@
         }
       } catch (e) {
         if (G.isAbort(e)) return { status: 'aborted', detail: 'stopped; ' + steps.length + ' paliers', measurements: { steps: steps } };
-        return { status: 'pass', detail: 'DOM a cede : ' + e.name + ' apres ' + steps.length + ' paliers', measurements: { steps: steps, error: e.name } };
+        return { status: 'pass', detail: 'DOM gave out: ' + e.name + ' apres ' + steps.length + ' paliers', measurements: { steps: steps, error: e.name } };
       }
       return { status: 'pass', detail: 'DOM trees built up to the test caps', measurements: { steps: steps } };
     }
@@ -205,7 +205,7 @@
       tryHTML('table enorme', '<table>' + new Array(20001).join('<tr><td>x</td></tr>') + '</table>');
       tryHTML('entites malformees', new Array(10001).join('&amp;&#x;&#;&nosuch;&'));
       tryHTML('commentaire non termine', '<!--' + new Array(100001).join('a'));
-      return { status: 'pass', detail: 'parseur HTML sonde sur ' + out.length + ' entrees geantes/malformees', measurements: { cases: out } };
+      return { status: 'pass', detail: 'parseur HTML sonde sur ' + out.length + ' giant/malformed inputs', measurements: { cases: out } };
     }
   });
 
@@ -261,7 +261,7 @@
         var cv = document.createElement('canvas'); cv.width = 64; cv.height = 64;
         var gl = cv.getContext('webgl') || cv.getContext('experimental-webgl');
         if (!gl) return { status: 'skip', detail: 'WebGL unavailable', measurements: null };
-        ctx.info('allocation de buffers/textures en masse...'); ctx.flush();
+        ctx.info('mass buffer/texture allocation...'); ctx.flush();
         for (var i = 0; i < 200000; i++) {
           var b = gl.createBuffer(); if (b) r.buffers++;
           if ((i & 255) === 0) { var t = gl.createTexture(); if (t) r.textures++; }
@@ -269,7 +269,7 @@
         }
         ctx.metric('ressources GL', r);
         // Plusieurs contextes (les navigateurs en limitent le nombre -> perte des plus anciens)
-        ctx.info('creation de multiples contextes WebGL...'); ctx.flush();
+        ctx.info('creating multiple WebGL contexts...'); ctx.flush();
         var ctxs = [];
         for (var c = 0; c < 64; c++) { var cc = document.createElement('canvas'); var gc = cc.getContext('webgl'); if (gc) { ctxs.push(gc); r.contexts++; } ctx.tick(); }
       } catch (e) {
@@ -351,11 +351,11 @@
         }
       } catch (e) {
         for (var k = 0; k < workers.length; k++) { try { workers[k].terminate(); } catch (x) {} }
-        if (G.isAbort(e)) return { status: 'aborted', detail: made + ' workers crees', measurements: { workers: made } };
+        if (G.isAbort(e)) return { status: 'aborted', detail: made + ' workers created', measurements: { workers: made } };
         return { status: 'pass', detail: 'worker limit reached at ' + made + ' (' + e.name + ')', measurements: { maxWorkers: made, error: e.name } };
       }
       for (var m = 0; m < workers.length; m++) { try { workers[m].terminate(); } catch (x) {} }
-      return { status: 'pass', detail: made + ' workers crees sans echec (plafond du test)', measurements: { workers: made } };
+      return { status: 'pass', detail: made + ' workers created without failure (test cap)', measurements: { workers: made } };
     }
   });
 
@@ -375,7 +375,7 @@
       catch (e) { out.forEachHoles = e.name; }
       try { var p = { length: 1e9 }; out.arrayProtoCall = Array.prototype.indexOf.call(p, 'z'); }
       catch (e) { out.arrayProtoCall = e.name; }
-      ctx.metric('tableaux creux', out);
+      ctx.metric('sparse arrays', out);
       return { status: 'pass', detail: 'degenerate sparse structures documented', measurements: out };
     }
   });

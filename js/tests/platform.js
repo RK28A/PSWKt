@@ -21,7 +21,7 @@
     run: function (ctx) {
       var src = 'self.onmessage=function(e){var n=e.data;var s=0;for(var i=0;i<n;i++){s+=i;}self.postMessage({doubled:n*2,sum:s});};';
       var url = global.URL.createObjectURL(new global.Blob([src], { type: 'text/javascript' }));
-      ctx.info('worker cree depuis Blob URL');
+      ctx.info('worker created from Blob URL');
       var worker;
       try { worker = new global.Worker(url); }
       catch (e) {

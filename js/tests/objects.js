@@ -101,7 +101,7 @@
     requires: [],
     run: function (ctx) {
       var original = {
-        n: 123.456, s: 'chaine avec accents: eàü', b: true, z: null,
+        n: 123.456, s: 'string with accents: eàü', b: true, z: null,
         arr: [1, 2, [3, 4], { k: 'v' }],
         nested: { deep: { deeper: [true, false, 0] } },
         unicode: 'é€😀'
@@ -114,7 +114,7 @@
         back.unicode === original.unicode);
       return {
         status: ok ? 'pass' : 'fail',
-        detail: ok ? 'fidelite confirmee (' + str.length + ' octets)' : 'divergence apres aller-retour',
+        detail: ok ? 'fidelite confirmee (' + str.length + ' octets)' : 'divergence after round-trip',
         measurements: { length: str.length, fidelity: ok }
       };
     }
@@ -167,7 +167,7 @@
       bag.length = 0;
       return {
         status: sample ? 'pass' : 'fail',
-        detail: target + ' objets crees en ' + Math.round(dt) + ' ms (echantillon ' + (sample ? 'ok' : 'ko') + ')',
+        detail: target + ' objects created in ' + Math.round(dt) + ' ms (echantillon ' + (sample ? 'ok' : 'ko') + ')',
         measurements: {
           objects: target, ms: Math.round(dt * 100) / 100,
           objPerSec: dt > 0 ? Math.round(target / (dt / 1000)) : null,

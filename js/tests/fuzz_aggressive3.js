@@ -33,11 +33,11 @@
         }
       } catch (e) {
         for (var k = 0; k < ctxs.length; k++) { try { ctxs[k].close(); } catch (x) {} }
-        if (G.isAbort(e)) return { status: 'aborted', detail: n + ' noeuds', measurements: { noeuds: n } };
-        return { status: 'pass', detail: 'cede a ' + n + ' noeuds (' + e.name + ')', measurements: { noeuds: n, error: e.name } };
+        if (G.isAbort(e)) return { status: 'aborted', detail: n + ' nodes', measurements: { noeuds: n } };
+        return { status: 'pass', detail: 'gave out at ' + n + ' nodes (' + e.name + ')', measurements: { noeuds: n, error: e.name } };
       }
       for (var j = 0; j < ctxs.length; j++) { try { ctxs[j].close(); } catch (x) {} }
-      return { status: 'pass', detail: n + ' noeuds audio', measurements: { noeuds: n } };
+      return { status: 'pass', detail: n + ' audio nodes', measurements: { noeuds: n } };
     }
   });
 
@@ -56,12 +56,12 @@
           if (n >= 200000) break;
         }
       } catch (e) {
-        if (G.isAbort(e)) { cleanup(); return { status: 'aborted', detail: n + ' cles', measurements: { cles: n } }; }
+        if (G.isAbort(e)) { cleanup(); return { status: 'aborted', detail: n + ' keys', measurements: { cles: n } }; }
         cleanup();
         return { status: 'pass', detail: 'quota reached at ~' + Math.round(written / 1024) + ' Ko (' + e.name + ')', measurements: { cles: n, ko: Math.round(written / 1024), error: e.name } };
       }
       cleanup();
-      return { status: 'pass', detail: n + ' cles ecrites', measurements: { cles: n } };
+      return { status: 'pass', detail: n + ' keys written', measurements: { cles: n } };
       function cleanup() { for (var k = 0; k < n; k++) { try { global.localStorage.removeItem('__pswkt_fill_' + k); } catch (x) {} } }
     }
   });
@@ -69,7 +69,7 @@
   // 3) Chemin Canvas geant (millions de segments).
   R.register({
     id: 'fuzz.aggr3.canvas.path', name: '⚠ Giant Canvas path', category: CAT, destructive: true,
-    description: 'Construit un chemin de millions de segments et le trace (CPU/GPU + memoire).',
+    description: 'Builds a path of millions of segments and draws it (CPU/GPU + memory).',
     requires: ['canvas.context2d'],
     run: function (ctx) {
       var cv = document.createElement('canvas'); cv.width = 1024; cv.height = 1024;
@@ -80,9 +80,9 @@
         c.stroke();
       } catch (e) {
         if (G.isAbort(e)) return { status: 'aborted', detail: n + ' segments', measurements: { segments: n } };
-        return { status: 'pass', detail: 'cede a ' + n + ' segments (' + e.name + ')', measurements: { segments: n, error: e.name } };
+        return { status: 'pass', detail: 'gave out at ' + n + ' segments (' + e.name + ')', measurements: { segments: n, error: e.name } };
       }
-      return { status: 'pass', detail: n + ' segments traces', measurements: { segments: n } };
+      return { status: 'pass', detail: n + ' segments drawn', measurements: { segments: n } };
     }
   });
 
@@ -104,7 +104,7 @@
         }
       } catch (e) {
         if (G.isAbort(e)) return { status: 'aborted', detail: out.length + ' paliers', measurements: { steps: out } };
-        return { status: 'pass', detail: 'SVG a cede (' + e.name + ')', measurements: { steps: out, error: e.name } };
+        return { status: 'pass', detail: 'SVG gave out (' + e.name + ')', measurements: { steps: out, error: e.name } };
       }
       return { status: 'pass', detail: 'SVGs built up to the cap', measurements: { steps: out } };
     }
@@ -136,7 +136,7 @@
         throw e;
       }
       try { host.parentNode.removeChild(host); } catch (x) {}
-      return { status: 'pass', detail: n + ' cycles de reflow', measurements: { cycles: n } };
+      return { status: 'pass', detail: n + ' reflow cycles', measurements: { cycles: n } };
     }
   });
 
@@ -177,7 +177,7 @@
         while (depth < 5000000) { cur = Object.create(cur); depth++; if ((depth & 16383) === 0) { ctx.tick(); ctx.metric('proto', { depth: depth, tasMo: heapMB() }); } }
       } catch (e) {
         if (G.isAbort(e)) return { status: 'aborted', detail: 'depth ' + depth, measurements: { depth: depth } };
-        return { status: 'pass', detail: 'cede a ' + depth + ' (' + e.name + ')', measurements: { depth: depth, error: e.name } };
+        return { status: 'pass', detail: 'gave out at ' + depth + ' (' + e.name + ')', measurements: { depth: depth, error: e.name } };
       }
       var val; try { val = cur.found; } catch (e2) { val = 'throw:' + e2.name; }
       return { status: 'pass', detail: 'depth ' + depth + ', resolution=' + val, measurements: { depth: depth, resolved: val } };
@@ -195,7 +195,7 @@
         while (depth < 200000) { target = new Proxy(target, { get: function (t, k) { return t[k]; } }); depth++; if ((depth & 1023) === 0) { ctx.tick(); if ((depth & 8191) === 0) { void target.v; ctx.metric('proxy', { depth: depth }); } } }
       } catch (e) {
         if (G.isAbort(e)) return { status: 'aborted', detail: 'depth ' + depth, measurements: { depth: depth } };
-        return { status: 'pass', detail: 'cede a ' + depth + ' (' + e.name + ')', measurements: { depth: depth, error: e.name } };
+        return { status: 'pass', detail: 'gave out at ' + depth + ' (' + e.name + ')', measurements: { depth: depth, error: e.name } };
       }
       var val; try { val = target.v; } catch (e2) { val = 'throw:' + e2.name; }
       return { status: 'pass', detail: 'depth ' + depth + ', acces=' + val, measurements: { depth: depth, access: val } };
@@ -211,13 +211,13 @@
       try {
         a = new Array(size);
         for (var i = 0; i < size; i++) { a[i] = (i * 2654435761) % 1000000; n++; if ((i & 1048575) === 0) ctx.tick(); }
-        ctx.info('tableau de ' + n + ' elements construit, tri...'); ctx.flush();
+        ctx.info('array of ' + n + ' elements built, sorting...'); ctx.flush();
         a.sort(function (x, y) { return x - y; });
         var sorted = a[0] <= a[1] && a[size - 2] <= a[size - 1];
-        return { status: 'pass', detail: 'tri de ' + n + ' elements (ordonne=' + sorted + ')', measurements: { elements: n, sorted: sorted } };
+        return { status: 'pass', detail: 'tri de ' + n + ' elements (sorted=' + sorted + ')', measurements: { elements: n, sorted: sorted } };
       } catch (e) {
         if (G.isAbort(e)) return { status: 'aborted', detail: n + ' elements', measurements: { elements: n } };
-        return { status: 'pass', detail: 'cede a ' + n + ' (' + e.name + ')', measurements: { elements: n, error: e.name } };
+        return { status: 'pass', detail: 'gave out at ' + n + ' (' + e.name + ')', measurements: { elements: n, error: e.name } };
       } finally { a = null; }
     }
   });
@@ -231,7 +231,7 @@
       var enc = new TextEncoder(), dec = new TextDecoder(), last = 0;
       try {
         for (var size = 1048576; size <= 1073741824; size *= 2) {
-          ctx.info('texte de ' + mb(size) + ' Mo...'); ctx.flush();
+          ctx.info('text of ' + mb(size) + ' Mo...'); ctx.flush();
           var s = new Array(size + 1).join('e');  // peut lever avant meme d encoder
           var bytes = enc.encode(s); var back = dec.decode(bytes);
           last = back.length; s = null; bytes = null; back = null;
@@ -253,7 +253,7 @@
       var last = 0;
       try {
         for (var size = 1000000; size <= 500000000; size *= 2) {
-          ctx.info('tableau de ' + size + ' elements -> JSON...'); ctx.flush();
+          ctx.info('array of ' + size + ' elements -> JSON...'); ctx.flush();
           var a = new Array(size); for (var i = 0; i < size; i++) { a[i] = i; if ((i & 2097151) === 0) ctx.tick(); }
           var s = JSON.stringify(a); last = s.length; a = null; s = null;
           ctx.metric('json', { elements: size, tasMo: heapMB() });
@@ -275,10 +275,10 @@
       try {
         for (var i = 0; i < 5000000; i++) { var f = new Function('a', 'return a+' + i + ';'); sink += f(1); n++; if ((i & 8191) === 0) ctx.tick(); }
       } catch (e) {
-        if (G.isAbort(e)) return { status: 'aborted', detail: n + ' fonctions', measurements: { fonctions: n } };
-        return { status: 'pass', detail: 'cede a ' + n + ' (' + e.name + ')', measurements: { fonctions: n, error: e.name } };
+        if (G.isAbort(e)) return { status: 'aborted', detail: n + ' functions', measurements: { fonctions: n } };
+        return { status: 'pass', detail: 'gave out at ' + n + ' (' + e.name + ')', measurements: { fonctions: n, error: e.name } };
       }
-      return { status: 'pass', detail: n + ' fonctions compilees', measurements: { fonctions: n, sink: sink } };
+      return { status: 'pass', detail: n + ' functions compiled', measurements: { fonctions: n, sink: sink } };
     }
   });
 
@@ -295,10 +295,10 @@
           if ((i & 65535) === 0) { ctx.tick(); ctx.metric('shapes', { n: n, tasMo: heapMB() }); if (hold.length > 2000000) hold.length = 0; }
         }
       } catch (e) {
-        if (G.isAbort(e)) return { status: 'aborted', detail: n + ' formes', measurements: { formes: n } };
-        return { status: 'pass', detail: 'cede a ' + n + ' (' + e.name + ')', measurements: { formes: n, error: e.name } };
+        if (G.isAbort(e)) return { status: 'aborted', detail: n + ' shapes', measurements: { formes: n } };
+        return { status: 'pass', detail: 'gave out at ' + n + ' (' + e.name + ')', measurements: { formes: n, error: e.name } };
       } finally { hold = null; }
-      return { status: 'pass', detail: n + ' formes', measurements: { formes: n, sink: sink } };
+      return { status: 'pass', detail: n + ' shapes', measurements: { formes: n, sink: sink } };
     }
   });
 
@@ -313,10 +313,10 @@
       try {
         for (var i = 0; i < 2000000; i++) { crypto.getRandomValues(buf); n++; bytes += 65536; if ((i & 1023) === 0) { ctx.tick(); ctx.metric('random', { appels: n, mo: mb(bytes) }); } }
       } catch (e) {
-        if (G.isAbort(e)) return { status: 'aborted', detail: n + ' appels (' + mb(bytes) + ' Mo)', measurements: { appels: n } };
-        return { status: 'pass', detail: 'cede a ' + n + ' (' + e.name + ')', measurements: { appels: n, error: e.name } };
+        if (G.isAbort(e)) return { status: 'aborted', detail: n + ' calls (' + mb(bytes) + ' Mo)', measurements: { appels: n } };
+        return { status: 'pass', detail: 'gave out at ' + n + ' (' + e.name + ')', measurements: { appels: n, error: e.name } };
       }
-      return { status: 'pass', detail: n + ' appels, ' + mb(bytes) + ' Mo aleatoires', measurements: { appels: n } };
+      return { status: 'pass', detail: n + ' calls, ' + mb(bytes) + ' Mo aleatoires', measurements: { appels: n } };
     }
   });
 

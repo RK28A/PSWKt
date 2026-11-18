@@ -46,7 +46,7 @@
       var kept = [];            // on retient tout -> le GC ne peut rien liberer
       var block = 16 * 1024 * 1024;
       var total = 0, blocks = 0;
-      ctx.info('depart, tas ~' + heapMB() + ' Mo ; on alloue par blocs de 16 Mo et on les retient...');
+      ctx.info('start, heap ~' + heapMB() + ' MB ; allocating in 16 MB blocks and retaining them...');
       try {
         while (true) {
           ctx.tick(); // laisse agir le bouton Stop / l echeance filet
@@ -59,9 +59,9 @@
           if ((blocks % 8) === 0) ctx.metric('progression', { blocsRetenus: blocks, totalMo: mb(total), tasMo: heapMB() });
         }
       } catch (e) {
-        if (G.isAbort(e)) return { status: 'aborted', detail: 'stopped at ' + mb(total) + ' Mo (' + blocks + ' blocs)', measurements: { totalMo: mb(total), blocks: blocks } };
-        ctx.info('ECHEC d allocation a ' + mb(total) + ' Mo : ' + e.name + ' (' + e.message + ')');
-        return { status: 'pass', detail: 'memory limit reached: ' + mb(total) + ' Mo retenus avant ' + e.name,
+        if (G.isAbort(e)) return { status: 'aborted', detail: 'stopped at ' + mb(total) + ' Mo (' + blocks + ' blocks)', measurements: { totalMo: mb(total), blocks: blocks } };
+        ctx.info('Allocation FAILED at ' + mb(total) + ' Mo : ' + e.name + ' (' + e.message + ')');
+        return { status: 'pass', detail: 'memory limit reached: ' + mb(total) + ' MB retained before ' + e.name,
                  measurements: { ceilingMo: mb(total), blocks: blocks, error: e.name } };
       } finally { kept.length = 0; } // relache (si on y arrive encore)
     }
@@ -80,11 +80,11 @@
           last = s.length;
           s = s + s;             // 1,2,4,... jusqu a la limite dure
           steps++;
-          if ((steps % 4) === 0) ctx.metric('longueur', { chars: s.length, approxMo: mb(s.length * 2), tasMo: heapMB() });
+          if ((steps % 4) === 0) ctx.metric('length', { chars: s.length, approxMo: mb(s.length * 2), tasMo: heapMB() });
         }
       } catch (e) {
         if (G.isAbort(e)) return { status: 'aborted', detail: 'stopped at ' + last + ' chars', measurements: { chars: last } };
-        ctx.info('limite chaine : ' + e.name + ' apres ' + last + ' chars (~' + mb(last * 2) + ' Mo)');
+        ctx.info('string limit: ' + e.name + ' apres ' + last + ' chars (~' + mb(last * 2) + ' Mo)');
         return { status: 'pass', detail: 'max supported length ~' + last + ' chars (' + e.name + ')',
                  measurements: { maxChars: last, maxApproxMo: mb(last * 2), error: e.name } };
       } finally { s = null; }
@@ -126,12 +126,12 @@
           var s = JSON.stringify(a);   // peut lever RangeError
           JSON.parse(s);               // idem
           lastOk = depth;
-          if ((depth % 5000) === 0) ctx.metric('profondeur OK', { depth: depth, chars: s.length, tasMo: heapMB() });
+          if ((depth % 5000) === 0) ctx.metric('depth OK', { depth: depth, chars: s.length, tasMo: heapMB() });
         }
         return { status: 'pass', detail: 'no overflow up to 20M (test cap)', measurements: { lastOk: lastOk } };
       } catch (e) {
         if (G.isAbort(e)) return { status: 'aborted', detail: 'stopped; last depth OK ' + lastOk, measurements: { lastOk: lastOk } };
-        return { status: 'pass', detail: 'JSON a cede au-dela de ~' + lastOk + ' niveaux (' + e.name + ')',
+        return { status: 'pass', detail: 'JSON gave out beyond ~' + lastOk + ' levels (' + e.name + ')',
                  measurements: { lastDepthOk: lastOk, error: e.name } };
       }
     }
@@ -163,7 +163,7 @@
                  measurements: { maxBytes: best, maxMo: mb(best) } };
       } catch (e2) {
         if (G.isAbort(e2)) return { status: 'aborted', detail: 'stopped; best ~' + mb(best) + ' Mo', measurements: { maxBytes: best } };
-        return { status: 'pass', detail: 'interrompu par ' + e2.name + ' ; meilleur ~' + mb(best) + ' Mo', measurements: { maxBytes: best, error: e2.name } };
+        return { status: 'pass', detail: 'interrompu par ' + e2.name + ' ; best ~' + mb(best) + ' Mo', measurements: { maxBytes: best, error: e2.name } };
       }
     }
   });
@@ -177,18 +177,18 @@
       var re = /(a+)+$/;
       var results = [];
       var lengths = [20, 24, 28, 30, 32, 34, 36, 38, 40, 44, 48];
-      ctx.info('ATTENTION : un appel .test() synchrone ne peut PAS etre interrompu par Stop.');
+      ctx.info('WARNING: a synchronous .test() call CANNOT be interrupted by Stop.');
       for (var i = 0; i < lengths.length; i++) {
         var len = lengths[i];
         var str = new Array(len + 1).join('a') + 'X'; // ne matche jamais -> pire cas
-        ctx.info('tentative longueur ' + len + ' (tas ~' + heapMB() + ' Mo) ...'); // journalise AVANT : trace si ca gele ici
+        ctx.info('attempt length ' + len + ' (tas ~' + heapMB() + ' Mo) ...'); // journalise AVANT : trace si ca gele ici
         var t0 = PSWKT.now();
         var matched = re.test(str);      // <-- peut ne jamais revenir
         var dt = PSWKT.now() - t0;
         results.push({ len: len, ms: Math.round(dt * 100) / 100, matched: matched });
-        ctx.metric('longueur ' + len, { ms: Math.round(dt * 100) / 100 });
+        ctx.metric('length ' + len, { ms: Math.round(dt * 100) / 100 });
         ctx.tick(); // point d arret entre deux longueurs (pas pendant l appel)
-        if (dt > 10000) { ctx.info('> 10 s sur une seule longueur : on arrete la montee.'); break; }
+        if (dt > 10000) { ctx.info('> 10 s on a single length: stopping the ramp-up.'); break; }
       }
       var worst = results.length ? results[results.length - 1] : null;
       return { status: 'pass',
@@ -215,14 +215,14 @@
       } catch (e) {
         if (G.isAbort(e)) {
           var dt = PSWKT.now() - t0;
-          return { status: 'aborted', detail: made + ' objets en ' + Math.round(dt) + ' ms (' + Math.round(made / (dt / 1000)) + '/s)',
+          return { status: 'aborted', detail: made + ' objects in ' + Math.round(dt) + ' ms (' + Math.round(made / (dt / 1000)) + '/s)',
                    measurements: { objects: made, ms: Math.round(dt), perSec: Math.round(made / (dt / 1000)), tasMo: heapMB() } };
         }
         throw e;
       }
       var dt2 = PSWKT.now() - t0;
       void sink;
-      return { status: 'pass', detail: made + ' objets crees en ' + Math.round(dt2) + ' ms',
+      return { status: 'pass', detail: made + ' objects created in ' + Math.round(dt2) + ' ms',
                measurements: { objects: made, ms: Math.round(dt2), perSec: Math.round(made / (dt2 / 1000)) } };
     }
   });
@@ -240,7 +240,7 @@
           ctx.tick();
           for (var i = 0; i < chunk; i++) arr.push(i);
           n += chunk;
-          ctx.metric('taille', { elements: n, tasMo: heapMB() });
+          ctx.metric('size', { elements: n, tasMo: heapMB() });
         }
       } catch (e) {
         if (G.isAbort(e)) return { status: 'aborted', detail: 'stopped at ' + n + ' elements', measurements: { elements: n } };

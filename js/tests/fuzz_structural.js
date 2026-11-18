@@ -108,7 +108,7 @@
       // Le cycle via une Map est legitime : Map n a pas de proprietes enumerables, donc
       // JSON.stringify(map) === "{}" sans parcourir le cycle -> ce n est PAS une anomalie.
       if (inp.label !== 'cycle map' && oc.value && typeof oc.value.json === 'string' && oc.value.json.indexOf('ok') === 0)
-        return 'JSON.stringify n a PAS detecte le cycle (' + inp.label + ')';
+        return 'JSON.stringify did NOT detect the cycle (' + inp.label + ')';
       return true;
     }
   });
@@ -237,13 +237,13 @@
     description: 'Object with N properties and a string built by doubling: respects the budget, measures the cost.',
     build: function (ctx) {
       var inputs = [
-        { v: 1000, label: '1 000 cles' },
-        { v: 10000, label: '10 000 cles' },
-        { v: 50000, label: '50 000 cles' }
+        { v: 1000, label: '1,000 keys' },
+        { v: 10000, label: '10,000 keys' },
+        { v: 50000, label: '50,000 keys' }
       ];
       return {
         target: function (n) {
-          if (ctx.charge) { if (!ctx.charge(n * 24)) throw new Error('garde-fou budget : ' + n + ' cles refusees'); }
+          if (ctx.charge) { if (!ctx.charge(n * 24)) throw new Error('garde-fou budget : ' + n + ' keys refused'); }
           var o = {};
           for (var i = 0; i < n; i++) { if ((i & 1023) === 0) ctx.tick(); o['k' + i] = i; }
           var keys = Object.keys(o).length;

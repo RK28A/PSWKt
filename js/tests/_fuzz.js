@@ -68,54 +68,54 @@
   function nastyStrings(ctx) {
     var S = [];
     function add(v, label) { S.push({ v: v, label: label }); }
-    add('', 'vide');
-    add(' ', 'espace');
-    add('\t\n\r\f\v', 'blancs mixtes');
+    add('', 'empty');
+    add(' ', 'space');
+    add('\t\n\r\f\v', 'mixed whitespace');
     add('\u0000', 'NUL');
-    add('\u0000abc\u0000', 'NUL encadrant');
-    add('\u0001\u0002\u001F\u007F', 'controles C0/DEL');
+    add('\u0000abc\u0000', 'surrounding NUL');
+    add('\u0001\u0002\u001F\u007F', 'C0/DEL controls');
     add('￿', 'U+FFFF');
-    add('￾', 'U+FFFE (BOM inverse)');
+    add('￾', 'U+FFFE (reversed BOM)');
     add('﻿', 'BOM/zero-width no-break');
     add('​‌‍', 'zero-width (ZWSP/ZWNJ/ZWJ)');
-    add('\uD800', 'surrogate haute isolee');
-    add('\uDC00', 'surrogate basse isolee');
-    add('\uD800\uD800', 'deux surrogates hautes');
-    add('\uDC00\uD800', 'paire inversee');
-    add('a\uD800b', 'surrogate isolee au milieu');
-    add('􏿿', 'U+10FFFF (paire valide extreme)');
-    add('é', 'e + accent combinant');
-    add('à́̂̃̄', 'base + 5 combinants');
-    add('ೆೆೆೆೆ', 'combinants empiles (Kannada)');
+    add('\uD800', 'lone high surrogate');
+    add('\uDC00', 'lone low surrogate');
+    add('\uD800\uD800', 'two high surrogates');
+    add('\uDC00\uD800', 'reversed pair');
+    add('a\uD800b', 'lone surrogate in the middle');
+    add('􏿿', 'U+10FFFF (extreme valid pair)');
+    add('é', 'e + combining accent');
+    add('à́̂̃̄', 'base + 5 combining');
+    add('ೆೆೆೆೆ', 'stacked combining (Kannada)');
     add('‮abc', 'RLO (bidi override)');
     add('abc‮def‬', 'bidi override + pop');
-    add('٠١٢٣٤', 'chiffres arabes-indiens');
-    add('١٢', 'chiffres arabes');
+    add('٠١٢٣٤', 'Arabic-Indic digits');
+    add('١٢', 'Arabic digits');
     add('½¼¾⅞', 'fractions');
-    add('ⅫⅬ', 'chiffres romains unicode');
-    add('%s%d%n%x%p', 'format-string style C');
+    add('ⅫⅬ', 'Unicode Roman numerals');
+    add('%s%d%n%x%p', 'C-style format string');
     add('{{7*7}}', 'template injection style');
     add('${alert(1)}', 'template literal style');
     add('\\x41\\u0041\\101', 'echappements litteraux');
-    add('"', 'guillemet seul');
+    add('"', 'lone quote');
     add("'", 'apostrophe seule');
-    add('\\', 'antislash seul');
-    add('\\\\\\', 'antislashs');
-    add('{', 'accolade ouvrante');
-    add('[', 'crochet ouvrant');
-    add('</script><script>', 'balises (donnee inerte)');
-    add("'; DROP TABLE--", 'motif SQL (donnee inerte)');
-    add('../../../etc/passwd', 'traversee (donnee inerte)');
-    add('  12.5  ', 'nombre entoure d espaces');
+    add('\\', 'lone backslash');
+    add('\\\\\\', 'backslashes');
+    add('{', 'opening brace');
+    add('[', 'opening bracket');
+    add('</script><script>', 'tags (inert data)');
+    add("'; DROP TABLE--", 'SQL pattern (inert data)');
+    add('../../../etc/passwd', 'traversal (inert data)');
+    add('  12.5  ', 'number surrounded by spaces');
     add('0x1F', 'hex style');
-    add('1_000_000', 'separateurs numeriques');
-    add('1,000.5', 'milliers a virgule');
-    add('1e1000', 'exposant demesure');
-    add('NaNInfinity', 'mots-cles colles');
-    add(repeatSafe(ctx, 'A', 50000, 131072), 'A x 50000 (borne)');
-    add(repeatSafe(ctx, '😀', 8000, 131072), 'emoji repete (borne)');
-    add(repeatSafe(ctx, '\uD800', 10000, 131072), 'surrogates isolees x N (borne)');
-    add(repeatSafe(ctx, 'é', 8000, 131072), 'combinant repete (borne)');
+    add('1_000_000', 'numeric separators');
+    add('1,000.5', 'thousands with comma');
+    add('1e1000', 'oversized exponent');
+    add('NaNInfinity', 'keywords glued');
+    add(repeatSafe(ctx, 'A', 50000, 131072), 'A x 50000 (bounded)');
+    add(repeatSafe(ctx, '😀', 8000, 131072), 'repeated emoji (bounded)');
+    add(repeatSafe(ctx, '\uD800', 10000, 131072), 'lone surrogates x N (bounded)');
+    add(repeatSafe(ctx, 'é', 8000, 131072), 'repeated combining (bounded)');
     return S;
   }
 
@@ -141,33 +141,33 @@
   function trap(kind) {
     var o;
     if (kind === 'throwValueOf') {
-      return { valueOf: function () { throw new Error('piege valueOf'); }, label: 'valueOf leve' };
+      return { valueOf: function () { throw new Error('valueOf trap'); }, label: 'valueOf throws' };
     }
     if (kind === 'throwToString') {
-      return { toString: function () { throw new Error('piege toString'); },
-               valueOf: function () { return {}; }, label: 'toString leve' };
+      return { toString: function () { throw new Error('toString trap'); },
+               valueOf: function () { return {}; }, label: 'toString throws' };
     }
     if (kind === 'throwSymPrim' && _hasSymPrim) {
-      o = {}; o[global.Symbol.toPrimitive] = function () { throw new Error('piege @@toPrimitive'); };
-      o.label = '@@toPrimitive leve'; return o;
+      o = {}; o[global.Symbol.toPrimitive] = function () { throw new Error('@@toPrimitive trap'); };
+      o.label = '@@toPrimitive throws'; return o;
     }
     if (kind === 'lying') {
       var n = 0;
       return { valueOf: function () { return (n++ % 2) ? 1 : 1000000; },
-               toString: function () { return 'muta-' + n; }, label: 'valueOf changeant' };
+               toString: function () { return 'muta-' + n; }, label: 'shifting valueOf' };
     }
     if (kind === 'poisonLength') {
-      return { length: { valueOf: function () { throw new Error('piege length'); } }, 0: 'x', label: 'length.valueOf leve' };
+      return { length: { valueOf: function () { throw new Error('piege length'); } }, 0: 'x', label: 'length.valueOf throws' };
     }
     if (kind === 'negLength') { return { length: -1, 0: 'x', label: 'length = -1' }; }
     if (kind === 'hugeLength') { return { length: 4294967296, label: 'length = 2^32' }; }
     if (kind === 'floatLength') { return { length: 2.7, 0: 'a', 1: 'b', label: 'length = 2.7' }; }
     if (kind === 'getterThrows') {
       o = {};
-      try { Object.defineProperty(o, 'x', { get: function () { throw new Error('getter leve'); }, enumerable: true }); } catch (e) {}
-      o.label = 'getter leve'; return o;
+      try { Object.defineProperty(o, 'x', { get: function () { throw new Error('getter throws'); }, enumerable: true }); } catch (e) {}
+      o.label = 'getter throws'; return o;
     }
-    return { label: 'objet nu' };
+    return { label: 'bare object' };
   }
   function trapObjects() {
     var kinds = ['throwValueOf', 'throwToString', 'throwSymPrim', 'lying',
@@ -191,15 +191,15 @@
       { v: true, label: 'true' },
       { v: false, label: 'false' },
       { v: 0, label: '0' },
-      { v: '', label: 'chaine vide' },
-      { v: {}, label: 'objet vide' },
-      { v: [], label: 'tableau vide' },
+      { v: '', label: 'empty string' },
+      { v: {}, label: 'empty object' },
+      { v: [], label: 'empty array' },
       { v: [1, 2, 3], label: 'tableau [1,2,3]' },
-      { v: sparse, label: 'tableau a trous (len 1001)' },
-      { v: function () {}, label: 'fonction' },
+      { v: sparse, label: 'sparse array (len 1001)' },
+      { v: function () {}, label: 'function' },
       { v: /re/g, label: 'RegExp' },
-      { v: new Date('invalide'), label: 'Date invalide' },
-      { v: cyc, label: 'objet cyclique' }
+      { v: new Date('invalide'), label: 'invalid Date' },
+      { v: cyc, label: 'cyclic object' }
     ];
     if (typeof global.Symbol === 'function') out.push({ v: global.Symbol('s'), label: 'Symbol' });
     if (typeof global.BigInt === 'function') { try { out.push({ v: global.BigInt(42), label: 'BigInt' }); } catch (e) {} }

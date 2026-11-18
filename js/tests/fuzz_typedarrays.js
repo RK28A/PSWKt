@@ -135,7 +135,7 @@
 
   // 5) DataView construit avec byteOffset/byteLength incoherents -> RangeError.
   F.resilience({
-    id: 'fuzz.ta.dataview.ctor', name: 'DataView(buffer, offset, len) incoherent', category: CAT,
+    id: 'fuzz.ta.dataview.ctor', name: 'DataView(buffer, offset, len) inconsistent', category: CAT,
     description: 'Construction with offset/length overflowing the buffer: caught RangeError expected.',
     requires: ['typedArrays.DataView'],
     build: function (ctx) {

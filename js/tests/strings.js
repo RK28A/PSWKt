@@ -19,7 +19,7 @@
     requires: [],
     run: function (ctx) {
       var emoji = '😀'; // U+1F600
-      ctx.info('longueur UTF-16 = ' + emoji.length + ' (attendu 2)');
+      ctx.info('UTF-16 length = ' + emoji.length + ' (attendu 2)');
       var cp = emoji.codePointAt ? emoji.codePointAt(0) : null;
       ctx.info('codePointAt(0) = U+' + (cp ? cp.toString(16).toUpperCase() : '?'));
       var rebuilt = String.fromCodePoint ? String.fromCodePoint(0x1F600) : null;
@@ -122,7 +122,7 @@
       var raw = '';
       for (var i = 0; i < 256; i++) raw += String.fromCharCode(i);
       var b64 = global.btoa(raw);
-      ctx.info('base64 longueur=' + b64.length + ' (pour 256 octets)');
+      ctx.info('base64 length=' + b64.length + ' (pour 256 octets)');
       var back = global.atob(b64);
       var ok = (back.length === 256);
       var identical = true;
@@ -162,7 +162,7 @@
       }
       var s2 = parts.join('');
       var dB = PSWKT.now() - tB;
-      ctx.info('tableau + join : ' + Math.round(dB * 100) / 100 + ' ms');
+      ctx.info('array + join: ' + Math.round(dB * 100) / 100 + ' ms');
       var ok = (s.length === N && s2.length === N);
       return {
         status: ok ? 'pass' : 'fail',

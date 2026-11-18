@@ -115,7 +115,7 @@
   // 4) Evenements synthetiques (dispatchEvent + listener).
   R.register({
     id: 'dom.events',
-    name: 'Evenements (dispatch + listener)',
+    name: 'Events (dispatch + listener)',
     category: 'dom',
     description: 'Registers a listener, dispatches an event, checks propagation.',
     requires: ['dom.addEventListener'],
