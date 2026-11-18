@@ -4,60 +4,38 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="no-referrer">
-  <title>PSWKT - Laboratoire de tests WebKit PS5</title>
+  <title>PSWKT &mdash; tests WebKit</title>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
   <header class="app-header">
-    <div class="wrap">
-      <h1>PSWKT <span class="sub">Laboratoire de tests WebKit</span></h1>
-      <p class="tagline">Diagnostic d'API JavaScript &mdash; du sondage doux et reproductible au <b>stress test agressif</b> qui pousse le moteur jusqu'a la rupture. Pense pour le navigateur WebKit de la PS5 (13.60) et tout WebKit.</p>
+    <div class="wrap header-row">
+      <h1>PSWKT <span class="sub">tests WebKit PS5</span></h1>
+      <nav class="topnav">
+        <a class="navlink active" href="index.html">Accueil</a>
+        <a class="navlink" href="tests.html">Categories &amp; test perso</a>
+      </nav>
     </div>
   </header>
 
   <main class="wrap">
-
     <div id="crash-banner" class="crash-banner" style="display:none"></div>
 
-    <!-- Panneau environnement + fonctionnalites -->
-    <section class="panel">
-      <h2>1. Environnement detecte</h2>
-      <p id="ps-hint" class="ps-hint"></p>
-      <div id="env-info" class="env-grid"></div>
-      <h3>Fonctionnalites reellement disponibles</h3>
-      <p class="muted">Vert = presente, gris = absente. Les tests dependant d'une API absente seront automatiquement ignores.</p>
-      <div id="feature-grid" class="feature-grid"></div>
-    </section>
-
-    <!-- Reglages des garde-fous -->
-    <section class="panel">
-      <h2>2. Garde-fous de ressources</h2>
-      <p class="muted">Ces limites cadrent les tests <b>ordinaires</b>. Les tests <b>agressifs</b> (destructifs) les ignorent volontairement : ils poussent les API jusqu'a la rupture.</p>
-      <div class="options">
-        <label>Echeance par test (ms)
-          <input id="opt-timeout" type="number" value="4000" min="100" step="100">
-        </label>
-        <label>Budget memoire par test (Mo)
-          <input id="opt-memory" type="number" value="64" min="1" step="1">
-        </label>
-        <label>Plafond d'iterations
-          <input id="opt-maxiter" type="number" value="5000000" min="1000" step="1000">
-        </label>
-      </div>
-      <label class="aggressive-toggle"><input id="opt-aggressive" type="checkbox" checked>
-        <b>Mode agressif</b> &mdash; active les tests destructifs qui peuvent <b>figer ou planter le navigateur</b>
-        (sans danger pour la console : au pire la PS5 redemarre). Decoche pour un diagnostic doux.
-      </label>
-      <label class="stream-toggle"><input id="opt-stream" type="checkbox" checked>
-        <b>Enregistrement continu sur le serveur</b> &mdash; ecrit le journal ultra-detaille au fur et a mesure
-        dans <code>logs/pswkt-live-&lt;session&gt;.txt</code>. <b>En cas de crash, le fichier garde tout jusqu'au test
-        fautif</b> (derniere ligne <code>▶ DEBUT ...</code>). Necessite <code>python3 server.py</code>.
-      </label>
-      <div id="stream-hint" class="stream-hint muted"></div>
-      <div class="run-bar">
-        <button id="btn-run-all" class="primary" type="button">Tout lancer</button>
-        <button id="btn-run-selected" class="primary" type="button">Lancer la selection</button>
+    <section class="panel hero">
+      <div id="ps-hint" class="ps-line"></div>
+      <div class="run-bar big">
+        <button id="btn-run-all" class="primary big" type="button">&#9654; Tout lancer</button>
         <button id="btn-stop" class="danger" type="button" disabled>Stop</button>
+        <button id="btn-options-toggle" class="ghost" type="button">&#9881; Options</button>
+      </div>
+      <div id="options-panel" class="options-panel" style="display:none">
+        <div class="options">
+          <label>Echeance/test (ms)<input id="opt-timeout" type="number" value="4000" min="100" step="100"></label>
+          <label>Memoire (Mo)<input id="opt-memory" type="number" value="64" min="1" step="1"></label>
+          <label>Plafond iterations<input id="opt-maxiter" type="number" value="5000000" min="1000" step="1000"></label>
+        </div>
+        <label class="mini-toggle"><input id="opt-aggressive" type="checkbox" checked> Mode agressif &mdash; peut figer/planter (la PS5 redemarre)</label>
+        <label class="mini-toggle"><input id="opt-stream" type="checkbox"> Enregistrement serveur continu (local, optionnel)</label>
       </div>
       <div class="progress">
         <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
@@ -66,18 +44,9 @@
       <div id="summary" class="summary"></div>
     </section>
 
-    <!-- Catalogue de tests -->
     <section class="panel">
-      <h2>3. Categories de tests</h2>
-      <p class="muted">Cochez les tests a executer, lancez une categorie entiere, ou un test isole.</p>
-      <div id="categories" class="categories"></div>
-    </section>
-
-    <!-- Resultats en direct -->
-    <section class="panel">
-      <h2>4. Resultats en direct</h2>
       <div class="results-filter">
-        <input id="result-search" type="text" placeholder="Rechercher par nom / id / detail..." spellcheck="false">
+        <input id="result-search" type="text" placeholder="Rechercher un resultat..." spellcheck="false">
         <label><input id="filter-pass" type="checkbox" checked> reussis</label>
         <label><input id="filter-fail" type="checkbox" checked> echecs</label>
         <label><input id="filter-error" type="checkbox" checked> erreurs</label>
@@ -88,56 +57,22 @@
       <div id="results" class="results"></div>
     </section>
 
-    <!-- Journal -->
     <section class="panel">
-      <h2>5. Journal d'execution</h2>
-      <p class="muted">Chaque test ecrit ici son debut, ses sous-etapes, ses mesures et sa fin. Les erreurs JS globales y apparaissent aussi. Copiez tout le journal pour l'analyser sur PC.</p>
       <div class="log-toolbar">
-        <button id="btn-copy-log" class="mini primary" type="button">Copier le journal</button>
-        <button id="btn-download-log" class="mini ghost" type="button">Telecharger (.txt)</button>
-        <button id="btn-save-log-server" class="mini ghost" type="button">Enregistrer sur le serveur</button>
-        <button id="btn-save-detailed-server" class="mini primary" type="button">⤓ Journal DETAILLE sur le serveur (.txt)</button>
-        <button id="btn-clear-log" class="mini ghost" type="button">Vider le journal</button>
+        <strong class="panel-tag">Console</strong>
+        <button id="btn-export-json" class="mini primary" type="button">Export JSON</button>
+        <button id="btn-export-text" class="mini ghost" type="button">Export TXT</button>
+        <button id="btn-copy-log" class="mini ghost" type="button">Copier</button>
+        <button id="btn-download-log" class="mini ghost" type="button">Telecharger .txt</button>
+        <button id="btn-clear-log" class="mini ghost" type="button">Vider</button>
         <label class="log-autoscroll"><input id="opt-autoscroll" type="checkbox" checked> defilement auto</label>
       </div>
       <div id="log-console" class="log-console"></div>
       <p id="log-copy-hint" class="muted"></p>
       <textarea id="log-copy-area" class="export-area" readonly spellcheck="false" style="display:none"></textarea>
-    </section>
-
-    <!-- Export -->
-    <section class="panel">
-      <h2>6. Export du rapport</h2>
-      <p class="muted">Le rapport inclut l'environnement, les fonctionnalites, tous les resultats, les durees et les erreurs JS. Sur console, utilisez la zone de texte si le telechargement echoue.</p>
-      <div class="run-bar">
-        <button id="btn-export-json" class="primary" type="button">Generer JSON</button>
-        <button id="btn-export-text" class="primary" type="button">Generer texte lisible</button>
-        <button id="btn-save-server" class="primary" type="button">Enregistrer sur le serveur (logs/)</button>
-        <button id="btn-select-export" class="mini ghost" type="button">Selectionner la zone</button>
-      </div>
-      <p id="export-hint" class="muted"></p>
       <textarea id="export-area" class="export-area" readonly spellcheck="false" style="display:none"></textarea>
+      <p id="export-hint" class="muted"></p>
     </section>
-
-    <!-- Historique des sessions (persistance locale IndexedDB, sans serveur) -->
-    <section class="panel">
-      <h2>7. Historique des sessions</h2>
-      <p class="muted">Chaque lancement cree une <b>nouvelle session</b> enregistree <b>localement dans le navigateur</b>
-        (IndexedDB) &mdash; aucun serveur requis, compatible hebergement statique. Consultez, exportez (JSON/TXT),
-        comparez ou supprimez vos sessions. <span id="store-kind"></span></p>
-      <div class="run-bar">
-        <button id="btn-history-refresh" class="mini ghost" type="button">Rafraichir</button>
-        <button id="btn-history-compare" class="mini primary" type="button">Comparer la selection</button>
-        <button id="btn-history-clear" class="mini danger" type="button">Tout supprimer</button>
-      </div>
-      <div id="history-list" class="history-list"></div>
-      <div id="history-compare" class="history-compare"></div>
-      <p id="history-hint" class="muted"></p>
-    </section>
-
-    <footer class="app-footer">
-      <p>PSWKT &mdash; tests reproductibles et non destructifs. Une erreur JavaScript observee ici est un comportement a documenter, <strong>pas</strong> une vulnerabilite. Pour des diagnostics memoire approfondis, utilisez un WebKit instrumente sur PC.</p>
-    </footer>
   </main>
 
   <!-- Coeur (ordre important) -->
@@ -159,7 +94,6 @@
   <script src="js/tests/async.js"></script>
   <script src="js/tests/platform.js"></script>
   <script src="js/tests/dom.js"></script>
-  <!-- Fabrique de tests pilotee par donnees + sondes massives -->
   <script src="js/tests/_factory.js"></script>
   <script src="js/tests/builtins.js"></script>
   <script src="js/tests/globals.js"></script>
@@ -170,7 +104,6 @@
   <script src="js/tests/input.js"></script>
   <script src="js/tests/syntax.js"></script>
   <script src="js/tests/ps5profile.js"></script>
-  <!-- Fuzzing : entrees malformees / adversariales (non destructif, borne, seme) -->
   <script src="js/tests/_fuzz.js"></script>
   <script src="js/tests/fuzz_parsers.js"></script>
   <script src="js/tests/fuzz_builtins.js"></script>
@@ -178,7 +111,6 @@
   <script src="js/tests/fuzz_structural.js"></script>
   <script src="js/tests/fuzz_robustness.js"></script>
   <script src="js/tests/fuzz_aggressive.js"></script>
-  <!-- Application -->
   <script src="js/app.js"></script>
 </body>
 </html>

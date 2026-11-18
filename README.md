@@ -143,9 +143,15 @@ navigateur. Les résultats sont persistés **localement** via **IndexedDB** (rep
 mémoire/localStorage), et exportables en **JSON** et **TXT**. Elle fonctionne donc telle
 quelle sur un hébergement statique gratuit comme **InfinityFree**.
 
+**Interface — 2 pages :**
+- `index.html` (**Accueil**) : épuré — un bouton **« Tout lancer »**, la progression, les
+  résultats et la **console**. Rien d'autre.
+- `tests.html` (**Catégories & test perso**) : le catalogue complet, les cases par test pour
+  lancer **une sélection personnalisée**, l'historique des sessions et l'environnement détaillé.
+
 **Déployer sur InfinityFree :**
-1. Téléverse tout le dépôt (le dossier `PSWKt/` : `index.html`, `css/`, `js/`) dans
-   `htdocs/` via le gestionnaire de fichiers ou en FTP.
+1. Téléverse tout le dépôt (`index.html`, `tests.html`, `css/`, `js/`) dans `htdocs/`
+   (gestionnaire de fichiers ou FTP).
 2. Ouvre l'URL de ton site. C'est tout — pas de PHP, pas de base de données, pas de
    processus serveur, pas de cron.
 3. Les sessions de test sont enregistrées dans **ton navigateur** (IndexedDB) et visibles

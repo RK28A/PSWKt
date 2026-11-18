@@ -39,63 +39,68 @@
     compareSel: {}
   };
 
-  // --- Rendu : environnement et fonctionnalites ---
+  // --- Rendu : environnement et fonctionnalites (tolerant aux elements absents) ---
   function renderEnvironment() {
     var rep = PSWKT.features.report();
     var env = rep.environment;
 
     var envBox = $('env-info');
-    clear(envBox);
-    var rows = [
-      ['User-Agent', env.userAgent],
-      ['Plateforme', env.platform],
-      ['Langue', env.language],
-      ['Coeurs logiques', env.hardwareConcurrency],
-      ['Memoire (GB)', env.deviceMemoryGB],
-      ['Ecran', env.screen.width + ' x ' + env.screen.height + ' @' + env.screen.pixelRatio],
-      ['Fenetre', env.viewport.innerWidth + ' x ' + env.viewport.innerHeight]
-    ];
-    for (var i = 0; i < rows.length; i++) {
-      envBox.appendChild(el('div', { class: 'kv' }, [
-        el('span', { class: 'k', text: rows[i][0] }),
-        el('span', { class: 'v', text: String(rows[i][1]) })
-      ]));
+    if (envBox) {
+      clear(envBox);
+      var rows = [
+        ['User-Agent', env.userAgent],
+        ['Plateforme', env.platform],
+        ['Langue', env.language],
+        ['Coeurs logiques', env.hardwareConcurrency],
+        ['Memoire (GB)', env.deviceMemoryGB],
+        ['Ecran', env.screen.width + ' x ' + env.screen.height + ' @' + env.screen.pixelRatio],
+        ['Fenetre', env.viewport.innerWidth + ' x ' + env.viewport.innerHeight]
+      ];
+      for (var i = 0; i < rows.length; i++) {
+        envBox.appendChild(el('div', { class: 'kv' }, [
+          el('span', { class: 'k', text: rows[i][0] }),
+          el('span', { class: 'v', text: String(rows[i][1]) })
+        ]));
+      }
     }
 
     var hint = $('ps-hint');
-    clear(hint);
-    if (rep.playstation.likelyPlaystation) {
-      hint.appendChild(el('span', { class: 'badge badge-ps', text: 'PlayStation detectee' }));
-      hint.appendChild(document.createTextNode(' ' + rep.playstation.hints.join(' ; ')));
-    } else {
-      hint.appendChild(el('span', { class: 'badge badge-neutral', text: 'PlayStation non detectee' }));
-      hint.appendChild(document.createTextNode(' (indices absents du User-Agent)'));
+    if (hint) {
+      clear(hint);
+      if (rep.playstation.likelyPlaystation) {
+        hint.appendChild(el('span', { class: 'badge badge-ps', text: 'PlayStation detectee' }));
+      } else {
+        hint.appendChild(el('span', { class: 'badge badge-neutral', text: 'PlayStation non detectee' }));
+      }
+      hint.appendChild(el('span', { class: 'env-ua', text: ' ' + env.platform + ' · ' + R.listTests().length + ' tests / ' + R.listCategories().length + ' categories' }));
     }
 
-    // Grille de fonctionnalites
     var grid = $('feature-grid');
-    clear(grid);
-    var groups = rep.features;
-    for (var groupName in groups) {
-      if (!groups.hasOwnProperty(groupName)) continue;
-      var g = groups[groupName];
-      var card = el('div', { class: 'feat-group' }, [el('h4', { text: groupName })]);
-      for (var fname in g) {
-        if (!g.hasOwnProperty(fname)) continue;
-        var ok = g[fname] === true;
-        card.appendChild(el('div', { class: 'feat ' + (ok ? 'feat-on' : 'feat-off') }, [
-          el('span', { class: 'dot' }),
-          el('span', { class: 'feat-name', text: fname })
-        ]));
+    if (grid) {
+      clear(grid);
+      var groups = rep.features;
+      for (var groupName in groups) {
+        if (!groups.hasOwnProperty(groupName)) continue;
+        var g = groups[groupName];
+        var card = el('div', { class: 'feat-group' }, [el('h4', { text: groupName })]);
+        for (var fname in g) {
+          if (!g.hasOwnProperty(fname)) continue;
+          var ok = g[fname] === true;
+          card.appendChild(el('div', { class: 'feat ' + (ok ? 'feat-on' : 'feat-off') }, [
+            el('span', { class: 'dot' }),
+            el('span', { class: 'feat-name', text: fname })
+          ]));
+        }
+        grid.appendChild(card);
       }
-      grid.appendChild(card);
     }
   }
 
   // --- Rendu : categories et tests ---
   function renderCatalog() {
-    var cats = R.listCategories();
     var container = $('categories');
+    if (!container) return; // page sans catalogue (accueil)
+    var cats = R.listCategories();
     clear(container);
 
     for (var i = 0; i < cats.length; i++) {
@@ -181,6 +186,11 @@
     return selected;
   }
 
+  function setAllChecks(value) {
+    var all = R.listTests();
+    for (var i = 0; i < all.length; i++) { var cb = $('cb-' + all[i].id); if (cb) cb.checked = value; }
+  }
+
   // --- Lecture des reglages (garde-fous) ---
   function readOptions() {
     var timeout = parseInt($('opt-timeout').value, 10);
@@ -202,9 +212,8 @@
 
   // --- Rendu : resultats et progression ---
   function resetResults() {
-    clear($('results'));
-    var sum = $('summary');
-    clear(sum);
+    if ($('results')) clear($('results'));
+    if ($('summary')) clear($('summary'));
     setProgress(0, 1, 'pret');
   }
 
@@ -290,13 +299,14 @@
     row.style.display = rowMatches(row, f) ? '' : 'none';
   }
   function applyResultFilter() {
+    if (!$('results')) return;
     var f = currentFilter();
     var rows = $('results').childNodes;
     for (var i = 0; i < rows.length; i++) { if (rows[i].nodeType === 1) applyFilterToRow(rows[i], f); }
     updateFilterCount();
   }
   function updateFilterCount() {
-    var el2 = $('filter-count'); if (!el2) return;
+    var el2 = $('filter-count'); if (!el2 || !$('results')) return;
     var rows = $('results').childNodes, shown = 0, total = 0;
     for (var i = 0; i < rows.length; i++) { if (rows[i].nodeType === 1) { total++; if (rows[i].style.display !== 'none') shown++; } }
     el2.textContent = shown + ' / ' + total + ' affiches';
@@ -304,12 +314,13 @@
 
   function setProgress(done, total, label) {
     var pct = total > 0 ? Math.round((done / total) * 100) : 0;
-    $('progress-bar').style.width = pct + '%';
-    $('progress-text').textContent = (label || '') + '  ' + done + ' / ' + total + '  (' + pct + '%)';
+    if ($('progress-bar')) $('progress-bar').style.width = pct + '%';
+    if ($('progress-text')) $('progress-text').textContent = (label || '') + '  ' + done + ' / ' + total + '  (' + pct + '%)';
   }
 
   function renderSummary(summary) {
     var sum = $('summary');
+    if (!sum) return;
     clear(sum);
     var c = summary.counts;
     var items = [
@@ -459,9 +470,9 @@
   }
 
   function setRunningUI(running) {
-    $('btn-run-all').disabled = running;
-    $('btn-run-selected').disabled = running;
-    $('btn-stop').disabled = !running;
+    if ($('btn-run-all')) $('btn-run-all').disabled = running;
+    if ($('btn-run-selected')) $('btn-run-selected').disabled = running;
+    if ($('btn-stop')) $('btn-stop').disabled = !running;
     var cards = document.querySelectorAll('.cat-card button');
     for (var i = 0; i < cards.length; i++) cards[i].disabled = running;
   }
@@ -470,6 +481,7 @@
   var LOG_MAX_LINES = 400;
   function logLine(level, msg) {
     var cons = $('log-console');
+    if (!cons) return;
     var line = el('div', { class: 'log-line log-' + level }, [
       el('span', { class: 'log-lvl', text: level.toUpperCase() }),
       el('span', { class: 'log-msg', text: msg })
@@ -652,7 +664,7 @@
   }
 
   function renderHistory() {
-    if (!PSWKT.store) return;
+    if (!PSWKT.store || !$('history-list')) return;
     var kindEl = $('store-kind');
     if (kindEl) kindEl.textContent = '(stockage : ' + PSWKT.store.kind + ')';
     PSWKT.store.listSessions().then(function (list) {
@@ -760,31 +772,31 @@
     renderCatalog();
     wireLogger();
 
-    $('btn-run-all').onclick = function () {
-      runTests(R.listTests(), 'tous les tests');
-    };
-    $('btn-run-selected').onclick = function () {
-      runTests(getSelectedTests(), 'selection');
-    };
-    $('btn-stop').onclick = stopRun;
-    $('btn-export-json').onclick = function () { doExport('json'); };
-    $('btn-export-text').onclick = function () { doExport('text'); };
-    $('btn-select-export').onclick = selectExportArea;
-    $('btn-clear-log').onclick = function () { clear($('log-console')); };
-    $('btn-copy-log').onclick = copyLog;
-    $('btn-download-log').onclick = downloadLog;
-    $('btn-save-log-server').onclick = function () {
-      saveToServer(PSWKT.logger.toText(), 'txt', 'journal', $('log-copy-hint'));
-    };
-    $('btn-save-detailed-server').onclick = function () {
+    function on(id, fn) { var e = $(id); if (e) e.onclick = fn; }
+
+    on('btn-run-all', function () { runTests(R.listTests(), 'tous les tests'); });
+    on('btn-run-selected', function () { runTests(getSelectedTests(), 'selection'); });
+    on('btn-check-all', function () { setAllChecks(true); });
+    on('btn-uncheck-all', function () { setAllChecks(false); });
+    on('btn-stop', stopRun);
+    on('btn-options-toggle', function () {
+      var p = $('options-panel'); if (p) p.style.display = (p.style.display === 'none' ? '' : 'none');
+    });
+    on('btn-export-json', function () { doExport('json'); });
+    on('btn-export-text', function () { doExport('text'); });
+    on('btn-select-export', selectExportArea);
+    on('btn-clear-log', function () { clear($('log-console')); });
+    on('btn-copy-log', copyLog);
+    on('btn-download-log', downloadLog);
+    on('btn-save-log-server', function () { saveToServer(PSWKT.logger.toText(), 'txt', 'journal', $('log-copy-hint')); });
+    on('btn-save-detailed-server', function () {
       var report = PSWKT.exporter.buildReport(state.lastRun);
-      var text = PSWKT.exporter.toDetailedText(report);
-      saveToServer(text, 'txt', 'detaille', $('log-copy-hint'));
-    };
-    $('btn-save-server').onclick = function () {
+      saveToServer(PSWKT.exporter.toDetailedText(report), 'txt', 'detaille', $('log-copy-hint'));
+    });
+    on('btn-save-server', function () {
       var report = PSWKT.exporter.buildReport(state.lastRun);
       saveToServer(PSWKT.exporter.toJSON(report), 'json', 'rapport', $('export-hint'));
-    };
+    });
 
     // Recherche / filtre des resultats
     if ($('result-search')) $('result-search').oninput = applyResultFilter;

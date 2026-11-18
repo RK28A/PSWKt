@@ -120,6 +120,30 @@ body {
 .cmp-table th { background: var(--panel2); color: var(--accent); }
 .cmp-table td:first-child { color: var(--muted); }
 
+/* --- Mise en page multi-pages (accueil epure + page catalogue) --- */
+.header-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.topnav { display: flex; gap: 8px; }
+.navlink {
+  color: var(--muted); text-decoration: none; font-size: 14px; padding: 6px 12px;
+  border: 1px solid var(--border); border-radius: 999px; background: var(--panel2);
+}
+.navlink.active { color: #fff; background: var(--accent); border-color: var(--accent); font-weight: 600; }
+.navlink:hover { color: var(--text); }
+
+.hero { text-align: center; }
+.ps-line { margin-bottom: 14px; color: var(--muted); font-size: 14px; }
+.env-ua { color: var(--muted); }
+.run-bar.big { justify-content: center; gap: 12px; margin-bottom: 8px; }
+button.big { font-size: 20px; padding: 14px 28px; border-radius: 10px; }
+
+.options-panel { margin: 12px auto; max-width: 640px; text-align: left; }
+.mini-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); margin: 6px 0; }
+.mini-toggle input { width: auto; flex: none; }
+
+.panel-tag { color: var(--accent); margin-right: 6px; }
+.panel-h { font-size: 16px; margin: 0 0 8px; }
+.muted.small, .small { font-size: 12.5px; }
+
 /* Boutons */
 button {
   cursor: pointer; border-radius: 6px; border: 1px solid var(--border);
