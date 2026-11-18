@@ -67,9 +67,9 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         path = urlparse(self.path).path
-        if path == '/api/save-log':
+        if path in ('/api/save-log', '/api/save-log.php'):
             self._handle_save()
-        elif path == '/api/log-stream':
+        elif path in ('/api/log-stream', '/api/log-stream.php'):
             self._handle_stream()
         else:
             self._json(404, {'ok': False, 'error': 'route inconnue'})

@@ -338,6 +338,12 @@
   function appendResultRow(record) {
     var meas = record.measurements ? JSON.stringify(record.measurements) : '';
     var cl = classifOf(record);
+    // Lazy annotation: build the (heavy) tag bar only when the user asks for it.
+    // Keeps big runs (hundreds/thousands of rows) light and responsive.
+    var annotSlot = el('div', { class: 'annot-slot' });
+    var annotBtn = el('button', { class: 'btn mini ghost annot-open', type: 'button', text: '✎ note' });
+    annotBtn.onclick = function () { annotSlot.removeChild(annotBtn); annotSlot.appendChild(buildAnnotationBar(record.id, record.name)); };
+    annotSlot.appendChild(annotBtn);
     var row = el('div', { class: 'result-row status-' + record.status }, [
       el('span', { class: 'result-status', text: statusLabel(record.status) }),
       el('div', { class: 'result-main' }, [
@@ -345,8 +351,8 @@
         el('div', { class: 'result-class class-' + cl.code, text: '→ ' + cl.label }),
         el('div', { class: 'result-detail', text: record.detail || '' }),
         meas ? el('div', { class: 'result-meas', text: meas }) : null,
-        record.error ? el('div', { class: 'result-error', text: 'ERREUR ' + record.error.name + ': ' + record.error.message }) : null,
-        buildAnnotationBar(record.id, record.name)
+        record.error ? el('div', { class: 'result-error', text: 'ERROR ' + record.error.name + ': ' + record.error.message }) : null,
+        annotSlot
       ])
     ]);
     row.setAttribute('data-status', record.status);
@@ -697,7 +703,7 @@
     hintEl.textContent = 'Saving to server...';
     try {
       var xhr = new XMLHttpRequest();
-      var url = '/api/save-log?format=' + encodeURIComponent(format) + '&name=' + encodeURIComponent(name);
+      var url = 'api/save-log.php?format=' + encodeURIComponent(format) + '&name=' + encodeURIComponent(name);
       xhr.open('POST', url, true);
       xhr.setRequestHeader('Content-Type', format === 'json' ? 'application/json;charset=utf-8' : 'text/plain;charset=utf-8');
       xhr.onreadystatechange = function () {

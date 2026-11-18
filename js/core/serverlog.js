@@ -51,7 +51,7 @@
     _post: function (text, extraQuery, sync) {
       try {
         var xhr = new XMLHttpRequest();
-        var url = '/api/log-stream?session=' + encodeURIComponent(this.session || 'session') + (extraQuery || '');
+        var url = 'api/log-stream.php?session=' + encodeURIComponent(this.session || 'session') + (extraQuery || '');
         xhr.open('POST', url, !sync);            // async = !sync
         xhr.setRequestHeader('Content-Type', 'text/plain;charset=utf-8');
         var self = this;
