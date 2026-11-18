@@ -10,7 +10,9 @@ HTML/CSS/JS statiques.
 - **Détection d'environnement et de fonctionnalités** : vérifie ce qui est *réellement*
   disponible (tableaux typés, Canvas/WebGL, Proxy/Map/Set, WeakRef, `performance.memory`,
   WebAssembly…). Les tests dont un prérequis manque sont automatiquement **ignorés**.
-- **Tests indépendants** par catégorie :
+- **55 tests indépendants** répartis en **10 catégories**, avec des *techniques variées*
+  (synchrone, asynchrone/Promise, Web Worker, microtâches, `requestAnimationFrame`,
+  sondage par `try/catch`, timing haute résolution) :
   - `Tableaux typés` — aller-retour par type, DataView/endianness, vues partagées,
     accès hors limites, allocation progressive sous budget, débit séquentiel.
   - `Canvas & graphismes` — remplissage + relecture de pixels, composition alpha,
@@ -19,12 +21,27 @@ HTML/CSS/JS statiques.
     `structuredClone`, création massive d'objets.
   - `Allocations & mémoire` — lecture du tas, cycle allocation/libération,
     WeakRef, rotation d'allocations (churn), construction de grande chaîne.
-- **Journal en direct** : erreurs JS globales, résultats, durées d'exécution.
+  - `Chaînes & texte` — Unicode hors BMP, normalisation NFC/NFD, regex avancées
+    (sondées), TextEncoder/TextDecoder, base64, construction concat vs join.
+  - `Nombres & arithmétique` — précision IEEE-754, entiers sûrs, BigInt, Math,
+    opérations bit à bit, analyse de nombres.
+  - `Erreurs & exceptions` — try/catch/finally, types d'erreurs natifs, pile d'appels,
+    sous-classes d'`Error`, rejets de promesses (tous **capturés et documentés**).
+  - `Asynchronisme` — ordre microtâches/macrotâches, dérive de `setTimeout`,
+    cadence `requestAnimationFrame` (FPS), `async/await` + `Promise.all`, `queueMicrotask`.
+  - `Plateforme & API` — Web Worker (aller-retour via Blob), WebAssembly (module `add`),
+    `crypto.getRandomValues`, SHA-256 (`crypto.subtle`), localStorage, Intl.
+  - `DOM` — DocumentFragment par lot, sélecteurs CSS, classList/dataset,
+    événements synthétiques, MutationObserver.
+- **Journal en direct, copiable** : chaque test écrit son début, ses sous-étapes, ses
+  **mesures**, l'évolution du tas et sa fin ; les erreurs JS globales y figurent aussi.
+  Boutons **Copier le journal** (presse-papiers + zone sélectionnable) et
+  **Télécharger (.txt)** — pensés pour la console où le téléchargement peut échouer.
 - **Garde-fous de ressources** : échéance par test, budget mémoire (Mo), plafond
-  d'itérations, et un bouton **Stop** coopératif pour ne jamais bloquer le navigateur.
+  d'itérations, délai maximal pour les tests asynchrones, et un bouton **Stop** coopératif
+  pour ne jamais bloquer le navigateur.
 - **Export** : rapport **JSON** complet + version **texte** lisible, avec trois voies de
-  récupération (téléchargement, presse-papiers, zone de texte sélectionnable — utile sur
-  console où le téléchargement peut échouer).
+  récupération (téléchargement, presse-papiers, zone de texte sélectionnable).
 
 ## Lancer sur PC
 
@@ -57,7 +74,8 @@ js/core/features.js   détection environnement + fonctionnalités
 js/core/guard.js      garde-fous : échéance, budget mémoire, arrêt
 js/core/runner.js     harnais : enregistrement, exécution non bloquante
 js/core/export.js     construction et export du rapport (JSON/texte)
-js/tests/*.js         modules de tests par catégorie
+js/tests/typedarrays.js  canvas.js  objects.js  memory.js
+js/tests/strings.js      numbers.js errors.js  async.js  platform.js  dom.js
 js/app.js             orchestration et rendu de l'interface
 ```
 

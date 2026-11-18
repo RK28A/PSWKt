@@ -93,6 +93,35 @@
     };
   };
 
+  // Enveloppe une Promise avec un delai maximal (pour les tests asynchrones :
+  // workers, crypto, timers...). Rejette avec AbortError si le delai expire.
+  function withTimeout(promise, ms, label) {
+    return new Promise(function (resolve, reject) {
+      var settled = false;
+      var timer = global.setTimeout(function () {
+        if (settled) return;
+        settled = true;
+        reject(new AbortError('delai asynchrone depasse' + (label ? ' (' + label + ')' : '') + ' apres ' + ms + ' ms'));
+      }, ms);
+      Promise.resolve(promise).then(function (v) {
+        if (settled) return;
+        settled = true;
+        try { global.clearTimeout(timer); } catch (e) {}
+        resolve(v);
+      }, function (e) {
+        if (settled) return;
+        settled = true;
+        try { global.clearTimeout(timer); } catch (e2) {}
+        reject(e);
+      });
+    });
+  }
+
+  // Attend ms millisecondes (pour mesurer la derive des timers).
+  function delay(ms) {
+    return new Promise(function (resolve) { global.setTimeout(resolve, ms); });
+  }
+
   // Rend la main a l'event loop (laisse l'UI respirer et le bouton Stop agir).
   function yieldToEventLoop() {
     return new Promise(function (resolve) {
@@ -124,6 +153,8 @@
     AbortError: AbortError,
     Budget: Budget,
     yieldToEventLoop: yieldToEventLoop,
+    withTimeout: withTimeout,
+    delay: delay,
     readHeap: readHeap,
     isAbort: function (e) { return !!(e && e.aborted); }
   };

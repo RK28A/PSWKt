@@ -109,6 +109,30 @@
     return rec;
   };
 
+  // Rend tout le journal sous forme de texte aligne, pret a copier/analyser.
+  Logger.prototype.toText = function () {
+    var lines = [];
+    lines.push('# PSWKT - journal (' + this.events.length + ' lignes, ' + isoStamp() + ')');
+    for (var i = 0; i < this.events.length; i++) {
+      var e = this.events[i];
+      var t = ('          ' + e.t.toFixed(2)).slice(-10);
+      var lvl = ((e.level || '').toUpperCase() + '      ').slice(0, 6);
+      var line = '[' + t + 'ms] ' + lvl + ' [' + e.source + '] ' + e.msg;
+      if (e.data !== undefined) {
+        try { line += ' | ' + JSON.stringify(e.data); } catch (x) { /* ignore */ }
+      }
+      lines.push(line);
+    }
+    if (this.globalErrors.length) {
+      lines.push('# erreurs JS globales : ' + this.globalErrors.length);
+      for (var k = 0; k < this.globalErrors.length; k++) {
+        var ge = this.globalErrors[k];
+        lines.push('  (' + ge.t + 'ms) ' + ge.name + ': ' + ge.message + (ge.source ? ('  @' + ge.source) : ''));
+      }
+    }
+    return lines.join('\n');
+  };
+
   Logger.prototype.snapshot = function () {
     return {
       durationMs: Math.round((now() - this.t0) * 1000) / 1000,

@@ -303,7 +303,34 @@
     ]);
     cons.appendChild(line);
     while (cons.childNodes.length > LOG_MAX_LINES) cons.removeChild(cons.firstChild);
-    cons.scrollTop = cons.scrollHeight;
+    var auto = $('opt-autoscroll');
+    if (!auto || auto.checked) cons.scrollTop = cons.scrollHeight;
+  }
+
+  // Construit le journal complet en texte, l'affiche dans la zone et tente la copie.
+  function copyLog() {
+    var text = PSWKT.logger.toText();
+    var area = $('log-copy-area');
+    area.value = text;
+    area.style.display = 'block';
+    var n = PSWKT.logger.events.length;
+    $('log-copy-hint').textContent = 'Journal : ' + n + ' lignes, ' + text.length + ' octets.';
+    PSWKT.exporter.copyToClipboard(text).then(function (copied) {
+      $('log-copy-hint').textContent = 'Journal : ' + n + ' lignes, ' + text.length + ' octets. ' +
+        (copied ? 'Copie dans le presse-papiers.' : 'Selectionnez le texte ci-dessous pour le copier (Ctrl/Cmd+A puis Ctrl/Cmd+C).');
+    });
+    try { area.focus(); area.select(); } catch (e) {}
+  }
+
+  function downloadLog() {
+    var text = PSWKT.logger.toText();
+    var name = PSWKT.exporter.filename('log.txt');
+    var ok = PSWKT.exporter.downloadText(text, name, 'text/plain;charset=utf-8');
+    var area = $('log-copy-area');
+    area.value = text;
+    area.style.display = 'block';
+    $('log-copy-hint').textContent = ok ? ('Telechargement declenche (' + name + ').') :
+      'Telechargement indisponible : selectionnez la zone ci-dessous pour copier le journal.';
   }
 
   function wireLogger() {
@@ -372,6 +399,8 @@
     $('btn-export-text').onclick = function () { doExport('text'); };
     $('btn-select-export').onclick = selectExportArea;
     $('btn-clear-log').onclick = function () { clear($('log-console')); };
+    $('btn-copy-log').onclick = copyLog;
+    $('btn-download-log').onclick = downloadLog;
 
     setRunningUI(false);
     PSWKT.logger.info('app', 'Interface prete. ' + R.listTests().length + ' tests dans ' +

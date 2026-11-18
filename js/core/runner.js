@@ -161,6 +161,15 @@
           heap: { before: heapBefore, after: heapAfter },
           error: null
         };
+        if (record.measurements) {
+          logger.log('metric', test.id, 'mesures', record.measurements);
+        }
+        if (record.heap && record.heap.before && record.heap.after) {
+          logger.log('metric', test.id, 'tas JS (Mo)', {
+            avant: Math.round(record.heap.before.usedJSHeapSize / 1048576 * 100) / 100,
+            apres: Math.round(record.heap.after.usedJSHeapSize / 1048576 * 100) / 100
+          });
+        }
         logger.log(status === 'pass' ? 'pass' : (status === 'fail' ? 'fail' : 'info'),
           test.id, 'Fin : ' + status + ' (' + durationMs + ' ms)', { detail: record.detail });
         return record;

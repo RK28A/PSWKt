@@ -175,7 +175,51 @@
       URLcreateObjectURL: !!(global.URL && typeof global.URL.createObjectURL === 'function'),
       clipboard: !!(global.navigator && global.navigator.clipboard && typeof global.navigator.clipboard.writeText === 'function'),
       TextEncoder: has('TextEncoder'),
-      TextDecoder: has('TextDecoder')
+      TextDecoder: has('TextDecoder'),
+      sessionStorage: (function () {
+        try { return !!global.sessionStorage; } catch (e) { return false; }
+      })(),
+      crypto: !!(global.crypto && typeof global.crypto.getRandomValues === 'function'),
+      cryptoSubtle: !!(global.crypto && global.crypto.subtle && typeof global.crypto.subtle.digest === 'function'),
+      base64: (typeOf('btoa') === 'function' && typeOf('atob') === 'function'),
+      fetch: typeOf('fetch') === 'function'
+    };
+
+    // Langage, texte, i18n, expressions regulieres (sondees sans planter).
+    function regexSupported(pattern, flags) {
+      try { /* eslint-disable no-new */ new RegExp(pattern, flags); return true; } catch (e) { return false; }
+    }
+    f.lang = {
+      Intl: has('Intl'),
+      IntlNumberFormat: has('Intl.NumberFormat'),
+      IntlDateTimeFormat: has('Intl.DateTimeFormat'),
+      IntlCollator: has('Intl.Collator'),
+      IntlSegmenter: has('Intl.Segmenter'),
+      BigInt: typeOf('BigInt') === 'function',
+      stringNormalize: typeof String.prototype.normalize === 'function',
+      stringPadStart: typeof String.prototype.padStart === 'function',
+      stringMatchAll: typeof String.prototype.matchAll === 'function',
+      stringReplaceAll: typeof String.prototype.replaceAll === 'function',
+      arrayFlat: typeof Array.prototype.flat === 'function',
+      arrayAt: typeof Array.prototype.at === 'function',
+      objectEntries: typeof Object.entries === 'function',
+      regexNamedGroups: regexSupported('(?<y>a)'),
+      regexLookbehind: regexSupported('(?<=a)b'),
+      regexUnicodeProperty: regexSupported('\\p{L}', 'u'),
+      regexDotAll: regexSupported('a.b', 's')
+    };
+
+    // DOM
+    f.dom = {
+      document: (typeof document !== 'undefined'),
+      createElement: (function () { try { return !!document.createElement('div'); } catch (e) { return false; } })(),
+      querySelector: (typeof document !== 'undefined' && typeof document.querySelector === 'function'),
+      DocumentFragment: has('DocumentFragment'),
+      classList: (function () { try { return !!document.createElement('div').classList; } catch (e) { return false; } })(),
+      dataset: (function () { try { return !!document.createElement('div').dataset; } catch (e) { return false; } })(),
+      addEventListener: (typeof document !== 'undefined' && typeof document.addEventListener === 'function'),
+      CustomEvent: has('CustomEvent'),
+      MutationObserver: has('MutationObserver')
     };
 
     return f;

@@ -70,10 +70,16 @@
     <!-- Journal -->
     <section class="panel">
       <h2>5. Journal d'execution</h2>
+      <p class="muted">Chaque test ecrit ici son debut, ses sous-etapes, ses mesures et sa fin. Les erreurs JS globales y apparaissent aussi. Copiez tout le journal pour l'analyser sur PC.</p>
       <div class="log-toolbar">
+        <button id="btn-copy-log" class="mini primary" type="button">Copier le journal</button>
+        <button id="btn-download-log" class="mini ghost" type="button">Telecharger (.txt)</button>
         <button id="btn-clear-log" class="mini ghost" type="button">Vider le journal</button>
+        <label class="log-autoscroll"><input id="opt-autoscroll" type="checkbox" checked> defilement auto</label>
       </div>
       <div id="log-console" class="log-console"></div>
+      <p id="log-copy-hint" class="muted"></p>
+      <textarea id="log-copy-area" class="export-area" readonly spellcheck="false" style="display:none"></textarea>
     </section>
 
     <!-- Export -->
@@ -105,6 +111,12 @@
   <script src="js/tests/canvas.js"></script>
   <script src="js/tests/objects.js"></script>
   <script src="js/tests/memory.js"></script>
+  <script src="js/tests/strings.js"></script>
+  <script src="js/tests/numbers.js"></script>
+  <script src="js/tests/errors.js"></script>
+  <script src="js/tests/async.js"></script>
+  <script src="js/tests/platform.js"></script>
+  <script src="js/tests/dom.js"></script>
   <!-- Application -->
   <script src="js/app.js"></script>
 </body>
