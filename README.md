@@ -30,7 +30,8 @@ A JavaScript error observed here is a **behaviour to document**, not a security 
 - **Crash-survivor marker.** Before each test, a “test running” marker is written to IndexedDB;
   on reload after a crash, a banner names the last test that was launched.
 - **Search & filters** on the results, and **two modes**: *diagnostic* (default) and *stress*.
-- **Optional continuous server logging** (local `python3 server.py` only) with `fsync`.
+- **Optional server-side log saving** via small **PHP** scripts (`api/save-log.php`,
+  `api/log-stream.php`) when hosted on a PHP host such as InfinityFree. Entirely optional.
 
 ## Interface — a single page with real tabs
 
@@ -50,23 +51,23 @@ to follow on a TV.
 (with a memory/localStorage fallback) and export to JSON and TXT. It therefore runs as-is on free
 static hosting.
 
-Upload `index.html`, `css/` and `js/` to your web root, open the URL — that is all (no PHP, no
+Upload `index.html`, `css/`, `js/` and `api/` to your web root, open the URL — that is all (no
 database, no server process, no cron). `tests.html` simply redirects to `index.html#categories`.
 
-`server.py` (Python) is **optional**: it is only useful locally, for continuous logging with a
-disk-flush (`fsync`) guarantee. It is **not required** and the app is fully usable without it.
+**Optional server-side saving:** if your host runs PHP (InfinityFree does), the two scripts in
+`api/` let the "save to server" buttons write reports/logs into a `logs/` folder. The app is fully
+usable without them (IndexedDB + JSON/TXT export) — no database and no server needed.
 
 ## Running locally
 
-```bash
-cd PSWKt
-python3 -m http.server 8080        # any static server works
-# or, for the optional continuous server logging:
-python3 server.py                  # default port 8080, or: python3 server.py 9000
+Serve the folder with any static web server and open it in a browser, for example:
+
+```
+# VS Code: "Live Server" extension, or any static file server you like
+# then open http://localhost:<port>/
 ```
 
-Then open `http://localhost:8080/`. From the PS5, open `http://<PC-IP>:8080/` (or just open your
-static-hosting URL).
+From the PS5, open your static-hosting URL (or your PC's local server address).
 
 ## Hunting crashes on the PS5
 
@@ -98,7 +99,8 @@ static-hosting URL).
 index.html            single-page app (Dashboard / Categories / History / About tabs)
 tests.html            redirect to index.html
 css/styles.css        styles (dark, animated, game-pad-friendly focus)
-server.py             optional local server: static files + log saving (one-shot and continuous/fsync)
+api/save-log.php      optional PHP endpoint: save a report/log into logs/ (InfinityFree-compatible)
+api/log-stream.php    optional PHP endpoint: append continuous log into logs/
 js/core/log.js        central log: events, errors, durations
 js/core/features.js   environment + feature detection
 js/core/guard.js      resource guards: deadline, memory budget, abort

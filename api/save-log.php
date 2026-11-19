@@ -1,5 +1,5 @@
 <?php
-/* PSWKT - one-shot log/report saving (InfinityFree-compatible, no Python needed).
+/* PSWKT - one-shot log/report saving (InfinityFree-compatible).
  * Writes the POST body into ../logs/ as a timestamped file. */
 header('Content-Type: application/json; charset=utf-8');
 $fmt  = isset($_GET['format']) ? $_GET['format'] : 'txt';
