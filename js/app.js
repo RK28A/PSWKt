@@ -29,6 +29,16 @@
     return e;
   }
   function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+  // Toggle one class on <body> without wiping the others (running / hazard-on).
+  function setBodyFlag(name, on) {
+    try {
+      var b = document.body; if (!b) return;
+      if (b.classList) { if (on) b.classList.add(name); else b.classList.remove(name); return; }
+      var list = (' ' + b.className + ' ').replace(' ' + name + ' ', ' ');
+      b.className = (on ? list + name : list).replace(/^\s+|\s+$/g, '');
+    } catch (e) {}
+  }
+  function fmtInt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
 
   // --- Application state ---
   var state = {
@@ -90,10 +100,10 @@
       } else {
         hint.appendChild(el('span', { class: 'badge badge-neutral', text: 'PlayStation not detected' }));
       }
-      hint.appendChild(el('span', { class: 'env-ua', text: '  ' + env.platform + ' · ' + nTests + ' tests / ' + nCats + ' categories' }));
+      hint.appendChild(el('span', { class: 'env-ua', text: env.platform }));
     }
     var stats = $('brand-stats');
-    if (stats) stats.textContent = nTests + ' tests · ' + nCats + ' categories';
+    if (stats) stats.textContent = fmtInt(nTests) + ' tests in ' + nCats + ' categories';
 
     var grid = $('feature-grid');
     if (grid) {
@@ -250,6 +260,7 @@
     if (!box) return;
     var on = $('opt-aggressive') && $('opt-aggressive').checked;
     if (on) { renderAggressiveList(); box.style.display = ''; } else { box.style.display = 'none'; }
+    setBodyFlag('hazard-on', on); // the whole bench switches to the hot palette
     // Make the main button say exactly what it will run in each mode.
     var btn = $('btn-run-all');
     if (btn) btn.innerHTML = on ? '▶&nbsp; Run checked aggressive' : '▶&nbsp; Run all tests';
@@ -406,7 +417,12 @@
   function setProgress(done, total, label) {
     var pct = total > 0 ? Math.round((done / total) * 100) : 0;
     if ($('progress-bar')) $('progress-bar').style.width = pct + '%';
-    if ($('progress-text')) $('progress-text').textContent = (label || '') + '  ' + done + ' / ' + total + '  (' + pct + '%)';
+    var txt = $('progress-text');
+    if (txt) {
+      // Large live readout: just the state when idle, counts while running.
+      if (label === 'ready' && done === 0) txt.textContent = 'ready';
+      else txt.textContent = (label || '') + '  ' + fmtInt(done) + ' / ' + fmtInt(total) + '  ' + pct + '%';
+    }
   }
 
   function renderSummary(summary) {
@@ -442,7 +458,7 @@
       var line = el('div', { class: 'classif-line' });
       for (var code in byCl) {
         if (!byCl.hasOwnProperty(code)) continue;
-        line.appendChild(el('span', { class: 'classif-chip class-' + code, text: byCl[code].label + ' : ' + byCl[code].n }));
+        line.appendChild(el('span', { class: 'classif-chip class-' + code, text: byCl[code].label + ': ' + byCl[code].n }));
       }
       sum.appendChild(line);
     }
@@ -588,7 +604,7 @@
     for (var k = 0; k < ids.length; k++) { if ($(ids[k])) $(ids[k]).disabled = running; }
     if ($('btn-stop')) $('btn-stop').disabled = !running;
     if ($('btn-stop-2')) $('btn-stop-2').disabled = !running;
-    try { document.body.className = running ? 'running' : ''; } catch (e) {}
+    setBodyFlag('running', running);
     var cards = document.querySelectorAll('.cat-head, .cat-actions button');
     for (var i = 0; i < cards.length; i++) cards[i].disabled = running;
   }

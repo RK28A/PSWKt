@@ -4,16 +4,28 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="no-referrer">
-  <title>PSWKT &mdash; WebKit Test Lab</title>
-  <link rel="stylesheet" href="css/styles.css?v=7">
+  <title>PSWKT &mdash; WebKit test bench</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="css/styles.css?v=8">
 </head>
 <body>
   <header class="app-header">
-    <div class="wrap">
-      <div class="brand-row">
-        <h1 class="brand">PSWKT <span class="sub">WebKit Test Lab</span></h1>
+    <div class="wrap header-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <div class="brand-text">
+          <h1 class="brand-name">PSWKT</h1>
+          <span class="brand-sub">WebKit test bench</span>
+        </div>
+      </div>
+      <div class="bench-status">
+        <span class="status-lamp" aria-hidden="true"></span>
         <span id="brand-stats" class="brand-stats"></span>
       </div>
+    </div>
+    <div class="wrap">
       <nav class="tabbar" role="tablist" aria-label="Sections">
         <button class="tab is-active" type="button" role="tab" data-tab="dashboard" id="tab-dashboard">Dashboard</button>
         <button class="tab" type="button" role="tab" data-tab="categories" id="tab-categories">Categories</button>
@@ -28,34 +40,41 @@
 
     <!-- ===================== DASHBOARD ===================== -->
     <section class="tabpanel is-active" id="panel-dashboard" role="tabpanel" aria-labelledby="tab-dashboard">
-      <section class="panel hero">
-        <div id="ps-hint" class="ps-line"></div>
-        <div class="run-bar big">
-          <button id="btn-run-all" class="btn primary big" type="button">&#9654;&nbsp; Run all tests</button>
-          <button id="btn-stop" class="btn danger" type="button" disabled>&#9632; Stop</button>
-          <button id="btn-options-toggle" class="btn ghost" type="button">&#9881; Options</button>
+      <section class="bench" aria-label="Test bench">
+        <div class="bench-top">
+          <div class="readout">
+            <div id="ps-hint" class="ps-line"></div>
+            <div id="progress-text" class="progress-text" aria-live="polite">ready</div>
+            <div class="meter" aria-hidden="true">
+              <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
+              <div class="meter-ticks"></div>
+            </div>
+          </div>
+          <div class="bench-controls">
+            <button id="btn-run-all" class="btn primary big" type="button">&#9654;&nbsp; Run all tests</button>
+            <div class="bench-controls-row">
+              <button id="btn-stop" class="btn danger" type="button" disabled>&#9632; Stop</button>
+              <button id="btn-options-toggle" class="btn ghost" type="button">Options</button>
+            </div>
+          </div>
         </div>
 
-        <label class="toggle-card aggr-main" for="opt-aggressive">
-          <input id="opt-aggressive" type="checkbox">
-          <span><b>Aggressive mode</b> &mdash; reveal and pick stress tests that may freeze or crash the browser</span>
-        </label>
-        <div id="aggressive-list" class="aggressive-list" style="display:none"></div>
+        <div id="summary" class="summary"></div>
 
         <div id="options-panel" class="options-panel" style="display:none">
           <div class="options">
-            <label>Deadline / test (ms)<input id="opt-timeout" type="number" value="4000" min="100" step="100"></label>
+            <label>Deadline per test (ms)<input id="opt-timeout" type="number" value="4000" min="100" step="100"></label>
             <label>Memory budget (MB)<input id="opt-memory" type="number" value="64" min="1" step="1"></label>
             <label>Iteration cap<input id="opt-maxiter" type="number" value="5000000" min="1000" step="1000"></label>
           </div>
-          <label class="toggle-card"><input id="opt-stream" type="checkbox"> Continuous server logging (local server only, optional)</label>
+          <label class="toggle-card"><input id="opt-stream" type="checkbox"> Send the live log to the server as it runs (needs <code>api/log-stream.php</code>)</label>
         </div>
 
-        <div class="progress">
-          <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
-          <div id="progress-text" class="progress-text">ready</div>
-        </div>
-        <div id="summary" class="summary"></div>
+        <label class="hazard" for="opt-aggressive">
+          <input id="opt-aggressive" type="checkbox">
+          <span class="hazard-text"><b>Aggressive mode</b><span>Pick stress tests that push the engine until it freezes or crashes. Off by default.</span></span>
+        </label>
+        <div id="aggressive-list" class="aggressive-list" style="display:none"></div>
       </section>
 
       <section class="panel">
@@ -75,7 +94,7 @@
       <section class="panel">
         <div class="log-toolbar">
           <strong class="panel-tag">Console</strong>
-          <button id="btn-export-json" class="btn mini primary" type="button">Export JSON</button>
+          <button id="btn-export-json" class="btn mini" type="button">Export JSON</button>
           <button id="btn-export-text" class="btn mini ghost" type="button">Export TXT</button>
           <button id="btn-copy-log" class="btn mini ghost" type="button">Copy</button>
           <button id="btn-download-log" class="btn mini ghost" type="button">Download .txt</button>
@@ -146,52 +165,52 @@
   </main>
 
   <!-- Core (order matters) -->
-  <script src="js/core/log.js?v=7"></script>
-  <script src="js/core/features.js?v=7"></script>
-  <script src="js/core/guard.js?v=7"></script>
-  <script src="js/core/runner.js?v=7"></script>
-  <script src="js/core/export.js?v=7"></script>
-  <script src="js/core/serverlog.js?v=7"></script>
-  <script src="js/core/store.js?v=7"></script>
+  <script src="js/core/log.js?v=8"></script>
+  <script src="js/core/features.js?v=8"></script>
+  <script src="js/core/guard.js?v=8"></script>
+  <script src="js/core/runner.js?v=8"></script>
+  <script src="js/core/export.js?v=8"></script>
+  <script src="js/core/serverlog.js?v=8"></script>
+  <script src="js/core/store.js?v=8"></script>
   <!-- Tests -->
-  <script src="js/tests/typedarrays.js?v=7"></script>
-  <script src="js/tests/canvas.js?v=7"></script>
-  <script src="js/tests/objects.js?v=7"></script>
-  <script src="js/tests/memory.js?v=7"></script>
-  <script src="js/tests/strings.js?v=7"></script>
-  <script src="js/tests/numbers.js?v=7"></script>
-  <script src="js/tests/errors.js?v=7"></script>
-  <script src="js/tests/async.js?v=7"></script>
-  <script src="js/tests/platform.js?v=7"></script>
-  <script src="js/tests/dom.js?v=7"></script>
-  <script src="js/tests/_factory.js?v=7"></script>
-  <script src="js/tests/builtins.js?v=7"></script>
-  <script src="js/tests/globals.js?v=7"></script>
-  <script src="js/tests/css.js?v=7"></script>
-  <script src="js/tests/canvas2d_api.js?v=7"></script>
-  <script src="js/tests/webgl_caps.js?v=7"></script>
-  <script src="js/tests/media.js?v=7"></script>
-  <script src="js/tests/input.js?v=7"></script>
-  <script src="js/tests/syntax.js?v=7"></script>
-  <script src="js/tests/ps5profile.js?v=7"></script>
-  <script src="js/tests/_fuzz.js?v=7"></script>
-  <script src="js/tests/fuzz_parsers.js?v=7"></script>
-  <script src="js/tests/fuzz_builtins.js?v=7"></script>
-  <script src="js/tests/fuzz_typedarrays.js?v=7"></script>
-  <script src="js/tests/fuzz_structural.js?v=7"></script>
-  <script src="js/tests/fuzz_robustness.js?v=7"></script>
-  <script src="js/tests/fuzz_robustness2.js?v=7"></script>
-  <script src="js/tests/fuzz_aggressive.js?v=7"></script>
-  <script src="js/tests/fuzz_aggressive2.js?v=7"></script>
-  <script src="js/tests/fuzz_aggressive3.js?v=7"></script>
-  <script src="js/tests/webapis.js?v=7"></script>
-  <script src="js/tests/natives_more.js?v=7"></script>
-  <script src="js/tests/css_more.js?v=7"></script>
-  <script src="js/tests/syntax_more.js?v=7"></script>
-  <script src="js/tests/media_more.js?v=7"></script>
-  <script src="js/tests/webgl_more.js?v=7"></script>
-  <script src="js/tests/behaviors.js?v=7"></script>
-  <script src="js/tests/behaviors2.js?v=7"></script>
-  <script src="js/app.js?v=7"></script>
+  <script src="js/tests/typedarrays.js?v=8"></script>
+  <script src="js/tests/canvas.js?v=8"></script>
+  <script src="js/tests/objects.js?v=8"></script>
+  <script src="js/tests/memory.js?v=8"></script>
+  <script src="js/tests/strings.js?v=8"></script>
+  <script src="js/tests/numbers.js?v=8"></script>
+  <script src="js/tests/errors.js?v=8"></script>
+  <script src="js/tests/async.js?v=8"></script>
+  <script src="js/tests/platform.js?v=8"></script>
+  <script src="js/tests/dom.js?v=8"></script>
+  <script src="js/tests/_factory.js?v=8"></script>
+  <script src="js/tests/builtins.js?v=8"></script>
+  <script src="js/tests/globals.js?v=8"></script>
+  <script src="js/tests/css.js?v=8"></script>
+  <script src="js/tests/canvas2d_api.js?v=8"></script>
+  <script src="js/tests/webgl_caps.js?v=8"></script>
+  <script src="js/tests/media.js?v=8"></script>
+  <script src="js/tests/input.js?v=8"></script>
+  <script src="js/tests/syntax.js?v=8"></script>
+  <script src="js/tests/ps5profile.js?v=8"></script>
+  <script src="js/tests/_fuzz.js?v=8"></script>
+  <script src="js/tests/fuzz_parsers.js?v=8"></script>
+  <script src="js/tests/fuzz_builtins.js?v=8"></script>
+  <script src="js/tests/fuzz_typedarrays.js?v=8"></script>
+  <script src="js/tests/fuzz_structural.js?v=8"></script>
+  <script src="js/tests/fuzz_robustness.js?v=8"></script>
+  <script src="js/tests/fuzz_robustness2.js?v=8"></script>
+  <script src="js/tests/fuzz_aggressive.js?v=8"></script>
+  <script src="js/tests/fuzz_aggressive2.js?v=8"></script>
+  <script src="js/tests/fuzz_aggressive3.js?v=8"></script>
+  <script src="js/tests/webapis.js?v=8"></script>
+  <script src="js/tests/natives_more.js?v=8"></script>
+  <script src="js/tests/css_more.js?v=8"></script>
+  <script src="js/tests/syntax_more.js?v=8"></script>
+  <script src="js/tests/media_more.js?v=8"></script>
+  <script src="js/tests/webgl_more.js?v=8"></script>
+  <script src="js/tests/behaviors.js?v=8"></script>
+  <script src="js/tests/behaviors2.js?v=8"></script>
+  <script src="js/app.js?v=8"></script>
 </body>
 </html>
